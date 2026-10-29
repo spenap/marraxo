@@ -48,6 +48,12 @@ Done in a separate repository.
 - [ ] Album/artist browsing, cached artwork, search, queue, favourites.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
+- [ ] About screen (from a ⋮ menu on the Library header, alongside
+      "Rescan library"): `versionName` from `git describe --tags --always
+      --dirty`, `versionCode` from `git rev-list --count HEAD`, build date,
+      device and Android version, and open-source licences via
+      AboutLibraries (works offline, unlike Google's oss-licenses plugin).
+      Run git via Gradle's `providers.exec`.
 
 ### A4. Stats and Year in review
 - [ ] Stats screen: top artists/songs, listening heatmap, outputs, library
