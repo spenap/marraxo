@@ -328,6 +328,76 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .voltoast .track { height: 4px; border-radius: 2px; background: #555; position: relative; }
 .voltoast .track i { position: absolute; left: 0; top: 0; bottom: 0; background: #9fd6cf; border-radius: 2px; }
 .voltoast .ic { width: 20px; height: 20px; }
+
+/* Stats */
+.stats { background: linear-gradient(180deg, #1b2f33 0, var(--g-bg) 260px); }
+.stats .topbar h2 { font: 800 20px/1 var(--g-display); margin: 0; }
+.st-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 4px 16px 16px; }
+.st-sum div { display: grid; gap: 2px; }
+.st-sum b { font: 800 30px/1 var(--g-display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.st-sum span { font-size: 12px; color: var(--g-soft); }
+.st-sub { padding: 0 16px 14px; font-size: 13px; color: var(--g-soft); }
+.wr-card { display: grid !important; grid-template-columns: 1fr auto; align-items: center; gap: 12px; margin: 0 16px 8px; width: calc(100% - 32px); padding: 16px !important; border-radius: 12px; background: linear-gradient(120deg, #24525a, #5e2238 55%, #7a4f1e) !important; box-shadow: 0 10px 24px rgba(0,0,0,.35); }
+.wr-card strong { display: block; font: 800 20px/1.1 var(--g-display); }
+.wr-card span { font-size: 13px; color: rgba(255,255,255,.8); }
+.wr-card .stackarts .art { width: 40px; height: 40px; border-radius: 6px; box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+.wr-card .stackarts .art + .art { margin-left: -16px; }
+.st-sec { padding: 18px 16px 4px; }
+.st-sec h3 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--g-soft); margin: 0 0 10px; font-weight: 600; }
+.rank { display: grid; grid-template-columns: 18px 1fr 40px; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.rank .n { color: var(--g-soft); font-size: 12px; text-align: right; }
+.rank .nm { min-width: 0; }
+.rank .nm b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank .nm i { display: block; height: 4px; border-radius: 2px; background: var(--hi, #9fd6cf); margin-top: 5px; opacity: .85; }
+.rank .c { text-align: right; font-size: 12px; color: var(--g-soft); }
+.heat { display: grid; grid-template-columns: 16px repeat(24, 1fr); gap: 2px; font-size: 9px; color: var(--g-soft); }
+.heat i { aspect-ratio: 1; border-radius: 2px; background: #9fd6cf; }
+.heat .dl { display: grid; place-items: center; }
+.heat .hl { grid-column: span 6; padding-top: 3px; }
+.heat-note { font-size: 12px; color: var(--g-soft); margin-top: 8px; }
+.stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; }
+.stack i { display: block; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 10px; font-size: 13px; }
+.legend span { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.legend span i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.legend span em { margin-left: auto; font-style: normal; color: var(--g-soft); font-size: 12px; }
+.geek { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.geek dt { color: var(--g-soft); white-space: nowrap; }
+.geek dd { margin: 0; text-align: right; }
+.geek dd small { display: block; color: var(--g-soft); font-size: 11px; }
+.st-foot { padding: 18px 16px 24px; font-size: 12px; color: var(--g-soft); display: flex; gap: 8px; align-items: center; }
+.st-foot .ic { width: 16px; height: 16px; }
+
+/* Year in review (story cards) */
+.wrapped { padding: 24px 0 0; justify-content: flex-start; transition: background .4s; }
+.segs { display: flex; gap: 4px; padding: 10px 12px 0; position: relative; z-index: 3; }
+.segs i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,.3); overflow: hidden; position: relative; }
+.segs i.done { background: #fff; }
+.segs i.cur::after { content: ""; position: absolute; inset: 0; background: #fff; transform-origin: left; transform: scaleX(.08); }
+@media (prefers-reduced-motion: no-preference) { .segs i.cur::after { animation: fill 6s linear forwards; } }
+@keyframes fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.w-close { position: absolute; z-index: 4; top: 40px; right: 8px; width: 40px; height: 40px; display: grid !important; place-items: center; }
+.w-tap { position: absolute; z-index: 2; top: 24px; bottom: 0; width: 40%; }
+.w-tap.l { left: 0; } .w-tap.r { right: 0; width: 60%; }
+.wcard { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 24px 28px 40px; position: relative; z-index: 1; pointer-events: none; }
+.wcard .btn-primary, .wcard button { pointer-events: auto; }
+.wk { margin: 0; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+.wh { margin: 0; font: 800 44px/1 var(--g-display); letter-spacing: -.03em; text-wrap: balance; }
+.wbig { margin: 0; font: 800 108px/.9 var(--g-display); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+.wbig span { display: block; font-size: 28px; letter-spacing: -.01em; margin-top: 8px; }
+.wp { margin: 0; font-size: 17px; line-height: 1.45; color: rgba(255,255,255,.85); max-width: 300px; }
+.wart { width: 200px; height: 200px; border-radius: 10px; box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+.wart.round { border-radius: 50%; }
+.hours { display: flex; align-items: flex-end; gap: 3px; height: 90px; }
+.hours i { flex: 1; background: rgba(255,255,255,.35); border-radius: 2px 2px 0 0; }
+.hours i.pk { background: #fff; }
+.hours-l { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.7); margin-top: -8px; }
+.wsum { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; background: rgba(0,0,0,.25); border-radius: 12px; padding: 18px; }
+.wsum h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); font-weight: 600; }
+.wsum ol { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.55; }
+.wsum ol li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wsum b { font: 800 26px/1 var(--g-display); display: block; }
+.wsum .k { font-size: 12px; color: rgba(255,255,255,.7); }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -360,6 +430,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M17 5v14L6 12z"/></symbol>
     <symbol id="i-home" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
     <symbol id="i-recents" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-stats" viewBox="0 0 24 24"><path fill="currentColor" d="M4 13h3.5v7H4zM10.25 4h3.5v16h-3.5zM16.5 9H20v11h-3.5z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3l7 3v5.5c0 4.4-3 8.1-7 9.5-4-1.4-7-5.1-7-9.5V6z"/></symbol>
   </defs>
 </svg>
 
@@ -407,6 +479,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         <button data-jump="queue">Queue</button>
         <button data-jump="output">Output picker</button>
         <button data-jump="search">Search</button>
+        <button data-jump="stats">Stats</button>
+        <button data-jump="wrapped">Year in review</button>
         <button data-jump="lock">Lock screen</button>
         <button data-jump="home">Home screen</button>
         <button data-jump="empty">No music found</button>
@@ -434,6 +508,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         <div class="flow"><h3>Screen off</h3>
           <ol><li>power button</li><li><button data-jump="lock">Lock screen</button></li><li>controls work locked</li><li>unlock</li></ol>
           <p>Playback runs in a background service, so locking, Home and Back never stop the music.</p></div>
+        <div class="flow"><h3>Year in review</h3>
+          <ol><li><button data-jump="library">Library</button></li><li>stats icon</li><li><button data-jump="stats">Stats</button></li><li><button data-jump="wrapped">Year in review</button></li></ol>
+          <p>Eight story cards built from the phone’s own play history. The last one is a summary to save and share.</p></div>
       </div>
     </div>
 
@@ -527,6 +604,15 @@ const NOTES = {
   empty: ['No music found', [
     'Shown when the scan finds no audio files.',
     'Gives the two ways to copy music on: USB file transfer, or <code>adb push</code> from a computer.']],
+  stats: ['Stats', [
+    'Everything is computed on the phone from the play history the app records: one row per play, with track, start time, seconds played, whether it was skipped, and the output device.',
+    'That history cannot be rebuilt later, so the app records it from the very first version, long before this screen exists.',
+    'The “Library, for geeks” figures come from the scan: tag versions, bitrates and file dates are already read there.',
+    'Nothing is uploaded or shared; there is no account to send it to.']],
+  wrapped: ['Year in review', [
+    'Mako’s take on Spotify Wrapped. It appears as a card on the Stats screen in December, and stays available after that.',
+    'Tap the right side for the next card and the left side to go back. Cards advance on their own every 6 seconds (unless reduced motion is on).',
+    'The last card is a summary designed to be saved as an image and shared.']],
 };
 
 const S = {
@@ -534,9 +620,10 @@ const S = {
   queue: [], qpos: 0, pos: 0, playing: false, shuffle: false, repeat: 'off',
   fav: new Set(['mezz:2']), output: 'phone',
   vol: { phone: 60, estudio: 35, cocina: 30, both: 32, frame: 20 },
-  dialog: null, sheet: false, locked: false, home: false, scanN: 0, query: '', volUntil: 0,
+  dialog: null, sheet: false, locked: false, home: false, scanN: 0, query: '', volUntil: 0, wi: 0, wt: 0,
 };
 let lastTop = null, scanTimer = null;
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const sec = s => { const [m, x] = s.split(':'); return +m * 60 + +x; };
 const fmt = n => Math.floor(n / 60) + ':' + String(Math.floor(n % 60)).padStart(2, '0');
@@ -640,7 +727,7 @@ const V = {
       body = ys.map(y => `<div class="yearhead">${y}</div><div class="rows">${IDS.filter(id => A[id].y === y).map(id => albumRow(id)).join('')}</div>`).join('');
     }
     return `<div class="v library">
-      <div class="libhead"><h2>Library</h2><button data-act="go" data-arg="search" aria-label="Search">${icon('search')}</button></div>
+      <div class="libhead"><h2>Library</h2><span style="display:flex"><button data-act="go" data-arg="stats" aria-label="Stats">${icon('stats')}</button><button data-act="go" data-arg="search" aria-label="Search">${icon('search')}</button></span></div>
       <div class="chips">${tabs.map(([k, l]) => `<button class="${S.tab === k ? 'on' : ''}" data-act="tab" data-arg="${k}">${l}</button>`).join('')}</div>
       <div class="scroll ${cur() ? 'pad-mini' : ''}">${body}</div>${mini()}</div>`;
   },
@@ -699,7 +786,110 @@ const V = {
       <div class="topbar" style="padding-left:4px"><button data-act="back" aria-label="Back">${icon('left')}</button><span></span></div>
       <label class="sfield">${icon('search')}<input id="q" type="search" placeholder="Artists, albums, songs" value="${esc(S.query)}" autocomplete="off"></label>
       <div class="scroll ${cur() ? 'pad-mini' : ''}" id="results">${results()}</div>${mini()}</div>`,
+  stats: () => {
+    const artists = [['Massive Attack', 412, 'mezz'], ['Portishead', 351, 'dummy'], ['Daft Punk', 298, 'disc'], ['LCD Soundsystem', 240, 'sos'], ['Radiohead', 211, 'okc']];
+    const songs = [['Teardrop', 'Massive Attack', 87], ['Roads', 'Portishead', 64], ['Digital Love', 'Daft Punk', 58], ['Glory Box', 'Portishead', 51], ['Someone Great', 'LCD Soundsystem', 47]];
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    let heat = '';
+    days.forEach((d, di) => { heat += `<span class="dl">${d}</span>`; for (let h = 0; h < 24; h++) heat += `<i style="opacity:${(.06 + .94 * heatAt(di, h)).toFixed(2)}" title="${d} ${h}:00"></i>`; });
+    heat += '<span></span>' + ['00', '06', '12', '18'].map(h => `<span class="hl">${h}</span>`).join('');
+    const outs = [['This phone', 61, '#9fd6cf'], ['Estudio', 24, '#ffd27a'], ['Cocina', 9, '#f4a9bb'], ['The Frame', 6, '#a8d0ea']];
+    const secs = IDS.reduce((n, id) => n + A[id].tr.reduce((m, x) => m + sec(x.split('|')[1]), 0), 0);
+    const all = IDS.flatMap(id => A[id].tr.map(x => { const [t, d] = x.split('|'); return [t, sec(d), A[id].ar]; })).sort((a, b) => a[1] - b[1]);
+    const gb = (secs * 271000 / 8 / 1e9).toFixed(2);
+    const years = IDS.map(id => A[id].y).sort();
+    return `<div class="v stats" style="--hi:#9fd6cf">
+      <div class="topbar"><button data-act="back" aria-label="Back">${icon('left')}</button><h2>Stats</h2><span style="width:40px"></span></div>
+      <div class="scroll">
+        <div class="st-sum"><div><b>158</b><span>hours</span></div><div><b>2,318</b><span>plays</span></div><div><b>19</b><span>day streak</span></div></div>
+        <div class="st-sub">2026 so far · example data</div>
+        <button class="wr-card" data-act="open-wrapped"><div><strong>Your 2026 in review</strong><span>8 cards · tap to play</span></div>
+          <div class="stackarts"><div class="art art-mezz"></div><div class="art art-dummy"></div><div class="art art-disc"></div></div></button>
+        <div class="st-sec"><h3>Top artists</h3>${artists.map(([n, c, id], i) => `<div class="rank" style="--hi:${A[id].hi}"><span class="n">${i + 1}</span><span class="nm"><b>${n}</b><i style="width:${c / 412 * 100}%"></i></span><span class="c">${c}</span></div>`).join('')}</div>
+        <div class="st-sec"><h3>Top songs</h3>${songs.map(([t, a, c], i) => `<div class="rank"><span class="n">${i + 1}</span><span class="nm"><b>${t}</b><span style="font-size:12px;color:var(--g-soft)">${a}</span></span><span class="c">${c}</span></div>`).join('')}</div>
+        <div class="st-sec"><h3>When you listen</h3><div class="heat">${heat}</div>
+          <div class="heat-note">Peak: weekdays 22:00–00:00. Weekend listening starts around noon.</div></div>
+        <div class="st-sec"><h3>Where it played</h3><div class="stack">${outs.map(([, p, c]) => `<i style="width:${p}%;background:${c}"></i>`).join('')}</div>
+          <div class="legend">${outs.map(([n, p, c]) => `<span><i style="background:${c}"></i>${n}<em>${p}%</em></span>`).join('')}</div></div>
+        <div class="st-sec"><h3>Library, for geeks</h3><dl class="geek">
+          <dt>Tracks</dt><dd>${TOTAL} in ${IDS.length} albums</dd>
+          <dt>Total length</dt><dd>${Math.floor(secs / 3600)} h ${Math.round(secs % 3600 / 60)} min</dd>
+          <dt>Size on phone</dt><dd>${gb} GB</dd>
+          <dt>Formats</dt><dd>MP3 CBR 320 · 61<small>VBR V0 · 22 · CBR 192 · 12 · CBR 128 · 9</small></dd>
+          <dt>Average bitrate</dt><dd>271 kbps</dd>
+          <dt>Sample rate</dt><dd>44.1 kHz · all ${TOTAL}</dd>
+          <dt>Tags</dt><dd>ID3v2.4 · 38 · ID3v2.3 · 57<small>ID3v1 only · 9</small></dd>
+          <dt>Embedded artwork</dt><dd>79 of ${TOTAL}</dd>
+          <dt>MusicBrainz match</dt><dd>96 of ${TOTAL}</dd>
+          <dt>Release years</dt><dd>${years[0]}–${years[years.length - 1]}<small>median ${years[Math.floor(years.length / 2)]}</small></dd>
+          <dt>Longest</dt><dd>${all[all.length - 1][0]} · ${fmt(all[all.length - 1][1])}</dd>
+          <dt>Shortest</dt><dd>${all[0][0]} · ${fmt(all[0][1])}</dd>
+          <dt>Oldest file</dt><dd>17 Nov 2003<small>Sour Times, 128 kbps</small></dd>
+          <dt>Most skipped</dt><dd>Fitter Happier<small>23 of 25 plays skipped</small></dd>
+          <dt>Completion rate</dt><dd>84% of plays</dd>
+        </dl></div>
+        <div class="st-foot">${icon('shield')}Counted on this phone from your play history. Nothing is uploaded.</div>
+      </div></div>`;
+  },
+
+  wrapped: () => {
+    const c = W[S.wi];
+    const segs = W.map((_, k) => `<i class="${k < S.wi ? 'done' : k === S.wi ? 'cur' : ''}"></i>`).join('');
+    return `<div class="v wrapped" style="background:${c.bg}">
+      <div class="segs">${segs}</div>
+      <button class="w-close" data-act="back" aria-label="Close">${icon('close')}</button>
+      <button class="w-tap l" data-act="w-prev" aria-label="Previous card"></button>
+      ${S.wi < W.length - 1 ? '<button class="w-tap r" data-act="w-next" aria-label="Next card"></button>' : ''}
+      <div class="wcard">${c.html()}</div></div>`;
+  },
 };
+
+function heatAt(d, h) {
+  const night = Math.exp(-((h - 22.5) ** 2) / 5);
+  const morn = d < 5 ? .5 * Math.exp(-((h - 8.3) ** 2) / 1.2) : 0;
+  const wkend = d >= 5 ? .65 * Math.exp(-((h - 13) ** 2) / 12) : 0;
+  const noise = (Math.sin(d * 7.3 + h * 3.1) + 1) * .07;
+  const asleep = h >= 2 && h < 7 ? .05 : 1;
+  return Math.min(1, (night * .95 + morn + wkend + noise) * asleep);
+}
+
+const W = [
+  { bg: 'radial-gradient(120% 80% at 80% 10%, #24525a, #0c1112 70%)', html: () => `
+      <p class="wk">Mako · 2026</p><h2 class="wh">Your year in music</h2>
+      <p class="wp">Counted on this phone, from your own play history. None of it ever left the phone.</p>` },
+  { bg: 'linear-gradient(170deg, #7a4f1e, #1d1207)', html: () => `
+      <p class="wk">Listening time</p><h2 class="wbig">158<span>hours</span></h2>
+      <p class="wp">That’s 6.6 days of music. Mezzanine alone took 31 hours of it.</p>` },
+  { bg: 'linear-gradient(170deg, #24525a, #081214)', html: () => `
+      <p class="wk">Top artist</p><div class="art art-mezz wart round"></div><h2 class="wh">Massive Attack</h2>
+      <p class="wp">412 plays, on 64 different days.</p>` },
+  { bg: 'linear-gradient(170deg, #2d455c, #0a1119)', html: () => `
+      <p class="wk">Song of the year</p><div class="art art-mezz wart"></div><h2 class="wh">Teardrop</h2>
+      <p class="wp">87 plays. Most of them after 22:00.</p>` },
+  { bg: 'linear-gradient(170deg, #3b2a5e, #0d0a16)', html: () => {
+      const hrs = Array.from({ length: 24 }, (_, h) => [0, 1, 2, 3, 4, 5, 6].reduce((n, d) => n + heatAt(d, h), 0));
+      const mx = Math.max(...hrs);
+      return `<p class="wk">Peak hour</p><h2 class="wbig">23:00</h2>
+      <div class="hours">${hrs.map((v, h) => `<i class="${h === 22 || h === 23 ? 'pk' : ''}" style="height:${Math.max(3, v / mx * 100)}%"></i>`).join('')}</div>
+      <div class="hours-l"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+      <p class="wp">You’re a night listener: 41% of your plays started after 21:00.</p>`; } },
+  { bg: 'linear-gradient(170deg, #5c4a2a, #15100a)', html: () => `
+      <p class="wk">Favourite room</p><h2 class="wh">Estudio</h2>
+      <div class="stack"><i style="width:61%;background:rgba(255,255,255,.35)"></i><i style="width:24%;background:#ffd27a"></i><i style="width:9%;background:#f4a9bb"></i><i style="width:6%;background:#a8d0ea"></i></div>
+      <p class="wp">24% of your plays went to the Sonos in Estudio. The Frame got 139, mostly on Sunday mornings.</p>` },
+  { bg: 'linear-gradient(170deg, #4a3f38, #120f0d)', html: () => `
+      <p class="wk">Archaeology</p><h2 class="wh">17 November 2003</h2>
+      <p class="wp">Your oldest file: “Sour Times”, ripped at 128 kbps. Nine of your tracks are still 128 kbps. Time to re-rip Dummy?</p>` },
+  { bg: 'linear-gradient(160deg, #24525a, #5e2238 60%, #7a4f1e)', html: () => `
+      <p class="wk">Your 2026</p>
+      <div class="wsum">
+        <div><h4>Top artists</h4><ol><li>Massive Attack</li><li>Portishead</li><li>Daft Punk</li><li>LCD Soundsystem</li><li>Radiohead</li></ol></div>
+        <div><h4>Top songs</h4><ol><li>Teardrop</li><li>Roads</li><li>Digital Love</li><li>Glory Box</li><li>Someone Great</li></ol></div>
+        <div><b>158 h</b><span class="k">listening time</span></div>
+        <div><b>Trip hop</b><span class="k">top genre</span></div>
+      </div>
+      <button class="btn-primary" data-act="back" style="--hi:#fff">Done</button>` },
+];
 
 function results() {
   const q = S.query.trim().toLowerCase();
@@ -761,7 +951,7 @@ function render() {
   const t = topView();
   let html = V[t]();
   if (t !== lastTop) {
-    const anim = t === 'now' || t === 'queue' ? 'enter-up' : (t === 'album' || t === 'search') ? 'enter-in' : '';
+    const anim = t === 'now' || t === 'queue' || t === 'wrapped' ? 'enter-up' : (t === 'album' || t === 'search' || t === 'stats') ? 'enter-in' : '';
     if (anim) html = html.replace('class="v ', `class="v ${anim} `);
   }
   lastTop = t;
@@ -823,6 +1013,9 @@ function act(a, arg, e) {
     case 'out': S.output = arg; break;
     case 'unlock': S.locked = false; break;
     case 'open-app': S.home = false; break;
+    case 'open-wrapped': S.wi = 0; S.wt = 0; go('wrapped'); break;
+    case 'w-next': if (S.wi < W.length - 1) { S.wi++; S.wt = 0; } break;
+    case 'w-prev': if (S.wi > 0) { S.wi--; S.wt = 0; } break;
     case 'nav-back': back(); break;
     case 'nav-home': if (!S.locked) { S.home = true; S.sheet = false; S.dialog = null; } break;
     case 'nav-recents': break;
@@ -845,6 +1038,8 @@ function jump(k) {
     case 'now': ensurePlaying(); S.stack = ['library', 'now']; break;
     case 'queue': ensurePlaying(); S.stack = ['library', 'now', 'queue']; break;
     case 'output': ensurePlaying(); S.stack = ['library', 'now']; S.sheet = true; break;
+    case 'stats': S.stack = ['library', 'stats']; break;
+    case 'wrapped': S.wi = 0; S.wt = 0; S.stack = ['library', 'stats', 'wrapped']; break;
     case 'lock': ensurePlaying(); lib(); S.locked = true; break;
     case 'home': ensurePlaying(); lib(); S.home = true; break;
   }
@@ -871,6 +1066,7 @@ document.querySelectorAll('[data-key]').forEach(b => b.addEventListener('click',
 setInterval(() => {
   document.getElementById('clock').textContent = clock();
   document.querySelectorAll('.js-clock').forEach(e => e.textContent = clock());
+  if (topView() === 'wrapped' && !S.locked && !S.home && !RM && S.wi < W.length - 1 && ++S.wt >= 6) { S.wi++; S.wt = 0; render(); }
   if (!S.playing) return;
   const c = cur(); S.pos++;
   if (S.pos >= c.d) { next(true); render(); } else live();
