@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Mako" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/glow_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+    </style>
+    <color name="glow_bg">#0C1112</color>
+    <color name="glow_tint">#24525A</color>
+</resources>
