@@ -1,0 +1,3 @@
+.venv/
+inventory/out/
+__pycache__/
