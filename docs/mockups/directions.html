@@ -1,0 +1,490 @@
+<title>Mako Player Sketches</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400;1,6..72,500&family=Bricolage+Grotesque:wght@400;600;800&family=Figtree:wght@400;500;600&family=Doto:wght@600;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a design board. Each direction is a band: idea, two device frames at 1 CSS px = 1 dp, then notes. */
+:root {
+  --bg: #eef0f1;
+  --surface: #f8f9fa;
+  --ink: #15181b;
+  --muted: #5b636b;
+  --line: #d2d7db;
+  --accent: #2f4fb8;
+  --f-display: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111416; --surface: #181c1f; --ink: #e5e8eb; --muted: #9aa2a9; --line: #2a3035; --accent: #8fa7f2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111416; --surface: #181c1f; --ink: #e5e8eb; --muted: #9aa2a9; --line: #2a3035; --accent: #8fa7f2;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 72px; }
+header { display: grid; gap: 16px; max-width: 68ch; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(32px, 5vw, 48px)/1.05 var(--f-display); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+header p { margin: 0; color: var(--muted); }
+.specs { display: flex; flex-wrap: wrap; gap: 8px; }
+.specs span { font: 400 12px/1 var(--f-mono); border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px; color: var(--ink); background: var(--surface); font-variant-numeric: tabular-nums; }
+
+section.dir { display: grid; gap: 28px; border-top: 1px solid var(--line); padding-top: 32px; }
+.dir-head { display: grid; gap: 8px; max-width: 68ch; }
+.dir-head h2 { font: 700 28px/1.1 var(--f-display); margin: 0; letter-spacing: -.01em; }
+.dir-head h2 small { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 8px; }
+.dir-head p { margin: 0; color: var(--muted); }
+
+.frames { display: flex; flex-wrap: wrap; gap: 40px; }
+figure { margin: 0; display: grid; gap: 12px; width: min(412px, 100%); }
+figcaption { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px 40px; max-width: 900px; }
+.notes h3 { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.notes p { margin: 0; }
+code { font: 13px var(--f-mono); }
+
+footer { border-top: 1px solid var(--line); padding-top: 32px; display: grid; gap: 12px; max-width: 68ch; }
+footer h2 { font: 700 22px/1.2 var(--f-display); margin: 0; }
+footer p { margin: 0; color: var(--muted); }
+
+/* ---------- Device frame (Nexus 4: black glass slab) ---------- */
+.fit { width: 100%; aspect-ratio: 412 / 744; position: relative; }
+.device {
+  position: absolute; top: 0; left: 0;
+  width: 412px; height: 744px; box-sizing: border-box; padding: 52px 14px;
+  background: #0b0c0d; border-radius: 30px;
+  box-shadow: inset 0 0 0 1px #2a2d30, 0 1px 2px rgba(0,0,0,.2), 0 12px 28px rgba(0,0,0,.18);
+  transform: scale(var(--s, 1)); transform-origin: top left;
+}
+.device::before { content: ""; position: absolute; top: 24px; left: 50%; width: 64px; height: 5px; margin-left: -32px; border-radius: 3px; background: #26292c; }
+.device::after { content: ""; position: absolute; top: 22px; left: calc(50% + 52px); width: 9px; height: 9px; border-radius: 50%; background: #1b1e21; box-shadow: inset 0 0 0 2px #2b2f33; }
+.phone { width: 384px; height: 640px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+.sb { height: 24px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font: 500 13px/1 Roboto, "Helvetica Neue", Arial, sans-serif; }
+.sb .sbi { display: flex; gap: 6px; align-items: center; }
+.sb svg { width: 15px; height: 15px; }
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.nav { height: 48px; flex: none; background: #000; color: #e8e8e8; display: flex; justify-content: space-around; align-items: center; }
+.nav svg { width: 22px; height: 22px; }
+.ic { width: 24px; height: 24px; flex: none; }
+
+/* ---------- Placeholder album art (abstract, not real covers) ---------- */
+.art { flex: none; }
+.art-mezz { background: radial-gradient(circle at 64% 38%, #d1a865 0 9%, transparent 9.5%), radial-gradient(circle at 64% 38%, #2a5560 0 24%, transparent 24.5%), radial-gradient(circle at 64% 38%, #173238 0 40%, transparent 40.5%), linear-gradient(160deg, #10262a, #04090a); }
+.art-okc { background: repeating-linear-gradient(115deg, #d7e5ee 0 6px, #84a9c0 6px 10px, #2c4862 10px 24px); }
+.art-homo { background: conic-gradient(from 210deg at 32% 68%, #8b2f4a, #e6b5aa, #3d1e30, #8b2f4a); }
+.art-moon { background: linear-gradient(#f4c84a 0 42%, #ee8a4c 42% 63%, #6aa8c8 63%); }
+.art-disc { background: radial-gradient(circle, #151515 0 16%, transparent 16.5%), repeating-radial-gradient(circle, #c3c9ce 0 2px, #868e95 2px 4px); }
+.art-strokes { background: linear-gradient(90deg, transparent 0 48%, #d3372a 48% 52%, transparent 52%), linear-gradient(#ebe6de, #d9d2c6); }
+.art-funeral { background: radial-gradient(ellipse at 50% 55%, #e9dcc0 0 34%, #b39c6c 35% 46%, #3d3424 47%); }
+.art-sos { background: linear-gradient(135deg, #f1f1f1 0 66%, #121212 66%); }
+.art-dummy { background: radial-gradient(circle at 30% 30%, #9db4c9 0 12%, transparent 40%), linear-gradient(#58748f, #263445); }
+
+/* ========== Direction A: Sleeve ========== */
+.dirA { --a-paper: #f7f8f9; --a-ink: #111315; --a-soft: #646b72; --a-rule: #dde1e4; --a-blue: #2747c8;
+  --a-serif: "Newsreader", Georgia, "Times New Roman", serif; --a-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  background: var(--a-paper); color: var(--a-ink); font-family: "Hanken Grotesk", Arial, sans-serif; }
+.dirA .sb { color: var(--a-ink); }
+.dirA .screen { padding: 0 24px 16px; justify-content: space-between; }
+.a-top { height: 44px; display: flex; align-items: center; justify-content: space-between; }
+.a-eyebrow { font: 500 11px/1 var(--a-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--a-soft); }
+.a-art { width: 264px; height: 264px; align-self: center; box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 10px 24px rgba(17,19,21,.12); }
+.a-meta { display: grid; gap: 4px; }
+.a-title { font: italic 500 32px/1.05 var(--a-serif); margin: 0; letter-spacing: -.01em; }
+.a-artist { font-size: 16px; margin: 0; }
+.a-tech { font: 400 11px/1.4 var(--a-mono); color: var(--a-soft); margin: 2px 0 0; letter-spacing: .02em; }
+.a-line { height: 2px; background: var(--a-rule); position: relative; }
+.a-line i { position: absolute; inset: 0 auto 0 0; background: var(--a-ink); }
+.a-line i::after { content: ""; position: absolute; right: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--a-ink); }
+.a-times { display: flex; justify-content: space-between; font: 400 11px/1 var(--a-mono); color: var(--a-soft); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.a-ctrl { display: flex; align-items: center; justify-content: space-between; }
+.a-ctrl .muted { color: var(--a-soft); }
+.a-ctrl .on { color: var(--a-blue); }
+.a-play { width: 60px; height: 60px; border-radius: 50%; border: 1.5px solid var(--a-ink); display: grid; place-items: center; }
+.a-out { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--a-rule); padding-top: 12px; font-size: 13px; }
+.a-out .ic { width: 18px; height: 18px; color: var(--a-blue); }
+.a-out b { font-weight: 600; }
+.a-out .k { margin-left: auto; font: 400 11px/1 var(--a-mono); color: var(--a-soft); }
+
+.dirA .screen.lib { padding: 0; justify-content: flex-start; }
+.a-libhead { padding: 12px 24px 4px; display: flex; justify-content: space-between; align-items: center; }
+.a-libhead h4 { font: 400 30px/1.1 var(--a-serif); margin: 0; }
+.a-tabs { display: flex; gap: 20px; padding: 8px 24px 0; border-bottom: 1px solid var(--a-rule); font: 500 11px/1 var(--a-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--a-soft); }
+.a-tabs span { padding-bottom: 10px; }
+.a-tabs .on { color: var(--a-ink); box-shadow: inset 0 -2px 0 var(--a-ink); }
+.a-list { flex: 1; min-height: 0; overflow: hidden; }
+.a-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 8px 24px; border-bottom: 1px solid var(--a-rule); }
+.a-row .art { width: 44px; height: 44px; }
+.a-row strong { display: block; font: 400 18px/1.2 var(--a-serif); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a-row span { font-size: 13px; color: var(--a-soft); }
+.a-row em { font: normal 400 11px/1 var(--a-mono); color: var(--a-soft); font-variant-numeric: tabular-nums; }
+.a-mini { flex: none; height: 56px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 0 20px 0 24px; background: var(--a-paper); border-top: 1px solid var(--a-ink); }
+.a-mini .art { width: 40px; height: 40px; }
+.a-mini strong { display: block; font: italic 500 17px/1.2 var(--a-serif); }
+.a-mini span { font-size: 12px; color: var(--a-soft); }
+
+/* ========== Direction B: Glow ========== */
+.dirB { --b-text: #ffffff; --b-soft: rgba(255,255,255,.64); --b-faint: rgba(255,255,255,.18); --b-tint: #9fd6cf;
+  --b-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif; --b-body: "Figtree", "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(180deg, #24525a 0%, #11292d 48%, #070d0e 100%); color: var(--b-text); font-family: var(--b-body); }
+.dirB .sb { color: var(--b-text); }
+.dirB .screen { padding: 0 24px 18px; justify-content: space-between; }
+.b-top { height: 48px; display: flex; align-items: center; justify-content: space-between; text-align: center; }
+.b-top div { font-size: 11px; line-height: 1.3; color: var(--b-soft); letter-spacing: .06em; text-transform: uppercase; }
+.b-top div b { display: block; color: var(--b-text); text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 600; }
+.b-art { width: 288px; height: 288px; align-self: center; border-radius: 10px; box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+.b-meta { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.b-title { font: 800 27px/1.05 var(--b-display); margin: 0; letter-spacing: -.02em; }
+.b-artist { margin: 4px 0 0; color: var(--b-soft); font-size: 16px; }
+.b-meta .ic { color: var(--b-tint); }
+.b-bar { height: 4px; border-radius: 2px; background: var(--b-faint); position: relative; }
+.b-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 2px; background: var(--b-text); }
+.b-bar i::after { content: ""; position: absolute; right: -6px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--b-text); }
+.b-times { display: flex; justify-content: space-between; font-size: 12px; color: var(--b-soft); margin-top: 8px; font-variant-numeric: tabular-nums; }
+.b-ctrl { display: flex; align-items: center; justify-content: space-between; }
+.b-ctrl .big { width: 32px; height: 32px; }
+.b-ctrl .muted { color: var(--b-soft); }
+.b-ctrl .on { color: var(--b-tint); }
+.b-play { width: 66px; height: 66px; border-radius: 50%; background: var(--b-text); color: #0e2226; display: grid; place-items: center; }
+.b-play .ic { width: 32px; height: 32px; }
+.b-out { display: flex; align-items: center; justify-content: space-between; }
+.b-pill { display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 13px; font-weight: 600; color: var(--b-tint); }
+.b-pill .ic { width: 18px; height: 18px; }
+.b-out > .ic { color: var(--b-soft); }
+
+.dirB.lib { background: #0c1112; }
+.dirB .screen.lib { padding: 0; justify-content: flex-start; }
+.b-libhead { padding: 10px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
+.b-libhead h4 { font: 800 28px/1.1 var(--b-display); margin: 0; letter-spacing: -.02em; }
+.b-chips { display: flex; gap: 8px; padding: 4px 16px 14px; }
+.b-chips span { font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--b-soft); }
+.b-chips .on { background: var(--b-tint); color: #0b1a1a; }
+.b-grid { flex: 1; min-height: 0; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; padding: 0 16px; align-content: start; }
+.b-tile .art { width: 168px; height: 168px; border-radius: 8px; }
+.b-tile strong { display: block; font-size: 14px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b-tile span { font-size: 12px; color: var(--b-soft); }
+.b-mini { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 58px; border-radius: 10px; display: grid; grid-template-columns: 42px 1fr auto auto; gap: 12px; align-items: center; padding: 0 14px 0 8px; background: #1d454b; box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; }
+.b-mini::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 41%; background: var(--b-text); }
+.b-mini .art { width: 42px; height: 42px; border-radius: 5px; }
+.b-mini strong { display: block; font-size: 14px; font-weight: 600; }
+.b-mini span { font-size: 12px; color: var(--b-soft); }
+.b-mini .pill { color: var(--b-tint); width: 20px; height: 20px; }
+
+/* ========== Direction C: Deck ========== */
+.dirC { --c-alu: #cfd2cd; --c-alu-hi: #e3e5e1; --c-alu-lo: #b3b7b1; --c-engrave: #33372f; --c-vfd-bg: #0a1412; --c-vfd: #8ff3dc; --c-vfd-dim: #1f3a34;
+  --c-dots: "Doto", "JetBrains Mono", ui-monospace, monospace; --c-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  background: linear-gradient(180deg, var(--c-alu-hi), var(--c-alu) 30%, #c6c9c3); color: var(--c-engrave); font-family: var(--c-mono); }
+.dirC .sb { color: var(--c-engrave); }
+.dirC .screen { padding: 4px 16px 16px; gap: 12px; }
+.c-top { height: 28px; display: flex; align-items: center; justify-content: space-between; font: 600 11px/1 var(--c-mono); letter-spacing: .12em; }
+.c-top span { display: flex; align-items: center; gap: 4px; }
+.c-top .ic { width: 16px; height: 16px; }
+.vfd { background: var(--c-vfd-bg); color: var(--c-vfd); border-radius: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,.8), 0 1px 0 var(--c-alu-hi); padding: 14px 16px 12px; display: grid; gap: 4px; text-shadow: 0 0 6px rgba(143,243,220,.45); }
+.vfd .row { display: flex; justify-content: space-between; font: 400 11px/1.2 var(--c-mono); letter-spacing: .1em; }
+.vfd .title { font: 900 30px/1.05 var(--c-dots); letter-spacing: .04em; }
+.vfd .artist { font: 400 12px/1.2 var(--c-mono); letter-spacing: .12em; }
+.vfd .time { display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.vfd .time b { font: 900 50px/1 var(--c-dots); letter-spacing: .02em; }
+.vfd .time span { font: 600 14px/1 var(--c-mono); opacity: .7; }
+.segs { display: grid; grid-template-columns: repeat(32, 1fr); gap: 3px; margin: 6px 0 4px; }
+.segs i { height: 8px; background: var(--c-vfd-dim); border-radius: 1px; }
+.segs i.lit { background: var(--c-vfd); box-shadow: 0 0 5px rgba(143,243,220,.55); }
+.vfd .row.dim { color: #5fb3a2; text-shadow: none; }
+.c-next { display: grid; grid-template-columns: 96px 1fr; gap: 14px; align-items: center; }
+.c-next .art { width: 96px; height: 96px; border-radius: 3px; box-shadow: 0 0 0 1px var(--c-alu-lo), 0 2px 4px rgba(0,0,0,.2); }
+.c-next dl { margin: 0; display: grid; gap: 2px; font-size: 12px; }
+.c-next dt { font-size: 10px; letter-spacing: .14em; color: #6a6f66; }
+.c-next dd { margin: 0 0 6px; font-weight: 600; }
+.keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.key { height: 52px; border-radius: 5px; display: grid; place-items: center; position: relative; background: linear-gradient(var(--c-alu-hi), #c8cbc5); box-shadow: inset 0 1px 0 #f4f5f3, 0 1px 0 #9ea29b, 0 2px 3px rgba(0,0,0,.18); color: var(--c-engrave); }
+.key .ic { width: 22px; height: 22px; }
+.key.play::after { content: ""; position: absolute; top: 7px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: #3fdcb9; box-shadow: 0 0 6px #3fdcb9; }
+.key.on { color: #11826b; }
+.selector { display: grid; grid-template-columns: repeat(3, 1fr); border-radius: 6px; padding: 3px; background: #b8bcb6; box-shadow: inset 0 1px 3px rgba(0,0,0,.25); }
+.selector span { text-align: center; font: 600 11px/1 var(--c-mono); letter-spacing: .12em; padding: 11px 0; border-radius: 4px; color: #565b52; }
+.selector .on { background: linear-gradient(var(--c-alu-hi), var(--c-alu)); color: var(--c-engrave); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.c-label { font: 600 10px/1 var(--c-mono); letter-spacing: .14em; color: #6a6f66; margin-bottom: -6px; }
+
+.dirC .screen.lib { gap: 10px; }
+.c-modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.c-modes .key { height: 34px; font: 600 11px/1 var(--c-mono); letter-spacing: .1em; }
+.c-modes .key.on { color: var(--c-engrave); }
+.c-modes .key.on::after { content: ""; position: absolute; top: 5px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: #3fdcb9; box-shadow: 0 0 5px #3fdcb9; }
+.c-letters { display: flex; justify-content: space-between; font: 600 12px/1 var(--c-mono); color: #6a6f66; padding: 2px 2px; }
+.c-letters b { color: var(--c-engrave); text-decoration: underline; text-underline-offset: 3px; }
+.c-list { flex: 1; min-height: 0; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,.35); box-shadow: inset 0 0 0 1px var(--c-alu-lo); }
+.c-row { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 12px; border-bottom: 1px solid rgba(0,0,0,.08); font-variant-numeric: tabular-nums; }
+.c-row .n { font-size: 11px; color: #7a7f75; }
+.c-row strong { font: 600 13px/1.2 var(--c-mono); letter-spacing: .04em; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-row small { font-size: 11px; color: #6a6f66; letter-spacing: .06em; }
+.c-row em { font-style: normal; font-size: 11px; color: #6a6f66; text-align: right; }
+.c-row.cur { background: rgba(63,220,185,.16); }
+.c-strip { flex: none; height: 44px; border-radius: 6px; background: var(--c-vfd-bg); color: var(--c-vfd); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font: 900 18px/1 var(--c-dots); letter-spacing: .06em; text-shadow: 0 0 6px rgba(143,243,220,.45); box-shadow: inset 0 2px 6px rgba(0,0,0,.8); font-variant-numeric: tabular-nums; }
+.c-strip span { font: 400 11px/1 var(--c-mono); letter-spacing: .1em; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .segs i.lit:last-child { animation: blink 1.2s steps(2) infinite; }
+}
+@keyframes blink { 50% { opacity: .35; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h2v12H6zM9.5 12L18 6v12z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path fill="currentColor" d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 7h3.5l10 10H20M3 17h3.5l3-3M13.5 10l3-3H20M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 11V9.5A2.5 2.5 0 0 1 6.5 7H19M16 4l3 3-3 3M20 13v1.5a2.5 2.5 0 0 1-2.5 2.5H5M8 20l-3-3 3-3"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="3" width="12" height="18" rx="2"/><circle cx="12" cy="14" r="3.2"/><circle cx="12" cy="7.5" r=".9" fill="currentColor"/></g></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/></symbol>
+    <symbol id="i-queue" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 6h13M4 11h13M4 16h7"/><path fill="currentColor" d="M15 14l6 3.5-6 3.5z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.4-7.5 10.4z"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M20 20l-5-5"/></g></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20 1.5 8.5a15 15 0 0 1 21 0z"/></symbol>
+    <symbol id="i-batt" viewBox="0 0 24 24"><path fill="currentColor" d="M9 2h6v2h2a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h2z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M17 5v14L6 12z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-recents" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Nexus 4 music player · UI exploration</span>
+    <h1>Three directions for the player</h1>
+    <p>Now Playing and Library, drawn three ways before any Kotlin gets written. Each screen is drawn at 1 CSS pixel = 1 dp, so proportions and type sizes match the real phone. Album names are real examples from a pre-2010 collection; the artwork is abstract placeholder art.</p>
+    <div class="specs">
+      <span>768 × 1280 px · xhdpi (2.0×)</span>
+      <span>384 × 640 dp</span>
+      <span>status bar 24 dp</span>
+      <span>on-screen nav 48 dp</span>
+      <span>usable 384 × 568 dp</span>
+    </div>
+  </header>
+
+  <!-- ===================== A: Sleeve ===================== -->
+  <section class="dir">
+    <div class="dir-head">
+      <h2><small>Direction A · light</small>Sleeve</h2>
+      <p>The screen as a record sleeve. Artwork is the only image; the type reads like liner notes, and details a collector cares about (track position, year, bitrate) are shown openly instead of hidden.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <figcaption>Now Playing</figcaption>
+        <div class="fit"><div class="device"><div class="phone dirA">
+          <div class="sb"><span>22:47</span><span class="sbi"><svg><use href="#i-wifi"/></svg><svg><use href="#i-batt"/></svg></span></div>
+          <div class="screen">
+            <div class="a-top"><svg class="ic"><use href="#i-down"/></svg><span class="a-eyebrow">Mezzanine</span><svg class="ic"><use href="#i-queue"/></svg></div>
+            <div class="art art-mezz a-art"></div>
+            <div class="a-meta">
+              <h4 class="a-title">Teardrop</h4>
+              <p class="a-artist">Massive Attack</p>
+              <p class="a-tech">Track 3 of 11 · 1998 · MP3 320 kbps</p>
+            </div>
+            <div><div class="a-line"><i style="width:41%"></i></div><div class="a-times"><span>2:14</span><span>−3:15</span></div></div>
+            <div class="a-ctrl">
+              <svg class="ic muted"><use href="#i-shuffle"/></svg>
+              <svg class="ic" style="width:30px;height:30px"><use href="#i-prev"/></svg>
+              <div class="a-play"><svg class="ic" style="width:28px;height:28px"><use href="#i-pause"/></svg></div>
+              <svg class="ic" style="width:30px;height:30px"><use href="#i-next"/></svg>
+              <svg class="ic on"><use href="#i-repeat"/></svg>
+            </div>
+            <div class="a-out"><svg class="ic"><use href="#i-speaker"/></svg><span>Playing on <b>Estudio</b></span><span class="k">Sonos One SL</span></div>
+          </div>
+          <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
+        </div></div></div>
+      </figure>
+      <figure>
+        <figcaption>Library</figcaption>
+        <div class="fit"><div class="device"><div class="phone dirA">
+          <div class="sb"><span>22:47</span><span class="sbi"><svg><use href="#i-wifi"/></svg><svg><use href="#i-batt"/></svg></span></div>
+          <div class="screen lib">
+            <div class="a-libhead"><h4>Library</h4><svg class="ic"><use href="#i-search"/></svg></div>
+            <div class="a-tabs"><span class="on">Albums</span><span>Artists</span><span>Genres</span><span>Years</span></div>
+            <div class="a-list">
+              <div class="a-row"><div class="art art-moon"></div><div><strong>Moon Safari</strong><span>Air</span></div><em>1998</em></div>
+              <div class="a-row"><div class="art art-funeral"></div><div><strong>Funeral</strong><span>Arcade Fire</span></div><em>2004</em></div>
+              <div class="a-row"><div class="art art-homo"></div><div><strong>Homogenic</strong><span>Björk</span></div><em>1997</em></div>
+              <div class="a-row"><div class="art art-disc"></div><div><strong>Discovery</strong><span>Daft Punk</span></div><em>2001</em></div>
+              <div class="a-row"><div class="art art-sos"></div><div><strong>Sound of Silver</strong><span>LCD Soundsystem</span></div><em>2007</em></div>
+              <div class="a-row"><div class="art art-mezz"></div><div><strong>Mezzanine</strong><span>Massive Attack</span></div><em>1998</em></div>
+              <div class="a-row"><div class="art art-dummy"></div><div><strong>Dummy</strong><span>Portishead</span></div><em>1994</em></div>
+              <div class="a-row"><div class="art art-okc"></div><div><strong>OK Computer</strong><span>Radiohead</span></div><em>1997</em></div>
+              <div class="a-row"><div class="art art-strokes"></div><div><strong>Is This It</strong><span>The Strokes</span></div><em>2001</em></div>
+            </div>
+            <div class="a-mini"><div class="art art-mezz"></div><div><strong>Teardrop</strong><span>Massive Attack · Estudio</span></div><svg class="ic"><use href="#i-pause"/></svg></div>
+          </div>
+          <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
+        </div></div></div>
+      </figure>
+    </div>
+    <div class="notes">
+      <div><h3>On the Nexus 4</h3><ul>
+        <li>Cheapest to draw: flat colours, no blur, no per-album colour work.</li>
+        <li>Bundles one serif face for titles; everything else is plain text.</li>
+        <li>A light nav bar needs API 27 (Android 8.1). On 7.1 it stays black, as drawn here.</li>
+      </ul></div>
+      <div><h3>Trade-off</h3><p>The most original of the three and the best fit for a curated collection. It may feel calmer and less "app-like" than Apple Music or Spotify.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================== B: Glow ===================== -->
+  <section class="dir">
+    <div class="dir-head">
+      <h2><small>Direction B · dark</small>Glow</h2>
+      <p>Artwork-led and dark. Each album tints the whole Now Playing screen with colours taken from its cover, the way the brief's references (Apple Music, Spotify) do it. Big touch targets, a filled play button, a heart for favourites.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <figcaption>Now Playing</figcaption>
+        <div class="fit"><div class="device"><div class="phone dirB">
+          <div class="sb"><span>22:47</span><span class="sbi"><svg><use href="#i-wifi"/></svg><svg><use href="#i-batt"/></svg></span></div>
+          <div class="screen">
+            <div class="b-top"><svg class="ic"><use href="#i-down"/></svg><div>Playing from album<b>Mezzanine</b></div><svg class="ic"><use href="#i-queue"/></svg></div>
+            <div class="art art-mezz b-art"></div>
+            <div class="b-meta"><div><h4 class="b-title">Teardrop</h4><p class="b-artist">Massive Attack</p></div><svg class="ic"><use href="#i-heart"/></svg></div>
+            <div><div class="b-bar"><i style="width:41%"></i></div><div class="b-times"><span>2:14</span><span>5:29</span></div></div>
+            <div class="b-ctrl">
+              <svg class="ic muted"><use href="#i-shuffle"/></svg>
+              <svg class="ic big"><use href="#i-prev"/></svg>
+              <div class="b-play"><svg class="ic"><use href="#i-pause"/></svg></div>
+              <svg class="ic big"><use href="#i-next"/></svg>
+              <svg class="ic on"><use href="#i-repeat"/></svg>
+            </div>
+            <div class="b-out"><span class="b-pill"><svg class="ic"><use href="#i-speaker"/></svg>Estudio</span><svg class="ic"><use href="#i-queue"/></svg></div>
+          </div>
+          <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
+        </div></div></div>
+      </figure>
+      <figure>
+        <figcaption>Library</figcaption>
+        <div class="fit"><div class="device"><div class="phone dirB lib">
+          <div class="sb"><span>22:47</span><span class="sbi"><svg><use href="#i-wifi"/></svg><svg><use href="#i-batt"/></svg></span></div>
+          <div class="screen lib">
+            <div class="b-libhead"><h4>Library</h4><svg class="ic"><use href="#i-search"/></svg></div>
+            <div class="b-chips"><span class="on">Albums</span><span>Artists</span><span>Genres</span><span>Years</span></div>
+            <div class="b-grid">
+              <div class="b-tile"><div class="art art-moon"></div><strong>Moon Safari</strong><span>Air</span></div>
+              <div class="b-tile"><div class="art art-funeral"></div><strong>Funeral</strong><span>Arcade Fire</span></div>
+              <div class="b-tile"><div class="art art-homo"></div><strong>Homogenic</strong><span>Björk</span></div>
+              <div class="b-tile"><div class="art art-disc"></div><strong>Discovery</strong><span>Daft Punk</span></div>
+              <div class="b-tile"><div class="art art-sos"></div><strong>Sound of Silver</strong><span>LCD Soundsystem</span></div>
+              <div class="b-tile"><div class="art art-mezz"></div><strong>Mezzanine</strong><span>Massive Attack</span></div>
+            </div>
+            <div class="b-mini"><div class="art art-mezz"></div><div><strong>Teardrop</strong><span>Massive Attack</span></div><svg class="ic pill"><use href="#i-speaker"/></svg><svg class="ic"><use href="#i-pause"/></svg></div>
+          </div>
+          <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
+        </div></div></div>
+      </figure>
+    </div>
+    <div class="notes">
+      <div><h3>On the Nexus 4</h3><ul>
+        <li>Colours come from <code>androidx.palette</code>, computed once per album at scan time and stored. The gradient is a static drawable.</li>
+        <li>No live blur: Android's built-in blur (<code>RenderEffect</code>) needs API 31. A flat gradient gives most of the effect at no cost.</li>
+        <li>The grid needs downscaled thumbnails (about 336 px) and a disk cache. Decoding full-size embedded art would exhaust the heap fast.</li>
+      </ul></div>
+      <div><h3>Trade-off</h3><p>The most familiar and "modern" feeling. Also the closest to existing apps, so what makes it distinctive has to come from details.</p></div>
+    </div>
+  </section>
+
+  <!-- ===================== C: Deck ===================== -->
+  <section class="dir">
+    <div class="dir-head">
+      <h2><small>Direction C · instrument</small>Deck</h2>
+      <p>The phone as a hi-fi component: a glowing display panel (a VFD, vacuum fluorescent display, like on CD players and amplifiers), physical-looking keys, and a source selector switch that puts the Sonos rooms front and centre.</p>
+    </div>
+    <div class="frames">
+      <figure>
+        <figcaption>Now Playing</figcaption>
+        <div class="fit"><div class="device"><div class="phone dirC">
+          <div class="sb"><span>22:47</span><span class="sbi"><svg><use href="#i-wifi"/></svg><svg><use href="#i-batt"/></svg></span></div>
+          <div class="screen">
+            <div class="c-top"><span><svg class="ic"><use href="#i-left"/></svg>LIBRARY</span><span>QUEUE 08</span></div>
+            <div class="vfd">
+              <div class="row"><span>03/11</span><span>MEZZANINE</span></div>
+              <div class="title">TEARDROP</div>
+              <div class="artist">MASSIVE ATTACK</div>
+              <div class="time"><b>02:14</b><span>/ 05:29</span></div>
+              <div class="segs"><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i class="lit"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="row dim"><span>MP3 · 320K · 44.1 KHZ</span><span>RPT ALL</span></div>
+            </div>
+            <div class="c-next">
+              <div class="art art-mezz"></div>
+              <dl><dt>NEXT</dt><dd>Inertia Creeps · 5:56</dd><dt>THEN</dt><dd>Exchange · 4:11</dd></dl>
+            </div>
+            <div class="keys">
+              <div class="key"><svg class="ic"><use href="#i-shuffle"/></svg></div>
+              <div class="key"><svg class="ic"><use href="#i-prev"/></svg></div>
+              <div class="key play"><svg class="ic"><use href="#i-pause"/></svg></div>
+              <div class="key"><svg class="ic"><use href="#i-next"/></svg></div>
+              <div class="key on"><svg class="ic"><use href="#i-repeat"/></svg></div>
+            </div>
+            <div class="c-label">OUTPUT</div>
+            <div class="selector"><span>PHONE</span><span class="on">ESTUDIO</span><span>COCINA</span></div>
+          </div>
+          <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
+        </div></div></div>
+      </figure>
+      <figure>
+        <figcaption>Library</figcaption>
+        <div class="fit"><div class="device"><div class="phone dirC">
+          <div class="sb"><span>22:47</span><span class="sbi"><svg><use href="#i-wifi"/></svg><svg><use href="#i-batt"/></svg></span></div>
+          <div class="screen lib">
+            <div class="c-top"><span>LIBRARY</span><span>9 ALBUMS · 104 TR</span></div>
+            <div class="c-modes"><div class="key on">ALB</div><div class="key">ART</div><div class="key">GEN</div><div class="key">YEAR</div></div>
+            <div class="c-letters"><b>A</b><b>B</b><span>C</span><b>D</b><span>E…K</span><b>L</b><b>M</b><span>N O</span><b>P</b><span>Q</span><b>R</b><b>T</b><span>U…Z</span></div>
+            <div class="c-list">
+              <div class="c-row"><span class="n">01</span><div><strong>MOON SAFARI</strong><small>AIR</small></div><em>1998<br>10 TR</em></div>
+              <div class="c-row"><span class="n">02</span><div><strong>FUNERAL</strong><small>ARCADE FIRE</small></div><em>2004<br>10 TR</em></div>
+              <div class="c-row"><span class="n">03</span><div><strong>HOMOGENIC</strong><small>BJÖRK</small></div><em>1997<br>10 TR</em></div>
+              <div class="c-row"><span class="n">04</span><div><strong>DISCOVERY</strong><small>DAFT PUNK</small></div><em>2001<br>14 TR</em></div>
+              <div class="c-row"><span class="n">05</span><div><strong>SOUND OF SILVER</strong><small>LCD SOUNDSYSTEM</small></div><em>2007<br>9 TR</em></div>
+              <div class="c-row cur"><span class="n">06</span><div><strong>MEZZANINE</strong><small>MASSIVE ATTACK</small></div><em>1998<br>11 TR</em></div>
+              <div class="c-row"><span class="n">07</span><div><strong>DUMMY</strong><small>PORTISHEAD</small></div><em>1994<br>11 TR</em></div>
+            </div>
+            <div class="c-strip">▶ TEARDROP<span>02:14 · ESTUDIO</span></div>
+          </div>
+          <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
+        </div></div></div>
+      </figure>
+    </div>
+    <div class="notes">
+      <div><h3>On the Nexus 4</h3><ul>
+        <li>Mostly text and rectangles; the segmented progress bar is a small custom View. Cheap to draw.</li>
+        <li>The output selector makes Sonos a first-class control, which suits the brief's Mode B.</li>
+        <li>Dot-matrix type needs care at small sizes on a 320 dpi screen; keep it for titles and the clock.</li>
+      </ul></div>
+      <div><h3>Trade-off</h3><p>The most distinctive, and the one that feels most like a dedicated device. The look may wear thin over time, and long titles need scrolling or truncation on the panel.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <h2>Picking one</h2>
+    <p>Mixing is fine: for example, Glow's artwork-tinted screen with Deck's output selector, or Sleeve's typography with Glow's album grid. Queue, Album detail and the output picker come next, in whichever direction wins.</p>
+    <p>After a pick, the chosen Now Playing screen becomes the first real UI on the device, as part of the Compose vs Views test (roadmap A1).</p>
+  </footer>
+</div>
+
+<script>
+  const ro = new ResizeObserver(entries => {
+    for (const e of entries) e.target.firstElementChild.style.setProperty('--s', e.contentRect.width / 412);
+  });
+  document.querySelectorAll('.fit').forEach(f => ro.observe(f));
+</script>
