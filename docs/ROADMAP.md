@@ -33,6 +33,12 @@ Done in a separate repository.
 ### A2. Minimal music player (brief Milestone 1)
 - [ ] MediaStore library scan, basic metadata, play/pause/next/prev/seek.
 - [ ] Playback state survives app restart.
+- [x] Library limited to the shared `Music/` folder.
+- [ ] "Hide from library" on albums and tracks, stored in the app
+      database and reversible. Done when a hidden album stays hidden after
+      a rescan and can be restored.
+- [ ] Rescan without restarting the app (and pick up files pushed over
+      ADB/USB).
 - [ ] Play history recorded from day one: one row per play with track,
       start time, seconds played, skipped or not, and output device.
       Done when a day of listening shows up correctly in the database.
@@ -120,3 +126,7 @@ Needs A1 and B0.
   WifiLock plus wake lock while serving HTTP.
 - 2026-10-29: First APK uses Jetpack Compose, provisionally. A1 decides
   whether it stays, based on how it performs on the Nexus 4.
+- 2026-10-30: The library is the shared `Music/` folder only; other folders
+  (test tones, recordings) are ignored. Choosing folders can become a
+  setting later. Removing music: the app only *hides* tracks; deleting
+  files belongs to the desktop collection and its sync to the phone.
