@@ -48,6 +48,10 @@ Done in a separate repository.
 - [ ] Album/artist browsing, cached artwork, search, queue, favourites.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
+- [ ] Radio v0: long-press a track → Start radio. Biases on tags and
+      history (decade, genre, artist, favourites, not recently played),
+      randomness, no artist repeat within 5 tracks, 3 tracks queued ahead.
+      See `discovery.md`.
 - [ ] About screen (from a ⋮ menu on the Library header, alongside
       "Rescan library"): `versionName` from `git describe --tags --always
       --dirty`, `versionCode` from `git rev-list --count HEAD`, build date,
@@ -204,3 +208,7 @@ desktop and shipped as `discovery.db`.
   (sound, people, era, mood, topic) instead of one blended score; heavy
   models run on the desktop only; results keyed by audio content so they
   survive renames.
+- 2026-10-30: The app is model-agnostic: it reads a versioned
+  `discovery.db` contract (views, label sets, scalars, edges) and never
+  ships a model. Radio starts as tag-based biases (Amarok-style) and gains
+  sound-based biases later without changing the engine.

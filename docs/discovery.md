@@ -54,6 +54,37 @@ Practical risk: some of these packages lag behind new Python versions
 (this machine has 3.14). Use a separate environment pinned to an older
 Python for the analysis step.
 
+## The app is model-agnostic
+
+The app understands a fixed contract (the `discovery.db` schema), never a
+particular model. Models can be swapped on the desktop without an app
+update.
+
+| Kind | Example | App behaviour |
+|---|---|---|
+| **View**: vectors, neighbours, reason template | Sounds like, Similar topics | A row per view, labelled from the database |
+| **Label set**: names with scores | Moods, styles | Chips; ranking by score |
+| **Scalar**: number with unit | Tempo, energy, danceability | Sorting, filtering, smooth radio steps |
+| **Edge with reason** | "Liam O'Flynn plays on both" | "Connected by", musician graph |
+
+Rules:
+- Every view records the model and version that produced it. Vectors are
+  only compared within one view, never across models.
+- Display names for views and labels live in the database, so new moods
+  or styles appear without an app change.
+- Free-text vocabulary vectors ship inside the same view as the audio
+  vectors they are compared with.
+- `discovery.db` carries a schema version; the app refuses versions it
+  doesn't know instead of guessing.
+
+## Licensing
+
+Neither the app nor the repository ships a model or `discovery.db`. The
+desktop tool downloads models at run time, and its output describes the
+user's own collection and stays on their devices. So non-commercial model
+licences (such as Essentia's CC BY-NC-SA) don't conflict with the app
+being open source. Never commit models or generated databases.
+
 ## Identity: results must survive renames
 
 beets renames files, and rotation moves them on and off the phone. Key
@@ -92,12 +123,25 @@ searches the audio vectors with the matched phrase's vector.
    sound alike, coloured by decade or style. Tap to play. 465 points is
    trivial to draw.
 4. **Timeline:** styles and scenes by original release year.
-5. **Radio:** endless play from a seed, walking the neighbour graph with
-   smooth steps in tempo, key and energy, without repeating an artist too
-   soon.
+5. **Radio:** endless play from a seed track (see "Radio" below).
 6. **Musician graph:** from the liner notes, follow a musician to every
    album in the collection they play on.
 7. **Year in review:** "your year in moods".
+
+## Radio
+
+In the spirit of Amarok's dynamic playlists: a queue generator driven by
+**biases**, each a scoring rule, plus randomness. It needs no models to
+start, and each new signal becomes one more bias.
+
+- Seed: long-press a track → Start radio.
+- v0 biases (tags and the app database only): same decade, same genre,
+  same artist (low weight), favourite (small boost), not played recently.
+- Later biases: sounds like (vector distance), people connections, tempo,
+  key and energy close to the previous track, mood.
+- Pick at random among the best-scoring candidates.
+- Rules: no track twice per session, no artist again within 5 tracks.
+- Keep 3 tracks queued ahead of the current one.
 
 ## Phases
 
@@ -118,7 +162,5 @@ searches the audio vectors with the matched phrase's vector.
 - Analyse whole tracks or a window (e.g. 60 s from the middle)? Whole
   tracks are better for long folk sets; windows are faster. Estimate CPU
   time on a sample first.
-- Keep Essentia's models for personal use only, or prefer openly licensed
-  ones from the start in case the app is ever shared?
 - How much does the people graph add for albums that MusicBrainz knows
   well vs the long tail?
