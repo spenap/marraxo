@@ -542,7 +542,7 @@ const sec = s => { const [m, x] = s.split(':'); return +m * 60 + +x; };
 const fmt = n => Math.floor(n / 60) + ':' + String(Math.floor(n % 60)).padStart(2, '0');
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const icon = (id, cls = 'ic') => `<svg class="${cls}"><use href="#i-${id}"/></svg>`;
-const top = () => S.stack[S.stack.length - 1];
+const topView = () => S.stack[S.stack.length - 1];
 const sortName = s => s.replace(/^The /, '');
 const tintVars = a => `--tint:${a.tint};--hi:${a.hi}`;
 function cur() {
@@ -755,10 +755,10 @@ const clock = () => { const d = new Date(); return String(d.getHours()).padStart
 const dateStr = () => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 function screenKey() {
   if (S.locked) return 'lock'; if (S.home) return 'home'; if (S.sheet) return 'output'; if (S.dialog) return S.dialog;
-  return top();
+  return topView();
 }
 function render() {
-  const t = top();
+  const t = topView();
   let html = V[t]();
   if (t !== lastTop) {
     const anim = t === 'now' || t === 'queue' ? 'enter-up' : (t === 'album' || t === 'search') ? 'enter-in' : '';
@@ -791,8 +791,8 @@ function startScan() {
   S.dialog = null; S.stack = ['scan']; S.scanN = 0;
   scanTimer = setInterval(() => {
     S.scanN = Math.min(TOTAL, S.scanN + 2);
-    if (S.scanN >= TOTAL) { clearInterval(scanTimer); setTimeout(() => { if (top() === 'scan') { S.stack = ['library']; render(); } }, 500); }
-    if (top() === 'scan') render();
+    if (S.scanN >= TOTAL) { clearInterval(scanTimer); setTimeout(() => { if (topView() === 'scan') { S.stack = ['library']; render(); } }, 500); }
+    if (topView() === 'scan') render();
   }, 45);
 }
 function act(a, arg, e) {
@@ -807,7 +807,7 @@ function act(a, arg, e) {
     case 'album': S.album = arg; go('album'); break;
     case 'go': go(arg); break;
     case 'back': back(); break;
-    case 'play': { const [id, i] = arg.split(':'); playAlbum(id, +i); if (top() === 'search') S.album = id; break; }
+    case 'play': { const [id, i] = arg.split(':'); playAlbum(id, +i); if (topView() === 'search') S.album = id; break; }
     case 'shuffle-album': S.shuffle = true; playAlbum(S.album, Math.floor(Math.random() * A[S.album].tr.length), true); go('now'); break;
     case 'open-now': go('now'); break;
     case 'toggle': S.playing = !S.playing; break;
