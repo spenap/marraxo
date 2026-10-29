@@ -100,6 +100,13 @@ desconocido", `Compilations` and `Varios Artistas`.
       artwork coverage and duplicates.
 
 ### C1. Identification, normalisation, artwork (Phases 2–4)
+Done with beets (`tools/beets/`), copying into
+`~/Music-clean`. Automatic pass first; skipped albums are
+reviewed interactively.
+- [x] Read-only inventory report (`tools/inventory/`).
+- [ ] Automatic pass over the whole collection (started 2026-10-30).
+- [ ] Interactive review of skipped albums (`out/import.log`).
+- [ ] Rerun the inventory on `Music-clean` and compare.
 - [ ] MusicBrainz/AcoustID matching with confidence scores and a review
       queue.
 
@@ -151,3 +158,10 @@ desconocido", `Compilations` and `Varios Artistas`.
 - 2026-10-30: The Nexus 4 holds a 3.8 GB test sample (50 albums, 664
   tracks, spread across the alphabet, including M4A and OGG) until sync
   and rotation exist.
+- 2026-10-30: Cleanup uses beets (MusicBrainz + AcoustID, fetchart,
+  embedart) instead of a custom tagger. It copies into `Music-clean`, so
+  the source collection stays untouched; we write config, not a tagger.
+- 2026-10-30: Glow's art-tinted look comes from a common pattern (Apple
+  Music, Spotify, Android's media notification). We don't use another player (a
+  GNOME player with a similar look) as a reference, and don't contribute
+  to it: its maintainer doesn't want LLM-written code.
