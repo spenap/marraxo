@@ -40,8 +40,8 @@ Done in a separate repository.
 ## Track B: Sonos (no phone needed for B0)
 
 ### B0. Sonos feasibility from the laptop
-- [ ] Check whether the speakers use the S1 or S2 app/firmware.
-- [ ] SSDP discovery finds both One SLs (and their group, if any).
+- [x] Check whether the speakers use the S1 or S2 app/firmware. (S2, 18.6)
+- [x] SSDP discovery finds both One SLs (and their group, if any).
 - [ ] Serve an MP3 over HTTP from the laptop; `SetAVTransportURI` + `Play`
       makes a speaker fetch and play it.
 - [ ] Seek works and duration is reported correctly. Test with byte-range
@@ -78,11 +78,14 @@ Needs A1 and B0.
 
 ## Open questions
 - Which ROM / Android version? (A0)
-- S1 or S2 Sonos firmware; does local UPnP still work? (B0)
+- Does local UPnP playback still work on S2 18.6? Services are
+  advertised; playback not yet tested. (B0)
 - Compose or Views? (A1)
-- Where does the music collection live on the laptop, and how big is it?
-  (C0; also checks it fits on the phone's 8 or 16 GB)
 
 ## Decision log
 - 2026-10-29: One repo with `android/`, `tools/`, `docs/`. The three
   tracks run in parallel, with risky items first.
+- 2026-10-29: Speakers are S2 (firmware 18.6), two separate rooms
+  (Estudio, Cocina), not paired. See `sonos-protocol.md`.
+- 2026-10-29: Music collection is a few GB on a backup drive; fits on
+  the phone.
