@@ -110,6 +110,21 @@ reviewed interactively.
 - [ ] MusicBrainz/AcoustID matching with confidence scores and a review
       queue.
 
+### C3. Liner notes (offline "X-ray")
+Learn more about a track, album or artist, offline, from data fetched on
+the desktop.
+- [ ] Fetch once per MusicBrainz ID (release, recording, work, artist,
+      with relationships) and cache the JSON; respect MusicBrainz's 1
+      request/s and send a User-Agent. Optionally a Wikipedia summary via
+      Wikidata (CC BY-SA: show attribution).
+- [ ] Build `linernotes.db` (SQLite) keyed by the track's path inside
+      `Music-clean`, and push it with the music.
+- [ ] App: a Liner notes screen for track, album and artist. Credits,
+      studios and dates, "first released on", other versions in your
+      library, and connections between your albums through shared
+      musicians. Hidden when there's no data.
+- [ ] Prototype it in `mockups/prototype.html` first.
+
 ### C2. Safe writing (Phase 5)
 - [ ] Backup, change manifest, reversible writes, validation.
 
@@ -170,3 +185,5 @@ reviewed interactively.
   `speed-profile` 1.3% (5 ms, p90 9 ms). Install with
   `android/scripts/install.sh`. Generating a proper Baseline Profile can
   replace the manual compile step later.
+- 2026-10-30: "Liner notes" (offline X-ray) is planned as C3. Data is
+  fetched and packaged on the desktop; the app never goes online.
