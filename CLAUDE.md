@@ -11,7 +11,7 @@ SL speakers or a Samsung TV.
 - UI reference: `docs/mockups/prototype.html` (interactive, "Glow").
 
 ## Components (one repo)
-- `android/`: Kotlin, Gradle multi-module, deployed with ADB.
+- `android/`: Kotlin app, built with Gradle, deployed with ADB.
 - `tools/`: Python desktop tools (music library inventory/enrichment).
 - `docs/`: plans, decisions, protocol notes, mockups.
 
@@ -30,25 +30,10 @@ current Android.
 - Check every dependency's minSdk against the Nexus 4 API. Avoid native
   libraries unless they ship both armeabi-v7a and arm64-v8a.
 
-## Reuse: a future audiobook app
-Parts of this app should be reusable in a later audiobook player. Keep
-reusable code in `core` modules that know nothing about "albums" or
-"music"; the music app is one consumer of them.
-- Likely reusable: playback service and queue, output routing (local,
-  UPnP, Sonos), UPnP discovery/control and the HTTP file server, local
-  media scanning, artwork and palette colours, play history, and the Glow
-  design system.
-- Music-specific: library browsing (albums/artists/genres), stats screens.
-- Playback must not assume short tracks: keep resume position, playback
-  speed and seeking generic, since audiobooks will need them.
-- Set module boundaries now, but don't build audiobook features
-  (chapters, bookmarks, sleep timer) until that app is started.
-
 ## Principles
 - Offline at runtime: no Internet, cloud services, accounts, analytics,
   or Google Play Services. Internet is fine for desktop tooling and builds.
-- Smallest maintainable stack; no premature abstraction. Module
-  boundaries are the exception: they are cheap now and costly later.
+- Smallest maintainable stack; no premature abstraction.
 - Playback lives in a service, independent of the UI.
 - Design for the Nexus 4 first: keep image allocations, animations and
   background work modest. If it is smooth there, it is smooth on the S25.

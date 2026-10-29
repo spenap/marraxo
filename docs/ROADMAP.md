@@ -15,10 +15,8 @@ Done in a separate repository.
       copied into `CLAUDE.md`.
 
 ### A1. Android feasibility spike
-- [ ] Gradle multi-module project in `android/`: reusable `core` modules
-      (playback, output/UPnP, media scanning, history, design system) and
-      a music `app` module. Dependency versions pinned against the Nexus 4
-      API. Done when `./gradlew assembleDebug` builds and the same APK
+- [ ] Gradle project in `android/` with dependency versions pinned
+      against the Nexus 4 API. Done when `./gradlew assembleDebug` builds and the same APK
       installs and launches on both the Nexus 4 and the S25.
 - [ ] Compose vs Views decision. Done when a trivial scrolling album grid
       exists in the chosen toolkit, it scrolls smoothly on the device, and
@@ -92,11 +90,6 @@ Needs A1 and B0.
 ## Later (brief Milestone 5)
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.
 
-## Later: audiobook app
-- A second app reusing the `core` modules. Needs chapters, per-book
-  resume, playback speed, bookmarks and a sleep timer. Not started; the
-  music app only keeps its core modules generic enough to allow it.
-
 ## Open questions
 - Which ROM / Android version? (A0)
 - Does local UPnP playback still work on S2 18.6, and on the TV?
@@ -121,6 +114,3 @@ Needs A1 and B0.
 - 2026-10-29: The app also targets a Samsung Galaxy S25 (main phone). One
   APK: minSdk from the Nexus 4 ROM, targetSdk current. The Nexus 4 stays the
   development device and performance floor.
-- 2026-10-29: Reusable `core` modules with no music-specific concepts, so a
-  future audiobook app can share playback, outputs, scanning, history and
-  the design system.
