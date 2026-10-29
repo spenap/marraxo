@@ -11,8 +11,8 @@ and record decisions in the log at the bottom.
 
 ### A0. ROM chosen and flashed
 Done in a separate repository.
-- [ ] Done when `RESULT.md` exists and its API level and known issues are
-      copied into `CLAUDE.md`.
+- [x] Done when `RESULT.md` exists and its API level and known issues are
+      copied into `CLAUDE.md`. (LineageOS 15.1, API 27.)
 
 ### A1. Android feasibility spike
 - [ ] Gradle project in `android/` with dependency versions pinned
@@ -91,7 +91,6 @@ Needs A1 and B0.
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.
 
 ## Open questions
-- Which ROM / Android version? (A0)
 - Does local UPnP playback still work on S2 18.6, and on the TV?
   Services are advertised; playback not yet tested. (B0)
 - Compose or Views? (A1)
@@ -114,3 +113,10 @@ Needs A1 and B0.
 - 2026-10-29: The app also targets a Samsung Galaxy S25 (main phone). One
   APK: minSdk from the Nexus 4 ROM, targetSdk current. The Nexus 4 stays the
   development device and performance floor.
+- 2026-10-29: ROM is LineageOS 15.1 (Android 8.1, API 27), so minSdk 27.
+  For Sonos (B1), from the firmware tests: receive SSDP replies on an
+  unconnected socket (Sonos replies from a random port), hold a
+  MulticastLock to receive multicast with the screen off, and keep a
+  WifiLock plus wake lock while serving HTTP.
+- 2026-10-29: First APK uses Jetpack Compose, provisionally. A1 decides
+  whether it stays, based on how it performs on the Nexus 4.

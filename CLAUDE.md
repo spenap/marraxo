@@ -11,7 +11,9 @@ SL speakers or a Samsung TV.
 - UI reference: `docs/mockups/prototype.html` (interactive, "Glow").
 
 ## Components (one repo)
-- `android/`: Kotlin app, built with Gradle, deployed with ADB.
+- `android/`: Kotlin + Jetpack Compose + Media3, single `app` module.
+  Build: `./gradlew assembleDebug`; install: `adb install -r
+  app/build/outputs/apk/debug/app-debug.apk`. SDK in `~/Android/Sdk`, JDK 17.
 - `tools/`: Python desktop tools (music library inventory/enrichment).
 - `docs/`: plans, decisions, protocol notes, mockups.
 
@@ -19,9 +21,9 @@ SL speakers or a Samsung TV.
 One APK for both: `minSdk` = the Nexus 4 ROM's API level, `targetSdk` =
 current Android.
 - **Nexus 4** (development device and performance floor): Snapdragon S4
-  Pro, 32-bit ARMv7, 2 GB RAM, 768×1280. ROM/Android version NOT YET
-  DECIDED; it's chosen in a separate project and the result lands in
-  the ROM notes. Until then, assume API 25–27.
+  Pro, 32-bit ARMv7 (armeabi-v7a only), 2 GB RAM, 768×1280. LineageOS
+  15.1, Android 8.1, **API 27**, no Google apps, ADB root available.
+  Details and network findings: the ROM notes.
 - **Samsung Galaxy S25** (main phone): arm64, current Android/One UI.
   Handle the newer platform rules: `READ_MEDIA_AUDIO` (API 33+) instead of
   `READ_EXTERNAL_STORAGE`, the notification permission (API 33+), and the
