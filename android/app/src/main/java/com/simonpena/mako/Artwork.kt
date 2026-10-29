@@ -31,12 +31,23 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.palette.graphics.Palette
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withContext
 
 /** Album artwork decoded at the size it's shown, plus the Glow tint picked from it. */
 class Art(val image: ImageBitmap, val tint: Color)
 
 private val cache = LruCache<String, Art>(48)
+
+/**
+ * At most two artwork decodes at a time. Dispatchers.IO alone allows 64, and
+ * on the Nexus 4's four cores they starve the UI thread while scrolling.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+private val artDispatcher = Dispatchers.IO.limitedParallelism(2)
+
+/** Small images (grid tiles, mini player) don't need the Glow tint. */
+private const val TINT_MIN_PX = 400
 
 /** Fallback tints for albums without artwork, so the grid isn't uniform. */
 private val placeholders = listOf(0xFF24525A, 0xFF5E2238, 0xFF7A4F1E, 0xFF2D455C, 0xFF3F474E, 0xFF5C4A2A)
@@ -57,11 +68,14 @@ private fun decodeSampled(context: Context, uri: Uri, px: Int): Bitmap? {
     if (bounds.outWidth <= 0) return null
     var sample = 1
     while (bounds.outWidth / (sample * 2) >= px) sample *= 2
-    val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+    val opts = BitmapFactory.Options().apply {
+        inSampleSize = sample
+        if (px < TINT_MIN_PX) inPreferredConfig = Bitmap.Config.RGB_565 // half the memory, faster upload
+    }
     return context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
 }
 
-suspend fun loadArt(context: Context, albumId: Long, px: Int): Art? = withContext(Dispatchers.IO) {
+suspend fun loadArt(context: Context, albumId: Long, px: Int): Art? = withContext(artDispatcher) {
     val key = "$albumId@$px"
     cache.get(key) ?: runCatching {
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -72,9 +86,11 @@ suspend fun loadArt(context: Context, albumId: Long, px: Int): Art? = withContex
         } else {
             decodeSampled(context, albumArtUri(albumId), px)
         } ?: return@runCatching null
-        val palette = Palette.from(bitmap).maximumColorCount(16).generate()
         val fallback = placeholderTint(albumId).toArgb()
-        val tint = palette.getDarkVibrantColor(palette.getDarkMutedColor(palette.getDominantColor(fallback)))
+        val tint = if (px < TINT_MIN_PX) fallback else {
+            val palette = Palette.from(bitmap).maximumColorCount(16).generate()
+            palette.getDarkVibrantColor(palette.getDarkMutedColor(palette.getDominantColor(fallback)))
+        }
         Art(bitmap.asImageBitmap(), Color(tint))
     }.getOrNull()?.also { cache.put(key, it) }
 }

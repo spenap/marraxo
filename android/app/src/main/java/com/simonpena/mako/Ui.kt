@@ -391,7 +391,7 @@ private fun SeekBar(pos: Long, duration: Long, onSeek: (Long) -> Unit) {
 
 @Composable
 private fun MiniPlayer(album: Album, track: Track, player: PlayerHolder, modifier: Modifier, onOpen: () -> Unit) {
-    val tint = rememberArt(album.id, 112)?.tint ?: placeholderTint(album.id)
+    val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id) // same decode as Now Playing
     val pos = rememberPosition(player, track.id)
     val fraction = if (track.durationMs > 0) (pos.toFloat() / track.durationMs).coerceIn(0f, 1f) else 0f
     Box(
