@@ -3,6 +3,8 @@ package com.simonpena.mako
 import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +34,20 @@ private fun sortKey(artist: String) = artist.removePrefix("The ").lowercase()
 private fun clean(value: String?, fallback: String) =
     value?.takeUnless { it.isBlank() || it == MediaStore.UNKNOWN_STRING } ?: fallback
 
-/** Reads the audio files Android's MediaStore knows about, grouped into albums. */
+/**
+ * Only audio under the shared Music folder is part of the library; test
+ * tones, recordings and ringtones elsewhere on the phone are ignored.
+ */
+@Suppress("DEPRECATION") // DATA and the public directory path are the only way on API 27–28
+private fun musicFolderSelection(): Pair<String, Array<String>> =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        "${MediaStore.Audio.Media.RELATIVE_PATH} LIKE ?" to arrayOf("${Environment.DIRECTORY_MUSIC}/%")
+    } else {
+        val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).absolutePath
+        "${MediaStore.Audio.Media.DATA} LIKE ?" to arrayOf("$root/%")
+    }
+
+/** Reads the audio files in the Music folder from Android's MediaStore, grouped into albums. */
 suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers.IO) {
     val m = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
     val projection = arrayOf(
@@ -47,7 +62,9 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
     )
     val tracks = mutableListOf<Track>()
     val years = mutableMapOf<Long, Int>()
-    context.contentResolver.query(m, projection, "${MediaStore.Audio.Media.IS_MUSIC} != 0", null, null)?.use { c ->
+    val (folder, args) = musicFolderSelection()
+    val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND $folder"
+    context.contentResolver.query(m, projection, selection, args, null)?.use { c ->
         val id = c.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
         val title = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
         val artist = c.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
