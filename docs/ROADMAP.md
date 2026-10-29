@@ -60,6 +60,10 @@ Done in a separate repository.
       details for geeks (see `mockups/prototype.html`).
 - [ ] Year in review story cards, with a shareable summary image.
 
+### A5. Discovery in the app
+- [ ] Prototype "Sounds like", Moods and Map in `mockups/prototype.html`.
+- [ ] Implement from `discovery.db` (C4/D2).
+
 ## Track B: Sonos and TV (no phone needed for B0)
 
 ### B0. Renderer feasibility from the laptop
@@ -125,6 +129,15 @@ the desktop.
       musicians. Hidden when there's no data.
 - [ ] Prototype it in `mockups/prototype.html` first.
 
+### C4. Discovery (see `discovery.md`)
+Offline similarity by sound, people, era, mood and topic, computed on the
+desktop and shipped as `discovery.db`.
+- [ ] D0: Essentia features + people graph, HTML explorer. Done when the
+      neighbours of 20 well-known albums look right.
+- [ ] D1: CLAP and Wikipedia text embeddings; named clusters.
+- [ ] D2: package `discovery.db`; app "Sounds like", Moods, Map (A5).
+- [ ] D3: radio sequencing; play-history signals.
+
 ### C2. Safe writing (Phase 5)
 - [ ] Backup, change manifest, reversible writes, validation.
 
@@ -187,3 +200,7 @@ the desktop.
   replace the manual compile step later.
 - 2026-10-30: "Liner notes" (offline X-ray) is planned as C3. Data is
   fetched and packaged on the desktop; the app never goes online.
+- 2026-10-30: Discovery (`discovery.md`): separate, explained views
+  (sound, people, era, mood, topic) instead of one blended score; heavy
+  models run on the desktop only; results keyed by audio content so they
+  survive renames.
