@@ -1,5 +1,6 @@
 package com.simonpena.mako
 
+import android.app.PendingIntent
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -31,7 +32,13 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true) // pause when headphones are unplugged
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+        // Tapping the notification (or the lock-screen controls) opens the app.
+        val openApp = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         session = MediaSession.Builder(this, player)
+            .setSessionActivity(openApp)
             .setCallback(object : MediaSession.Callback {
                 // Items from a controller arrive without their URI; restore it.
                 override fun onAddMediaItems(

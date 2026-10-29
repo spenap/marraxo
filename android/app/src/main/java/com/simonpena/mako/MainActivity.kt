@@ -3,6 +3,7 @@ package com.simonpena.mako
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.BLACK),
         )
         super.onCreate(savedInstanceState)
+        volumeControlStream = AudioManager.STREAM_MUSIC // volume keys = music, even when paused
         player = PlayerHolder(this)
         refreshPermission()
         setContent {
