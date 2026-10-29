@@ -12,8 +12,11 @@ SL speakers or a Samsung TV.
 
 ## Components (one repo)
 - `android/`: Kotlin + Jetpack Compose + Media3, single `app` module.
-  Build: `./gradlew assembleDebug`; install: `adb install -r
-  app/build/outputs/apk/debug/app-debug.apk`. SDK in `~/Android/Sdk`, JDK 17.
+  Install on a phone: `android/scripts/install.sh` (release build +
+  ahead-of-time compile). Judge performance only on that: the debug build
+  is ~100 ms/frame on the Nexus 4. Measure with
+  `android/scripts/scroll-bench.sh` (`dumpsys gfxinfo`). SDK in
+  `~/Android/Sdk`, JDK 17.
 - `tools/`: Python desktop tools (music library inventory/enrichment).
 - `docs/`: plans, decisions, protocol notes, mockups.
 

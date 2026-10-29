@@ -18,9 +18,9 @@ Done in a separate repository.
 - [ ] Gradle project in `android/` with dependency versions pinned
       against the Nexus 4 API. Done when `./gradlew assembleDebug` builds and the same APK
       installs and launches on both the Nexus 4 and the S25.
-- [ ] Compose vs Views decision. Done when a trivial scrolling album grid
+- [x] Compose vs Views decision. Done when a trivial scrolling album grid
       exists in the chosen toolkit, it scrolls smoothly on the device, and
-      the decision is logged below.
+      the decision is logged below. (Compose: 1.3% janky frames.)
 - [ ] Local MP3 playback with Media3. Done when a pushed MP3 plays.
 - [ ] Background playback. Done when playback continues with the screen
       off for 10+ minutes and lock-screen/media-session controls work.
@@ -165,3 +165,8 @@ reviewed interactively.
   Music, Spotify, Android's media notification). We don't use another player (a
   GNOME player with a similar look) as a reference, and don't contribute
   to it: its maintainer doesn't want LLM-written code.
+- 2026-10-30: Compose stays. Album grid fling benchmark on the Nexus 4:
+  debug 97% janky (median 101 ms); release 27% (7 ms); release + AOT
+  `speed-profile` 1.3% (5 ms, p90 9 ms). Install with
+  `android/scripts/install.sh`. Generating a proper Baseline Profile can
+  replace the manual compile step later.
