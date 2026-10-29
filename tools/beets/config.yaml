@@ -1,0 +1,64 @@
+# beets configuration for the collection cleanup (roadmap C1–C2).
+# Run through tools/beets/beet, which sets BEETSDIR so nothing from
+# ~/.config/beets leaks in.
+#
+# Safety: beets COPIES into `directory`; the source collection is never
+# modified. Tags are written to the copies only.
+
+directory: ~/Music-clean
+per_disc_numbering: yes # disc 2 starts again at track 1
+library: tools/beets/out/library.db
+
+import:
+  copy: yes
+  move: no
+  write: yes
+  resume: ask
+  log: tools/beets/out/import.log
+  # Quiet mode accepts only strong matches; everything else is skipped
+  # and listed in the log, to be reviewed interactively.
+  quiet_fallback: skip
+  duplicate_action: keep # report duplicates later with `beet duplicates`
+  languages: [es, en]
+  detail: yes
+
+# Spanish and English names as MusicBrainz aliases, original script otherwise.
+musicbrainz:
+  extra_tags: [year, catalognum, country, media, label]
+
+match:
+  # Accept automatically from ~92% similarity (default 96%): differences
+  # below that are mostly capitalisation and typographic apostrophes.
+  strong_rec_thresh: 0.08
+  distance_weights:
+    # beets 2.5 penalises "data source" even for MusicBrainz candidates.
+    data_source: 0.0
+  preferred:
+    countries: ['ES', 'GB|UK', 'US', 'XW']
+    media: ['CD', 'Digital Media|File']
+    original_year: yes
+
+paths:
+  default: $albumartist/$album%aunique{}/%if{$multidisc,$disc-}$track $title
+  comp: Compilations/$album%aunique{}/%if{$multidisc,$disc-}$track $title
+  singleton: Non-Album/$artist/$title
+
+plugins: [musicbrainz, chroma, fetchart, embedart, duplicates, missing, info, inline]
+
+# Disc prefix in file names only for albums with more than one disc.
+item_fields:
+  multidisc: 1 if disctotal > 1 else 0
+
+chroma:
+  auto: yes
+
+fetchart:
+  auto: yes
+  # Covers next to the files first, then the Cover Art Archive.
+  sources: [filesystem, coverart, itunes]
+  minwidth: 300
+  maxwidth: 1000
+
+embedart:
+  auto: yes
+  maxwidth: 1000

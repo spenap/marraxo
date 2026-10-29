@@ -1,0 +1,5 @@
+#!/bin/sh
+# Runs beets with this project's config and state (tools/beets/out).
+here=$(cd "$(dirname "$0")" && pwd)
+mkdir -p "$here/out"
+BEETSDIR="$here/out" exec "$here/../.venv/bin/beet" -c "$here/config.yaml" "$@"
