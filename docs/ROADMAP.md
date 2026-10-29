@@ -37,9 +37,9 @@ Done in a separate repository.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
 
-## Track B: Sonos (no phone needed for B0)
+## Track B: Sonos and TV (no phone needed for B0)
 
-### B0. Sonos feasibility from the laptop
+### B0. Renderer feasibility from the laptop
 - [x] Check whether the speakers use the S1 or S2 app/firmware. (S2, 18.6)
 - [x] SSDP discovery finds both One SLs (and their group, if any).
 - [ ] Serve an MP3 over HTTP from the laptop; `SetAVTransportURI` + `Play`
@@ -48,8 +48,11 @@ Done in a separate repository.
       requests and check which HTTP headers Sonos actually sends.
 - [ ] Pause/stop/volume (RenderingControl) and a GENA subscription work.
 - [ ] Group behaviour: commands sent to the group coordinator play in sync.
+- [x] Samsung The Frame TV found as a DLNA renderer with AVTransport;
+      accepts MP3/FLAC/AAC.
+- [ ] TV plays a served MP3 via `SetAVTransportURI` + `Play`.
 - [ ] Works with the router's Internet uplink disconnected.
-- Done when the findings are written to `docs/sonos-protocol.md`.
+- Done when the findings are written to `docs/upnp-renderers.md`.
 
 ### B1. Phone as HTTP server + controller (brief Milestone 3)
 Needs A1 and B0.
@@ -78,16 +81,19 @@ Needs A1 and B0.
 
 ## Open questions
 - Which ROM / Android version? (A0)
-- Does local UPnP playback still work on S2 18.6? Services are
-  advertised; playback not yet tested. (B0)
+- Does local UPnP playback still work on S2 18.6, and on the TV?
+  Services are advertised; playback not yet tested. (B0)
 - Compose or Views? (A1)
 
 ## Decision log
 - 2026-10-29: One repo with `android/`, `tools/`, `docs/`. The three
   tracks run in parallel, with risky items first.
 - 2026-10-29: Speakers are S2 (firmware 18.6), two separate rooms
-  (Estudio, Cocina), not paired. See `sonos-protocol.md`.
+  (Estudio, Cocina), not paired. See `upnp-renderers.md`.
 - 2026-10-29: Music collection is a few GB on a backup drive; fits on
   the phone.
 - 2026-10-29: UI direction is Glow (artwork-tinted, dark), with Sleeve's
   "Playing on <room> · <model>" output row. See `mockups/directions.html`.
+- 2026-10-29: The Samsung The Frame TV (UE55LS003) is an output target
+  too. All targets are generic UPnP renderers, with Sonos-specific
+  grouping on top.

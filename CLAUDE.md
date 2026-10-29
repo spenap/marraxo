@@ -1,8 +1,8 @@
 # Nexus 4 music player
 
 An offline-first music player that turns an LG Nexus 4 ("mako") into a
-dedicated music device, with playback through headphones/Bluetooth or two
-Sonos One SL speakers on the LAN.
+dedicated music device. It plays through headphones/Bluetooth, or over the
+LAN (UPnP) to two Sonos One SL speakers or a Samsung TV.
 
 - Full original brief: `docs/original-brief.md` (a guide, not gospel).
 - Plan and progress: `docs/ROADMAP.md`. Update it when a milestone item is
