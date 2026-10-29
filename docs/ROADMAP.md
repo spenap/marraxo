@@ -88,6 +88,13 @@ Needs A1 and B0.
 ## Track C: Music library tool (no phone needed)
 
 ### C0. Read-only inventory (brief §5 Phase 1)
+Collection: laptop copy at `~/Music` (originals stay on
+the backup drive). 37 GB, 225 artist folders, `Artist/Album/` layout,
+~6,300 tracks: 6,206 MP3, 40 M4A, 37 OGG, 10 Musepack (`.mpc`, which
+Android can't decode). 476 cover images next to the tracks, plus leftovers
+(`.DS_Store`, `.ini`, `.html`). Known messy cases: one band under two
+folder names (`R.E.M_`, `rem`), an album folder called "Álbum
+desconocido", `Compilations` and `Varios Artistas`.
 - [ ] Python tool in `tools/` scans the collection without writing to it.
 - [ ] Done when an HTML report shows stats, missing/contradictory tags,
       artwork coverage and duplicates.
@@ -101,6 +108,11 @@ Needs A1 and B0.
 
 ## Later (brief Milestone 5)
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.
+- Rotation: the collection (37 GB) is bigger than the Nexus 4's free
+  space (~12.5 GB), so the phone holds a rotating selection. The sync
+  tool picks it (favourites, recent plays from the play history, albums
+  not heard in a while) and swaps albums in and out. The S25 can probably
+  hold everything.
 
 ## Open questions
 - Does local UPnP playback still work on S2 18.6, and on the TV?
@@ -136,3 +148,6 @@ Needs A1 and B0.
   (test tones, recordings) are ignored. Choosing folders can become a
   setting later. Removing music: the app only *hides* tracks; deleting
   files belongs to the desktop collection and its sync to the phone.
+- 2026-10-30: The Nexus 4 holds a 3.8 GB test sample (50 albums, 664
+  tracks, spread across the alphabet, including M4A and OGG) until sync
+  and rotation exist.
