@@ -30,12 +30,20 @@ Done in a separate repository.
 ### A2. Minimal music player (brief Milestone 1)
 - [ ] MediaStore library scan, basic metadata, play/pause/next/prev/seek.
 - [ ] Playback state survives app restart.
+- [ ] Play history recorded from day one: one row per play with track,
+      start time, seconds played, skipped or not, and output device.
+      Done when a day of listening shows up correctly in the database.
 - [ ] A basic but polished Now Playing screen.
 
 ### A3. Library and visual design (brief Milestone 2)
 - [ ] Album/artist browsing, cached artwork, search, queue, favourites.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
+
+### A4. Stats and Year in review
+- [ ] Stats screen: top artists/songs, listening heatmap, outputs, library
+      details for geeks (see `mockups/prototype.html`).
+- [ ] Year in review story cards, with a shareable summary image.
 
 ## Track B: Sonos and TV (no phone needed for B0)
 
@@ -97,3 +105,6 @@ Needs A1 and B0.
 - 2026-10-29: The Samsung The Frame TV (UE55LS003) is an output target
   too. All targets are generic UPnP renderers, with Sonos-specific
   grouping on top.
+- 2026-10-29: Interactive prototype in `mockups/prototype.html` is the UI
+  reference. Stats need play history, which can't be rebuilt later, so
+  history recording ships in A2, long before the stats screens.
