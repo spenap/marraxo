@@ -162,10 +162,10 @@ footer p { margin: 0; color: var(--muted); }
 .b-ctrl .on { color: var(--b-tint); }
 .b-play { width: 66px; height: 66px; border-radius: 50%; background: var(--b-text); color: #0e2226; display: grid; place-items: center; }
 .b-play .ic { width: 32px; height: 32px; }
-.b-out { display: flex; align-items: center; justify-content: space-between; }
-.b-pill { display: flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 13px; font-weight: 600; color: var(--b-tint); }
-.b-pill .ic { width: 18px; height: 18px; }
-.b-out > .ic { color: var(--b-soft); }
+.b-out { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--b-faint); padding-top: 12px; font-size: 13px; color: var(--b-soft); }
+.b-out .ic { width: 18px; height: 18px; color: var(--b-tint); }
+.b-out b { font-weight: 600; color: var(--b-text); }
+.b-out .k { margin-left: auto; font-size: 12px; }
 
 .dirB.lib { background: #0c1112; }
 .dirB .screen.lib { padding: 0; justify-content: flex-start; }
@@ -178,12 +178,12 @@ footer p { margin: 0; color: var(--muted); }
 .b-tile .art { width: 168px; height: 168px; border-radius: 8px; }
 .b-tile strong { display: block; font-size: 14px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .b-tile span { font-size: 12px; color: var(--b-soft); }
-.b-mini { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 58px; border-radius: 10px; display: grid; grid-template-columns: 42px 1fr auto auto; gap: 12px; align-items: center; padding: 0 14px 0 8px; background: #1d454b; box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; }
+.b-mini { position: absolute; left: 8px; right: 8px; bottom: 8px; height: 58px; border-radius: 10px; display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; padding: 0 14px 0 8px; background: #1d454b; box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; }
 .b-mini::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 41%; background: var(--b-text); }
 .b-mini .art { width: 42px; height: 42px; border-radius: 5px; }
 .b-mini strong { display: block; font-size: 14px; font-weight: 600; }
 .b-mini span { font-size: 12px; color: var(--b-soft); }
-.b-mini .pill { color: var(--b-tint); width: 20px; height: 20px; }
+.b-mini span b { color: var(--b-tint); font-weight: 600; }
 
 /* ========== Direction C: Deck ========== */
 .dirC { --c-alu: #cfd2cd; --c-alu-hi: #e3e5e1; --c-alu-lo: #b3b7b1; --c-engrave: #33372f; --c-vfd-bg: #0a1412; --c-vfd: #8ff3dc; --c-vfd-dim: #1f3a34;
@@ -348,8 +348,8 @@ footer p { margin: 0; color: var(--muted); }
   <!-- ===================== B: Glow ===================== -->
   <section class="dir">
     <div class="dir-head">
-      <h2><small>Direction B · dark</small>Glow</h2>
-      <p>Artwork-led and dark. Each album tints the whole Now Playing screen with colours taken from its cover, the way the brief's references (Apple Music, Spotify) do it. Big touch targets, a filled play button, a heart for favourites.</p>
+      <h2><small>Direction B · dark · chosen</small>Glow</h2>
+      <p>Artwork-led and dark. Each album tints the whole Now Playing screen with colours taken from its cover, the way the brief's references (Apple Music, Spotify) do it. Big touch targets, a filled play button, a heart for favourites. Chosen, with Sleeve's "Playing on Estudio" output line merged in.</p>
     </div>
     <div class="frames">
       <figure>
@@ -368,7 +368,7 @@ footer p { margin: 0; color: var(--muted); }
               <svg class="ic big"><use href="#i-next"/></svg>
               <svg class="ic on"><use href="#i-repeat"/></svg>
             </div>
-            <div class="b-out"><span class="b-pill"><svg class="ic"><use href="#i-speaker"/></svg>Estudio</span><svg class="ic"><use href="#i-queue"/></svg></div>
+            <div class="b-out"><svg class="ic"><use href="#i-speaker"/></svg><span>Playing on <b>Estudio</b></span><span class="k">Sonos One SL</span></div>
           </div>
           <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
         </div></div></div>
@@ -388,7 +388,7 @@ footer p { margin: 0; color: var(--muted); }
               <div class="b-tile"><div class="art art-sos"></div><strong>Sound of Silver</strong><span>LCD Soundsystem</span></div>
               <div class="b-tile"><div class="art art-mezz"></div><strong>Mezzanine</strong><span>Massive Attack</span></div>
             </div>
-            <div class="b-mini"><div class="art art-mezz"></div><div><strong>Teardrop</strong><span>Massive Attack</span></div><svg class="ic pill"><use href="#i-speaker"/></svg><svg class="ic"><use href="#i-pause"/></svg></div>
+            <div class="b-mini"><div class="art art-mezz"></div><div><strong>Teardrop</strong><span>Playing on <b>Estudio</b></span></div><svg class="ic"><use href="#i-pause"/></svg></div>
           </div>
           <div class="nav"><svg><use href="#i-back"/></svg><svg><use href="#i-home"/></svg><svg><use href="#i-recents"/></svg></div>
         </div></div></div>
@@ -476,8 +476,8 @@ footer p { margin: 0; color: var(--muted); }
   </section>
 
   <footer>
-    <h2>Picking one</h2>
-    <p>Mixing is fine: for example, Glow's artwork-tinted screen with Deck's output selector, or Sleeve's typography with Glow's album grid. Queue, Album detail and the output picker come next, in whichever direction wins.</p>
+    <h2>Decision</h2>
+    <p>Glow, with Sleeve's "Playing on Estudio · Sonos One SL" line as the output row. Tapping it will open the output picker. Queue, Album detail and the output picker come next, in this direction.</p>
     <p>After a pick, the chosen Now Playing screen becomes the first real UI on the device, as part of the Compose vs Views test (roadmap A1).</p>
   </footer>
 </div>
