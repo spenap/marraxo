@@ -89,3 +89,5 @@ Needs A1 and B0.
   (Estudio, Cocina), not paired. See `sonos-protocol.md`.
 - 2026-10-29: Music collection is a few GB on a backup drive; fits on
   the phone.
+- 2026-10-29: UI direction is Glow (artwork-tinted, dark), with Sleeve's
+  "Playing on <room> · <model>" output row. See `mockups/directions.html`.
