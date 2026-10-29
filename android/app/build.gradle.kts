@@ -20,6 +20,8 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            // Sideloaded to our own phones only, so the debug key is enough for now.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
