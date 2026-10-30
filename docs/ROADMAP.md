@@ -207,6 +207,28 @@ desktop and shipped as `discovery.db`.
 ### C2. Safe writing (Phase 5)
 - [ ] Backup, change manifest, reversible writes, validation.
 
+## Track T: Tests and CI
+Every check done by hand on a device should end up as a test at the
+cheapest level that can catch it. CI runs levels 1–3 on every push; the
+others run on demand.
+- [ ] **T1. Unit tests** (JVM + Robolectric, no device): hiding, search
+      folding, UPnP time/DIDL helpers, HTTP byte ranges, queue save and
+      restore, play-history rows (completed/skipped/stopped, durations).
+- [ ] **T2. Fake renderer**: a local SOAP + HTTP server that behaves like
+      Sonos (downloads the whole file) or the TV (needs DLNA headers,
+      streams with ranges). Tests hand-over, next, track end, pause and
+      "taken over by another controller" through `RendererPlayer`.
+- [ ] **T3. CI**: a hosted pipeline that builds the release APK and runs
+      T1–T2 (`./gradlew testReleaseUnitTest assembleRelease`), plus pytest
+      for `tools/`. Needs a git remote.
+- [ ] **T4. UI tests** (Compose, emulator in CI or the Nexus 4 locally):
+      tabs and filters, hide and show, search plays a result, the queue
+      restored after the app is killed, rescan messages.
+- [ ] **T5. Performance gate** (Macrobenchmark or `scroll-bench.sh` with a
+      threshold), real phone only: fail above 5% janky frames.
+- [ ] **T6. Hardware smoke tests**: `tools/upnp/probe.py` with assertions,
+      against the real speakers and TV, run by hand.
+
 ## Later (brief Milestone 5)
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.
 - Rotation: the collection (37 GB) is bigger than the Nexus 4's free
