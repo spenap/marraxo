@@ -345,11 +345,14 @@ class RendererPlayer(
             }
             "TRANSITIONING" -> playbackState = Player.STATE_BUFFERING
             "STOPPED", "NO_MEDIA_PRESENT" -> if (!settling && playWhenReady) {
-                // Android's length for a variable-bitrate MP3 can be seconds too long
-                // (3:24.7 for audio ending at 3:17), so trust the renderer's own
-                // measure when it gives one, and allow 5% either way.
+                // A renderer that stops on its own while still holding our track has
+                // almost always reached the end: a takeover changes the track and a
+                // pause says PAUSED. Its position can't confirm it precisely: for VBR
+                // MP3s Sonos's clock drifts behind the audio (Arregla Los Papeles
+                // ended at a reported 3:23 of 3:35). So the last fifth of a track
+                // counts as its end; earlier, it's still taken as a stop elsewhere.
                 val duration = minOf(items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE, rendererDurationMs ?: Long.MAX_VALUE)
-                val slack = maxOf(END_SLACK_MS, duration / 20)
+                val slack = maxOf(END_SLACK_MS, duration / 5)
                 val ended = maxOf(lastPosition, furthestMs) >= duration - slack
                 // One line per decision, so a wrong one can be explained afterwards.
                 Log.i(TAG, "${renderer.name}: $state at last=$lastPosition furthest=$furthestMs duration=$duration " +
