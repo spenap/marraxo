@@ -125,7 +125,7 @@ class RendererPlayer(
         when {
             // The renderer was taken over by something else: take it back.
             playWhenReady && loadedUrl == null && !loading && items.isNotEmpty() -> load()
-            loadedUrl != null -> call { avt(if (playWhenReady) "Play" else "Pause", *(if (playWhenReady) arrayOf("Speed" to 1) else emptyArray())) }
+            loadedUrl != null -> call { playOrPause(playWhenReady) }
         }
         return DONE
     }
@@ -204,7 +204,7 @@ class RendererPlayer(
                 if (items.getOrNull(index) !== item) return@post
                 loadedUrl = url
                 // Play or pause asked for while loading; queued after this load's own calls.
-                if (playWhenReady != play) call { avt(if (playWhenReady) "Play" else "Pause", *(if (playWhenReady) arrayOf("Speed" to 1) else emptyArray())) }
+                if (playWhenReady != play) call { playOrPause(playWhenReady) }
             }
             val metadata = didl(
                 url, mime, meta.title?.toString(), meta.artist?.toString(), meta.albumTitle?.toString(),
@@ -212,6 +212,7 @@ class RendererPlayer(
             )
             avt("SetAVTransportURI", "CurrentURI" to url, "CurrentURIMetaData" to metadata)
             if (play) avt("Play", "Speed" to 1)
+            settleFromNow()
             // The TV only seeks once it is playing.
             if (start > 1000) runCatching { avt("Seek", "Unit" to "REL_TIME", "Target" to formatUpnpTime(start)) }
         }
@@ -307,6 +308,22 @@ class RendererPlayer(
             loadedUrl = null
             updateLocks()
         }
+    }
+
+    /** Net thread: sends Play or Pause, then gives the renderer time to get there. */
+    private fun playOrPause(play: Boolean) {
+        if (play) avt("Play", "Speed" to 1) else avt("Pause")
+        settleFromNow()
+    }
+
+    /**
+     * Net thread: renderers report stale or in-between states for a moment
+     * after a command (the TV can sit in STOPPED, then TRANSITIONING, for
+     * seconds), so state that contradicts us is ignored until SETTLE_MS
+     * after the command arrived, not after it was queued.
+     */
+    private fun settleFromNow() {
+        main.post { loadedAt = SystemClock.elapsedRealtime() }
     }
 
     private fun updateLocks() {

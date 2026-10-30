@@ -129,6 +129,34 @@ class RendererPlayerTest {
         assertEquals(null, player.playerError)
     }
 
+    @Test fun `waits for a slow TV to start without giving up`() {
+        val (fake, player) = start(FakeRenderer.Kind.TV)
+        fake.slowStart = true // the real TV took 8.4 s from Play to PLAYING
+        player.setMediaItems(listOf(item(1, "Daily Growing", file("c.mp3"), 293_000)))
+        player.prepare()
+        player.play()
+        eventually("Play reaches the TV") { "Play" in fake.actions }
+        idle(10_000) // longer than the player's settling time
+        eventually("buffering while it starts") { player.playbackState == Player.STATE_BUFFERING }
+        assertTrue(player.playWhenReady)
+        assertEquals(null, player.playerError)
+        fake.state = "PLAYING"
+        eventually("plays") { player.isPlaying }
+    }
+
+    @Test fun `a slow answer to Play is not mistaken for being stopped`() {
+        val (fake, player) = start(FakeRenderer.Kind.TV)
+        fake.playDelayMs = 500 // meanwhile the fake clock runs far past the settling time
+        fake.stateAfterPlay = "STOPPED" // and the TV still says STOPPED for a moment
+        player.setMediaItems(listOf(item(1, "Daily Growing", file("c.mp3"), 293_000)))
+        player.prepare()
+        player.play()
+        while (fake.plays == 0) { idle(1_000); Thread.sleep(50) }
+        repeat(2) { idle(1_000); Thread.sleep(100) } // a couple of polls see STOPPED
+        fake.state = "PLAYING"
+        eventually("plays") { player.isPlaying }
+    }
+
     @Test fun `volume goes both ways`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))

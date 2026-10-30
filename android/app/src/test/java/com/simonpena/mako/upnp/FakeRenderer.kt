@@ -44,6 +44,14 @@ class FakeRenderer(private val kind: Kind) {
     @Volatile var volume = 15
     @Volatile var downloaded: ByteArray? = null
     @Volatile var contentFeatures: String? = null
+    /** Like the TV: Play leaves it TRANSITIONING until the test says it started. */
+    @Volatile var slowStart = false
+    /** Real-time delay before answering Play, like a busy TV on Wi-Fi. */
+    @Volatile var playDelayMs = 0L
+    /** State right after Play, if not the usual one (the TV can stay STOPPED for a moment). */
+    @Volatile var stateAfterPlay: String? = null
+    /** Play requests fully handled (after any [playDelayMs]). */
+    @Volatile var plays = 0
     val actions: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
 
     /** Plays to the end of the track and stops, as Sonos and the TV do. */
@@ -73,7 +81,11 @@ class FakeRenderer(private val kind: Kind) {
                 state = "STOPPED"
                 fetch(uri)
             }
-            "Play" -> state = "PLAYING"
+            "Play" -> {
+                Thread.sleep(playDelayMs)
+                state = stateAfterPlay ?: if (slowStart) "TRANSITIONING" else "PLAYING"
+                plays++
+            }
             "Pause" -> state = "PAUSED_PLAYBACK"
             "Stop" -> { state = "STOPPED"; positionMs = 0 }
             "Seek" -> {
