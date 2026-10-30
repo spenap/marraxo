@@ -7,6 +7,10 @@
 
 directory: ~/Music-clean
 per_disc_numbering: yes # disc 2 starts again at track 1
+# ID3v2.3, not beets' default v2.4: Android's media scanner reads the year
+# only from v2.3's TYER and shows no year for v2.4 files (checked on the
+# Pixel 5, Android 17, 2026-10-30).
+id3v23: yes
 library: tools/beets/out/library.db
 
 import:
