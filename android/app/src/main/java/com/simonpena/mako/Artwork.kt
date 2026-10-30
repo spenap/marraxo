@@ -95,6 +95,18 @@ suspend fun loadArt(context: Context, albumId: Long, px: Int): Art? = withContex
     }.getOrNull()?.also { cache.put(key, it) }
 }
 
+/** Cover as JPEG bytes, for renderers that show artwork (the TV). Blocking. */
+fun coverJpeg(context: Context, albumId: Long, px: Int = 500): ByteArray? = runCatching {
+    val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        context.contentResolver.loadThumbnail(
+            ContentUris.withAppendedId(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumId), Size(px, px), null,
+        )
+    } else {
+        decodeSampled(context, albumArtUri(albumId), px)
+    } ?: return@runCatching null
+    java.io.ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+}.getOrNull()
+
 @Composable
 fun rememberArt(albumId: Long, px: Int): Art? {
     val context = LocalContext.current

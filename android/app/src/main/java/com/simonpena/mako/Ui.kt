@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -60,7 +62,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simonpena.mako.upnp.Renderer
+import com.simonpena.mako.upnp.discoverRenderers
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 // Glow tokens, from docs/mockups/prototype.html.
 private val GBg = Color(0xFF0C1112)
@@ -69,6 +75,7 @@ private val GFaint = Color.White.copy(alpha = .16f)
 private val GHi = Color(0xFF9FD6CF)
 private val GDeep = Color(0xFF0B1415)
 private val GDeepest = Color(0xFF070D0E)
+private val GSheet = Color(0xFF161D1E)
 
 private fun display(size: Int) = TextStyle(
     fontSize = size.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.02 * size).sp, color = Color.White,
@@ -303,6 +310,7 @@ private fun rememberPosition(player: PlayerHolder, key: Any): Long {
 private fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClose: () -> Unit) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
     val pos = rememberPosition(player, track.id)
+    var outputs by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to tint, .62f to GDeep, 1f to GDeepest))) {
         Column(
             Modifier.fillMaxSize().systemBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
@@ -345,28 +353,109 @@ private fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClose
                     }
                 }
             }
-            OutputRow()
+            OutputRow(player.output) { outputs = true }
+        }
+        if (outputs) OutputSheet(player) { outputs = false }
+    }
+}
+
+private fun outputIcon(output: Renderer?) = when {
+    output == null -> GlowIcons.Phone
+    output.isSpeaker -> GlowIcons.Speaker
+    else -> GlowIcons.Tv
+}
+
+@Composable
+private fun OutputRow(output: Renderer?, onClick: () -> Unit) {
+    Column(Modifier.clickable(onClick = onClick)) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(outputIcon(output), null, tint = GHi, modifier = Modifier.size(18.dp))
+            Text(
+                buildAnnotatedString {
+                    append("Playing on ")
+                    withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.SemiBold)) {
+                        append(output?.name ?: "This phone")
+                    }
+                },
+                style = TextStyle(fontSize = 13.sp, color = GSoft),
+                modifier = Modifier.padding(start = 8.dp).weight(1f),
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            Text("Change", style = TextStyle(fontSize = 12.sp, color = GSoft))
         }
     }
 }
 
-/** Only "This phone" for now; the picker arrives with UPnP (roadmap B1). */
+/** Pick where to play: this phone, a Sonos room or the TV, found on the Wi-Fi. */
 @Composable
-private fun OutputRow() {
-    Column {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(GlowIcons.Phone, null, tint = GHi, modifier = Modifier.size(18.dp))
-            Text(
-                buildAnnotatedString {
-                    append("Playing on ")
-                    withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.SemiBold)) { append("This phone") }
-                },
-                style = TextStyle(fontSize = 13.sp, color = GSoft),
-                modifier = Modifier.padding(start = 8.dp).weight(1f),
-            )
-            Text("Headphones", style = TextStyle(fontSize = 12.sp, color = GSoft))
+private fun OutputSheet(player: PlayerHolder, onClose: () -> Unit) {
+    val context = LocalContext.current
+    var found by remember { mutableStateOf<List<Renderer>?>(null) }
+    LaunchedEffect(Unit) {
+        found = withContext(Dispatchers.IO) { runCatching { discoverRenderers(context) }.getOrDefault(emptyList()) }
+    }
+    BackHandler(onBack = onClose)
+    val current = player.output
+    // Keep the current output listed even if this search missed it.
+    val renderers = (found.orEmpty() + listOfNotNull(current)).distinctBy { it.avTransport }
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .5f)).pointerInput(Unit) { detectTapGestures { onClose() } }) {
+        Column(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp))
+                .background(GSheet)
+                .pointerInput(Unit) { detectTapGestures { } } // taps inside don't close it
+                .navigationBarsPadding()
+                .padding(top = 10.dp, bottom = 14.dp),
+        ) {
+            Box(Modifier.align(Alignment.CenterHorizontally).size(36.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(GFaint))
+            Text("Play on", style = display(20), modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 10.dp))
+            OutputOption(GlowIcons.Phone, "This phone", "Headphones or Bluetooth", current == null) {
+                player.playOn(null)
+                onClose()
+            }
+            renderers.forEach { r ->
+                OutputOption(outputIcon(r), r.name, r.model.ifEmpty { if (r.isSpeaker) "Speaker" else "TV" }, current?.avTransport == r.avTransport) {
+                    player.playOn(r)
+                    onClose()
+                }
+            }
+            Box(Modifier.padding(top = 6.dp).fillMaxWidth().height(1.dp).background(GFaint))
+            Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(6.dp).clip(CircleShape).background(GHi))
+                Text(
+                    when {
+                        found == null -> "Looking for speakers and TVs…"
+                        found!!.isEmpty() -> "No speakers or TVs found on this Wi-Fi"
+                        else -> "Found on this Wi-Fi"
+                    },
+                    style = TextStyle(fontSize = 12.sp, color = GSoft),
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun OutputOption(icon: ImageVector, name: String, detail: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(40.dp).clip(CircleShape).background(if (selected) GHi else Color.White.copy(alpha = .08f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, null, tint = if (selected) Color(0xFF0B1A1A) else Color.White, modifier = Modifier.size(20.dp))
+        }
+        Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Text(name, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = TextStyle(fontSize = 13.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (selected) Icon(GlowIcons.Check, null, tint = GHi, modifier = Modifier.size(22.dp))
     }
 }
 

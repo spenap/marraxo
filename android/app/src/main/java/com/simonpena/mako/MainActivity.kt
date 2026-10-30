@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -39,8 +40,15 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.BLACK),
         )
         super.onCreate(savedInstanceState)
-        volumeControlStream = AudioManager.STREAM_MUSIC // volume keys = music, even when paused
         player = PlayerHolder(this)
+        // Volume keys: music volume on this phone, even when paused. On a
+        // speaker or the TV, let the system send them to the session, which
+        // sets the renderer's volume.
+        lifecycleScope.launch {
+            snapshotFlow { player.output }.collect {
+                volumeControlStream = if (it == null) AudioManager.STREAM_MUSIC else AudioManager.USE_DEFAULT_STREAM_TYPE
+            }
+        }
         refreshPermission()
         setContent {
             MakoApp(

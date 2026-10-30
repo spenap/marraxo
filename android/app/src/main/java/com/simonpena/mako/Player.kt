@@ -2,6 +2,7 @@ package com.simonpena.mako
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.Bundle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -11,6 +12,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
+import androidx.media3.session.SessionCommand
+import com.simonpena.mako.upnp.Renderer
 import androidx.media3.session.SessionToken
 
 /** The UI's handle on [PlaybackService], exposing player state as Compose state. */
@@ -25,6 +28,9 @@ class PlayerHolder(context: Context) {
         private set
     var repeatMode by mutableIntStateOf(Player.REPEAT_MODE_OFF)
         private set
+    /** The speaker or TV playing, or null for this phone. */
+    var output by mutableStateOf<Renderer?>(null)
+        private set
 
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = sync(player)
@@ -32,12 +38,17 @@ class PlayerHolder(context: Context) {
 
     init {
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
-        val future = MediaController.Builder(context, token).buildAsync()
+        val future = MediaController.Builder(context, token)
+            .setListener(object : MediaController.Listener {
+                override fun onExtrasChanged(controller: MediaController, extras: Bundle) = syncOutput(extras)
+            })
+            .buildAsync()
         future.addListener({
             val c = future.get()
             c.addListener(listener)
             controller = c
             sync(c)
+            syncOutput(c.sessionExtras)
         }, ContextCompat.getMainExecutor(context))
     }
 
@@ -46,6 +57,15 @@ class PlayerHolder(context: Context) {
         currentTrackId = p.currentMediaItem?.mediaId?.toLongOrNull()
         shuffle = p.shuffleModeEnabled
         repeatMode = p.repeatMode
+    }
+
+    private fun syncOutput(extras: Bundle) {
+        output = extras.getBundle(PlaybackService.EXTRA_OUTPUT)?.let(Renderer::fromBundle)
+    }
+
+    /** Moves playback to [renderer], or back to this phone when null. */
+    fun playOn(renderer: Renderer?) {
+        controller?.sendCustomCommand(SessionCommand(PlaybackService.SET_OUTPUT, Bundle.EMPTY), renderer?.toBundle() ?: Bundle.EMPTY)
     }
 
     /** Plays [tracks] starting at [index]: the queue becomes the album. */
@@ -92,6 +112,8 @@ class PlayerHolder(context: Context) {
     }
 }
 
+const val EXTRA_ALBUM_ID = "albumId"
+
 private fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(id.toString())
     .setUri(uri)
@@ -102,6 +124,7 @@ private fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
             .setArtist(artist)
             .setAlbumTitle(album)
             .setDurationMs(durationMs)
+            .setExtras(Bundle().apply { putLong(EXTRA_ALBUM_ID, albumId) })
             .setArtworkUri(legacyArtworkUri(albumId))
             .build()
     )

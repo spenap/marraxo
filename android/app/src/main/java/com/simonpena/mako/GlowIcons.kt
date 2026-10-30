@@ -20,6 +20,9 @@ object GlowIcons {
     val Shuffle = stroked("M3 7h3.5l10 10H20M3 17h3.5l3-3M13.5 10l3-3H20M17.5 4.5L20 7l-2.5 2.5M17.5 14.5L20 17l-2.5 2.5")
     val Repeat = stroked("M4 11V9.5A2.5 2.5 0 0 1 6.5 7H19M16 4l3 3-3 3M20 13v1.5a2.5 2.5 0 0 1-2.5 2.5H5M8 20l-3-3 3-3")
     val Phone = stroked("M9 2.5h6a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2zM11 18.5h2")
+    val Speaker = stroked("M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM15.2 14a3.2 3.2 0 1 1-6.4 0a3.2 3.2 0 1 1 6.4 0zM12.9 7.5a.9 .9 0 1 1-1.8 0a.9 .9 0 1 1 1.8 0z")
+    val Tv = stroked("M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v9.5a1.5 1.5 0 0 1-1.5 1.5H4a1.5 1.5 0 0 1-1.5-1.5V6A1.5 1.5 0 0 1 4 4.5zM8 20.5h8")
+    val Check = stroked("M5 12.5l4.5 4.5L19 7", width = 2.2f)
 }
 
 private fun builder() = ImageVector.Builder(

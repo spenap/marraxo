@@ -12,11 +12,16 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Speakers and the TV over the LAN (UPnP): discovery, control and serving tracks. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="Mako"
-        android:theme="@style/Theme.Mako">
+        android:theme="@style/Theme.Mako"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"

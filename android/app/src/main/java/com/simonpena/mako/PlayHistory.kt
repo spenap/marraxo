@@ -31,7 +31,7 @@ class PlayHistory(context: Context) : SQLiteOpenHelper(context, "history.db", nu
                 duration_ms INTEGER,
                 listened_ms INTEGER NOT NULL, -- time actually playing
                 ended TEXT NOT NULL,          -- completed | skipped | stopped
-                output TEXT NOT NULL          -- where it played: phone, later a renderer
+                output TEXT NOT NULL          -- "phone", or the speaker or TV's name
             )
             """.trimIndent()
         )
@@ -41,7 +41,9 @@ class PlayHistory(context: Context) : SQLiteOpenHelper(context, "history.db", nu
 }
 
 /** Follows the player and writes one [PlayHistory] row per track heard. */
-class PlayRecorder(private val history: PlayHistory, private val player: Player) : Player.Listener {
+class PlayRecorder(private val history: PlayHistory, private var player: Player) : Player.Listener {
+    private var output = "phone"
+
     private val writer = Executors.newSingleThreadExecutor()
     private var item: MediaItem? = null
     private var startedAt = 0L
@@ -73,6 +75,15 @@ class PlayRecorder(private val history: PlayHistory, private val player: Player)
         if (playbackState == Player.STATE_ENDED) finish("completed")
     }
 
+    /** Follows [player] from now on; the track in progress ends as "stopped". */
+    fun attach(player: Player, output: String) {
+        finish("stopped")
+        this.player.removeListener(this)
+        this.player = player
+        this.output = output
+        player.addListener(this)
+    }
+
     /** Call before releasing the player: records the track in progress. */
     fun close() {
         finish("stopped")
@@ -100,7 +111,7 @@ class PlayRecorder(private val history: PlayHistory, private val player: Player)
                 put("duration_ms", meta.durationMs)
                 put("listened_ms", listenedMs)
                 put("ended", ended)
-                put("output", "phone")
+                put("output", output)
             }
             writer.execute { history.writableDatabase.insert("plays", null, row) }
         }
