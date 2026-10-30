@@ -160,6 +160,10 @@ Needs A1 and B0.
       seconds while paused, and GENA events instead of polling (B0),
       should let Wi-Fi and the CPU sleep. Test first; measure again with
       the rundown script.
+- [ ] Measure the phone's baseline draw: 30 min, screen off, Wi-Fi on,
+      charging off, Mako stopped. The app's share is playing minus
+      baseline (292 mA playing to a speaker on 2026-10-30, baseline not
+      yet measured). Repeat both after the polling fix to quantify it.
 - [ ] Sonos groups (Estudio + Cocina), and the TV from the app.
 - [x] Shuffle and repeat on a renderer; they move with the queue between
       the phone and a speaker.
