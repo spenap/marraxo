@@ -54,12 +54,35 @@ IPs come from DHCP and may change; always find devices by discovery.
   `audio/x-wav`, `audio/L16`, `audio/vnd.dlna.adts`, `audio/x-ms-wma`,
   among others. MP3 needs no transcoding.
 
+## Playback test: Estudio (2026-10-30)
+
+`tools/upnp/probe.py estudio <file>` served one MP3 (7.1 MB, 4:53,
+Altan, *Daily Growing*) from the laptop and drove AVTransport. Everything
+worked on the first try, with DIDL-Lite metadata and
+`protocolInfo="http-get:*:audio/mpeg:*"`.
+
+- `SetAVTransportURI`, `Play`, `Seek` (`REL_TIME`), `Pause`, `Stop`,
+  `GetPositionInfo`, `GetTransportInfo` and `Get/SetVolume` all succeed.
+  The position is reported to the second; the duration (0:04:53) comes
+  from the file.
+- On `SetAVTransportURI` the speaker probes the file before `Play`: a
+  plain GET (abandoned after ~190 KB), then `Range: bytes=20695-` (the
+  end of the ID3 tag) and `Range: bytes=10-`. **Byte ranges must work.**
+- It then **downloads the whole file in ~2.6 s** and plays from its own
+  buffer. A seek within the track made no new HTTP request.
+  Consequence for the phone: a burst of a few MB per track, then idle;
+  the HTTP server need not stay busy during playback, but the phone must
+  stay reachable for the next track.
+- Request headers: `User-Agent: Linux UPnP/1.0 Sonos/96.0-79160 (ZPS38)`,
+  `X-Sonos-SWGen: 2`, `X-Sonos-Firmware`, `X-Sonos-Muse-Api: 1.53.1`.
+  No `getcontentFeatures.dlna.org` request.
+- No laptop firewall changes were needed for an ephemeral port.
+
 ## Still to test
-- `SetAVTransportURI` + `Play` with an MP3 served over HTTP from the laptop,
-  on one Sonos and on the TV.
-- Seek, duration reporting, byte-range requests and the HTTP headers each
-  device sends.
-- Pause/stop, volume, GENA event subscriptions.
+- `SetAVTransportURI` + `Play` on the TV (done on Estudio).
+- Seek, duration reporting, byte ranges and request headers on the TV.
+- GENA event subscriptions (track end, state changes) on both.
+- Gapless or queued playback: `SetNextAVTransportURI`, or the Sonos queue.
 - Sonos: grouping the two rooms and playing to the group.
 - TV: does it need DIDL-Lite metadata with a matching `protocolInfo`? Does
   it show an "allow this device" prompt the first time? Does it wake from

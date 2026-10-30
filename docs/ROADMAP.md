@@ -73,11 +73,12 @@ Done in a separate repository.
 ### B0. Renderer feasibility from the laptop
 - [x] Check whether the speakers use the S1 or S2 app/firmware. (S2, 18.6)
 - [x] SSDP discovery finds both One SLs (and their group, if any).
-- [ ] Serve an MP3 over HTTP from the laptop; `SetAVTransportURI` + `Play`
-      makes a speaker fetch and play it.
-- [ ] Seek works and duration is reported correctly. Test with byte-range
+- [x] Serve an MP3 over HTTP from the laptop; `SetAVTransportURI` + `Play`
+      makes a speaker fetch and play it. (Estudio, `tools/upnp/probe.py`)
+- [x] Seek works and duration is reported correctly. Test with byte-range
       requests and check which HTTP headers Sonos actually sends.
-- [ ] Pause/stop/volume (RenderingControl) and a GENA subscription work.
+- [x] Pause/stop/volume (RenderingControl) work.
+- [ ] A GENA subscription reports state changes and track end.
 - [ ] Group behaviour: commands sent to the group coordinator play in sync.
 - [x] Samsung The Frame TV found as a DLNA renderer with AVTransport;
       accepts MP3/FLAC/AAC.
