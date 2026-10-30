@@ -218,10 +218,10 @@ others run on demand.
       Sonos (downloads the whole file) or the TV (needs DLNA headers,
       streams with ranges). Tests hand-over, next, track end, pause and
       "taken over by another controller" through `RendererPlayer`.
-- [ ] **T3. CI**: written (`.github/workflows/ci.yml`, GitHub Actions), not yet run:
-      needs a git remote. A hosted pipeline that builds the release APK and runs
-      T1–T2 (`./gradlew testReleaseUnitTest assembleRelease`), plus pytest
-      for `tools/`. Needs a git remote.
+- [ ] **T3. CI**: a hosted pipeline that runs T1–T2 and builds the release
+      APK (`./gradlew testDebugUnitTest assembleRelease`). Written for
+      GitHub Actions (`.github/workflows/ci.yml`); not run yet, as the repo
+      has no remote. Still to add: pytest for `tools/`.
 - [ ] **T4. UI tests** (Compose, emulator in CI or the Nexus 4 locally):
       tabs and filters, hide and show, search plays a result, the queue
       restored after the app is killed, rescan messages.
