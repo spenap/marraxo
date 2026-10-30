@@ -213,6 +213,24 @@ desktop and shipped as `discovery.db`.
 - [ ] D2: package `discovery.db`; app "Sounds like", Moods, Map (A5).
 - [ ] D3: radio sequencing; play-history signals.
 
+### C5. Lyrics
+- [ ] Fetch synced lyrics (LRC) from LRCLIB once per track on the desktop
+      (open, no key; full dumps available), cached like the liner notes;
+      ship them in `linernotes.db`. Never committed (copyright).
+- [ ] App: a lyrics view in Now Playing, the current line highlighted and
+      scrolling with the music, on the phone and on speakers. Hidden for
+      instrumentals.
+
+### C6. Recognise a song from your library (Shazam-style, offline)
+- [ ] Desktop prototype: index the library with landmark fingerprints
+      (spectrogram peak pairs; e.g. audfprint, or Olaf/Panako, check
+      licences), then match 5–10 s clips recorded on the phone near a
+      speaker. Done when 9 of 10 clips find the right song.
+- [ ] Ship the index; the app records with the microphone (asked only
+      when used), matches on the phone, and opens the album.
+- AcoustID fingerprints from beets don't fit this: they identify clean
+  whole files, not noisy clips.
+
 ### C2. Safe writing (Phase 5)
 - [ ] Backup, change manifest, reversible writes, validation.
 
