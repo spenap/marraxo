@@ -225,8 +225,8 @@ others run on demand.
 - [ ] **T4. UI tests** (Compose, emulator in CI or the Nexus 4 locally):
       tabs and filters, hide and show, search plays a result, the queue
       restored after the app is killed, rescan messages.
-- [ ] **T5. Performance gate** (Macrobenchmark or `scroll-bench.sh` with a
-      threshold), real phone only: fail above 5% janky frames.
+- [x] **T5. Performance gate**: `scroll-bench.sh` fails above 5% janky
+      frames (`MAX_JANKY`) or under 100 frames drawn. Real phone only.
 - [ ] **T6. Hardware smoke tests**: `tools/upnp/probe.py` with assertions,
       against the real speakers and TV, run by hand.
 

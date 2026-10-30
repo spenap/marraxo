@@ -15,7 +15,8 @@ SL speakers or a Samsung TV.
   Install on a phone: `android/scripts/install.sh` (release build +
   ahead-of-time compile). Judge performance only on that: the debug build
   is ~100 ms/frame on the Nexus 4. Measure with
-  `android/scripts/scroll-bench.sh` (`dumpsys gfxinfo`). SDK in
+  `android/scripts/scroll-bench.sh` (`dumpsys gfxinfo`; fails above 5%
+  janky frames). SDK in
   `~/Android/Sdk`, JDK 17.
 - `tools/`: Python desktop tools (music library inventory/enrichment).
 - `docs/`: plans, decisions, protocol notes, mockups.
