@@ -4,6 +4,19 @@ package com.simonpena.mako
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.platform.testTag
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
@@ -364,23 +377,123 @@ private fun LibraryScreen(
                     }
                 }
             }
-            Tab.Years -> {
-                val years = remember(library) { library.groupBy { it.year }.toList().sortedByDescending { (y, _) -> if (y > 0) y else -1 } }
-                LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
-                    years.forEach { (year, albums) ->
-                        item(key = "y$year") {
-                            Text(
-                                if (year > 0) "$year" else "Unknown year", style = display(20),
-                                modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
-                            )
-                        }
-                        items(albums, key = { it.id }) { album ->
-                            ListRow(album.id, round = false, title = album.title, detail = album.artist) { onAlbum(album.id) }
-                        }
-                    }
+            Tab.Years -> YearsList(library, state.lists.getValue(Tab.Years), bottom, onAlbum)
+        }
+    }
+}
+
+/**
+ * Albums by year with a scrubber on the right: drag or tap it to jump.
+ * While scrolling fast a label shows the decade; as it slows, the year.
+ */
+@Composable
+private fun YearsList(library: List<Album>, list: LazyListState, bottom: Dp, onAlbum: (Long) -> Unit) {
+    val years = remember(library) { library.groupBy { it.year }.toList().sortedByDescending { (y, _) -> if (y > 0) y else -1 } }
+    val rows = remember(years) { YearRows(years.map { (year, albums) -> year to albums.size }) }
+    val zoom = remember { ScrollZoom() }
+    var coarse by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
+    var showLabel by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Speed in rows per second, from each change of the top row: nothing runs
+    // while the list is still. No change for a moment counts as slowing down.
+    LaunchedEffect(list) {
+        var lastRow = list.firstVisibleItemIndex
+        var lastTime = System.nanoTime()
+        var speed = 0f
+        snapshotFlow { list.firstVisibleItemIndex }.drop(1).collectLatest { row -> // the first is where it starts, not a movement
+            val now = System.nanoTime()
+            val seconds = (now - lastTime) / 1e9f
+            if (seconds > 0) speed = .5f * speed + .5f * ((row - lastRow) / seconds) // smoothed
+            lastRow = row
+            lastTime = now
+            zoom.onSpeed(speed)
+            coarse = zoom.coarse
+            showLabel = true
+            delay(250) // no new row since: slowing down, narrow to the year
+            speed = 0f
+            zoom.onSpeed(0f)
+            coarse = false
+            delay(700)
+            if (!dragging) showLabel = false
+        }
+    }
+    val label by remember(rows) { derivedStateOf { yearLabel(rows.yearAt(list.firstVisibleItemIndex), coarse) } }
+
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = 28.dp)) {
+            years.forEach { (year, albums) ->
+                item(key = "y$year") {
+                    Text(
+                        if (year > 0) "$year" else "Unknown year", style = display(20),
+                        modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
+                    )
+                }
+                items(albums, key = { it.id }) { album ->
+                    ListRow(album.id, round = false, title = album.title, detail = album.artist) { onAlbum(album.id) }
                 }
             }
         }
+        YearScrubber(
+            rows, list,
+            onDrag = { fraction ->
+                dragging = true
+                showLabel = true
+                scope.launch { list.scrollToItem(rows.rowAt(fraction)) }
+            },
+            onRelease = { dragging = false },
+            modifier = Modifier.align(Alignment.TopEnd).padding(bottom = bottom).navigationBarsPadding(),
+        )
+        if (showLabel || dragging) {
+            Text(
+                label, style = display(22),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
+                    .clip(RoundedCornerShape(20.dp)).background(GSheet).padding(horizontal = 18.dp, vertical = 8.dp)
+                    .testTag("yearLabel"),
+            )
+        }
+    }
+}
+
+/** The strip on the right of the Years list: decade marks, a thumb, and touch to jump. */
+@Composable
+private fun YearScrubber(
+    rows: YearRows,
+    list: LazyListState,
+    onDrag: (fraction: Float) -> Unit,
+    onRelease: () -> Unit,
+    modifier: Modifier,
+) {
+    BoxWithConstraints(
+        modifier.fillMaxHeight().width(28.dp).testTag("yearScrubber").pointerInput(rows) {
+            awaitEachGesture {
+                val down = awaitFirstDown()
+                onDrag(down.position.y / size.height)
+                do {
+                    val event = awaitPointerEvent()
+                    event.changes.forEach { change ->
+                        onDrag(change.position.y / size.height)
+                        change.consume()
+                    }
+                } while (event.changes.any { it.pressed })
+                onRelease()
+            }
+        },
+    ) {
+        val height = constraints.maxHeight.toFloat()
+        val minGap = with(LocalDensity.current) { 16.dp.toPx() }
+        rows.visibleMarks(height, minGap).forEach { mark ->
+            Text(
+                mark.label, style = TextStyle(fontSize = 10.sp, color = GSoft),
+                modifier = Modifier.align(Alignment.TopCenter).offset { IntOffset(0, (mark.fraction * height).toInt()) },
+            )
+        }
+        val thumb by remember(rows) { derivedStateOf { rows.fractionOf(list.firstVisibleItemIndex) } }
+        Box(
+            Modifier.align(Alignment.TopEnd).offset { IntOffset(0, (thumb * height).toInt()) }
+                .size(3.dp, 22.dp).clip(RoundedCornerShape(2.dp)).background(GHi),
+        )
     }
 }
 
