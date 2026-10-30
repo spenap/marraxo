@@ -85,8 +85,8 @@ values, so the phone can be put back as it was.
       Done when Home lands in Mako and Android Settings is two taps away.
 - [ ] **No lock screen:** screen lock set to None, so waking the phone
       lands in the player.
-- [ ] **Waking without the power button** (worn: it misses presses, so
-      nothing should depend on it):
+- [ ] **Waking without the power button** (worn: it works only when
+      pressed firmly, so offer easier ways; it stays the fallback):
       - plugging or unplugging the cable already wakes it
         (`wake_when_plugged_or_unplugged=1`);
       - volume keys: try LineageOS's volume-wake setting; if this build
