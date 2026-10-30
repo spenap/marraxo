@@ -9,6 +9,9 @@ Pause, Stop. Volume is set low first and restored at the end.
 With --next, it queues a second file with SetNextAVTransportURI, seeks
 near the end of the first and checks that the renderer moves on by itself.
 
+Each step is also checked; the run ends with PASS or FAIL (exit code 1),
+so it works as a smoke test of a real speaker or TV (roadmap T6).
+
 Usage: probe.py RENDERER FILE [--next FILE] [--volume N] [--listen SECONDS]
 RENDERER is one of the names in RENDERERS below.
 """
@@ -20,6 +23,7 @@ import mimetypes
 import os
 import re
 import socket
+import sys
 import threading
 import time
 import urllib.request
@@ -42,6 +46,23 @@ RC = "urn:schemas-upnp-org:service:RenderingControl:1"
 DLNA_FEATURES = "DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000"
 
 start = time.monotonic()
+failures = []
+
+
+def check(what, ok, detail=""):
+    """Records one expectation about the renderer; failures fail the run."""
+    log(f"{'ok  ' if ok else 'FAIL'} {what}{f' ({detail})' if detail else ''}")
+    if not ok:
+        failures.append(what)
+
+
+def seconds(t):
+    """'0:01:30' or '0:00:02.035' → seconds; None if unknown."""
+    try:
+        h, m, s = t.split(":")
+        return int(h) * 3600 + int(m) * 60 + float(s)
+    except (AttributeError, ValueError):
+        return None
 
 
 def describe(path):
@@ -231,53 +252,73 @@ def main():
     try:
         ok, _ = avt_call("SetAVTransportURI", ("CurrentURI", url),
                          ("CurrentURIMetaData", didl(url, mime, infos["track"], art["track"])))
-        log(f"SetAVTransportURI ok={ok}")
+        check("SetAVTransportURI accepted", ok)
         ok, _ = avt_call("Play", ("Speed", 1))
-        log(f"Play ok={ok}")
+        check("Play accepted", ok)
+        # The TV can take several seconds to start (TRANSITIONING); measure from there.
+        asked = time.monotonic()
+        state, pos = status()
+        while state != "PLAYING" and time.monotonic() - asked < 15:
+            time.sleep(1)
+            state, pos = status()
+        check("starts playing", state == "PLAYING", f"after {time.monotonic() - asked:.1f} s")
+        positions = []
         for _ in range(a.listen // 2):
             time.sleep(2)
-            _, pos = status()
+            state, pos = status()
+            positions.append(seconds(pos.get("RelTime")))
+        check("keeps playing", state == "PLAYING", state)
+        heard = [p for p in positions if p is not None]
+        check("position advances", len(heard) > 1 and heard[-1] - heard[0] >= a.listen / 2,
+              f"{heard[0] if heard else '?'} → {heard[-1] if heard else '?'} s")
         if next_url:
             next_mime = files["/next" + os.path.splitext(a.next)[1].lower()][1]
             ok, _ = avt_call("SetNextAVTransportURI", ("NextURI", next_url),
                              ("NextURIMetaData", didl(next_url, next_mime, infos["next"], art["next"])))
-            log(f"SetNextAVTransportURI ok={ok}")
+            check("SetNextAVTransportURI accepted", ok)
             _, m = avt_call("GetMediaInfo")
-            log(f"NextURI reported: {m.get('NextURI') or '(empty)'}")
+            check("next track reported back", m.get("NextURI") == next_url, m.get("NextURI") or "empty")
             reported = pos.get("TrackDuration", "0:00:00")
             known = reported if reported != "0:00:00" else infos["track"].get("duration", reported)
             h, mnt, sec = (int(float(x)) for x in known.split(":"))
             end = max(0, h * 3600 + mnt * 60 + sec - 8)
             target = f"{end // 3600}:{end // 60 % 60:02}:{end % 60:02}"
             ok, _ = avt_call("Seek", ("Unit", "REL_TIME"), ("Target", target))
-            log(f"Seek to {target} (8 s before the end) ok={ok}")
+            check(f"Seek to {target} (8 s before the end) accepted", ok)
+            moved_on = False
             for _ in range(10):
                 time.sleep(2)
-                status()
+                _, pos = status()
+                moved_on = moved_on or pos.get("TrackURI") == next_url
+            check("moves to the next track by itself", moved_on)
             return
         ok, _ = avt_call("Seek", ("Unit", "REL_TIME"), ("Target", "0:01:30"))
-        log(f"Seek to 1:30 ok={ok}")
-        for _ in range(4):
-            time.sleep(2)
-            status()
+        check("Seek to 1:30 accepted", ok)
+        time.sleep(2)
+        _, pos = status()
+        landed = seconds(pos.get("RelTime"))
+        check("seek lands near 1:30", landed is not None and 89 <= landed <= 96, f"{landed} s")
         ok, _ = avt_call("Pause")
-        log(f"Pause ok={ok}")
         time.sleep(3)
-        status()
+        state, _ = status()
+        check("pauses", ok and state == "PAUSED_PLAYBACK", state)
         ok, _ = avt_call("Play", ("Speed", 1))
-        log(f"Resume ok={ok}")
         time.sleep(4)
-        status()
+        state, _ = status()
+        check("resumes", ok and state == "PLAYING", state)
     finally:
         ok, _ = avt_call("Stop")
-        log(f"Stop ok={ok}")
         time.sleep(1)
-        status()
+        state, _ = status()
+        check("stops", ok and state == "STOPPED", state)
         if old_volume is not None:
             soap(host, port, rc, RC, "SetVolume",
                  (("InstanceID", 0), ("Channel", "Master"), ("DesiredVolume", old_volume)))
-            log(f"Volume restored to {old_volume}")
+            _, v = soap(host, port, rc, RC, "GetVolume", (("InstanceID", 0), ("Channel", "Master")))
+            check("volume restored", v.get("CurrentVolume") == old_volume, f"{v.get('CurrentVolume')}, was {old_volume}")
         server.shutdown()
+        log(f"FAIL: {', '.join(failures)}" if failures else "PASS")
+        sys.exit(1 if failures else 0)
 
 
 if __name__ == "__main__":

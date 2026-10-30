@@ -109,6 +109,9 @@ Same probe, `--next` to test queueing. Works, once the server speaks DLNA:
   GetMediaInfo, GetTransportInfo, GetPositionInfo, GetTransportSettings,
   GetDeviceCapabilities, GetCurrentTransportActions.
 - No "allow this device" prompt appeared from the laptop.
+- Slow to start: 8.4 s from `Play` to `PLAYING` on one run (screen waking,
+  long `TRANSITIONING`), against well under a second for Sonos. The app
+  must not treat that as a failure.
 
 ## Remote control from a second phone
 
