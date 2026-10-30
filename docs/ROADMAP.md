@@ -221,7 +221,7 @@ others run on demand.
 - [ ] **T3. CI**: a hosted pipeline that runs T1–T2 and builds the release
       APK (`./gradlew testDebugUnitTest assembleRelease`). Written for
       GitHub Actions (`.github/workflows/ci.yml`); not run yet, as the repo
-      has no remote. Still to add: pytest for `tools/`.
+      has no remote. Also runs pytest for `tools/`.
 - [ ] **T4. UI tests** (Compose, emulator in CI or the Nexus 4 locally):
       tabs and filters, hide and show, search plays a result, the queue
       restored after the app is killed, rescan messages.
