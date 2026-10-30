@@ -56,6 +56,7 @@ class RendererPlayer(
     // The furthest point reached in this track: Sonos briefly reports 0:00 as a
     // track ends, so the last position alone can't tell an end from a stop.
     private var furthestMs = 0L
+    private var rendererDurationMs: Long? = null // the length the renderer measured, if it says
     private var volume = 0
     private var muted = false
     private var playerError: PlaybackException? = null
@@ -249,6 +250,7 @@ class RendererPlayer(
         val start = positionMs
         val play = playWhenReady
         furthestMs = start
+        rendererDurationMs = null
         playbackState = Player.STATE_BUFFERING
         loadedAt = SystemClock.elapsedRealtime()
         loading = true
@@ -330,6 +332,7 @@ class RendererPlayer(
                 playbackState = Player.STATE_READY
                 if (!settling) {
                     parseUpnpTime(position?.get("RelTime"))?.let(::reached)
+                    parseUpnpTime(position?.get("TrackDuration"))?.takeIf { it > 0 }?.let { rendererDurationMs = it }
                     if (!playWhenReady) { playWhenReady = true; updateLocks(); Log.i(TAG, "${renderer.name}: resumed elsewhere") }
                 }
             }
@@ -342,8 +345,12 @@ class RendererPlayer(
             }
             "TRANSITIONING" -> playbackState = Player.STATE_BUFFERING
             "STOPPED", "NO_MEDIA_PRESENT" -> if (!settling && playWhenReady) {
-                val duration = items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE
-                val ended = maxOf(lastPosition, furthestMs) >= duration - END_SLACK_MS
+                // Android's length for a variable-bitrate MP3 can be seconds too long
+                // (3:24.7 for audio ending at 3:17), so trust the renderer's own
+                // measure when it gives one, and allow 5% either way.
+                val duration = minOf(items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE, rendererDurationMs ?: Long.MAX_VALUE)
+                val slack = maxOf(END_SLACK_MS, duration / 20)
+                val ended = maxOf(lastPosition, furthestMs) >= duration - slack
                 // One line per decision, so a wrong one can be explained afterwards.
                 Log.i(TAG, "${renderer.name}: $state at last=$lastPosition furthest=$furthestMs duration=$duration " +
                     "reported=${position?.get("RelTime")} → ${if (ended) "track ended" else "stopped elsewhere"}")

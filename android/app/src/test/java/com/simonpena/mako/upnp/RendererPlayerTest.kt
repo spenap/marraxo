@@ -235,6 +235,36 @@ class RendererPlayerTest {
         assertTrue(player.playWhenReady)
     }
 
+    @Test fun `a track shorter than Android says still counts as ended`() {
+        // Seen on Estudio: Android said 3:24.7 for an MP3 whose audio ends at 3:17.
+        val (fake, player) = start(FakeRenderer.Kind.TV) // the TV only echoes the length we send
+        player.setMediaItems(listOf(item(1, "Long", file("l.mp3", 20_000), 204_748), item(2, "Next", file("n.mp3", 20_000), 200_000)))
+        player.prepare()
+        player.play()
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        idle(5_000)
+        fake.positionMs = 196_000
+        eventually("near the real end") { player.currentPosition >= 196_000 }
+        fake.positionMs = 0
+        fake.state = "STOPPED"
+        eventually("moves on") { player.currentMediaItemIndex == 1 && titleOnSpeaker(fake) == "Next" }
+    }
+
+    @Test fun `a stop well before the end is still someone stopping it`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(2))
+        player.prepare()
+        player.play()
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        idle(5_000)
+        fake.positionMs = 120_000 // 2:00 of 3:20
+        eventually("mid-track") { player.currentPosition >= 120_000 }
+        fake.positionMs = 0
+        fake.state = "STOPPED"
+        eventually("pauses here") { !player.playWhenReady }
+        assertEquals(0, player.currentMediaItemIndex)
+    }
+
     @Test fun `follows a pause made elsewhere`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
