@@ -31,6 +31,7 @@ data class Album(
     val artist: String,
     val year: Int,
     val tracks: List<Track>,
+    val genre: String = "",
 )
 
 /** Artists sort ignoring a leading "The", so The Strokes is under S. */
@@ -94,13 +95,35 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
             if (!c.isNull(year)) years[aId] = c.getInt(year)
         }
     }
+    val genres = trackGenres(context)
     tracks.groupBy { it.albumId }
         .map { (albumId, list) ->
             val sorted = list.sortedWith(compareBy({ it.number }, { it.title }))
             val first = sorted.first()
-            Album(albumId, first.album, first.artist, years[albumId] ?: 0, sorted)
+            // The genre most of the album's songs share.
+            val genre = list.mapNotNull { genres[it.id] }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key.orEmpty()
+            Album(albumId, first.album, first.artist, years[albumId] ?: 0, sorted, genre)
         }
         .sortedWith(compareBy({ sortKey(it.artist) }, { it.year }, { it.title }))
+}
+
+/** Track id → genre. Android 8 keeps genres in their own table, one query per genre. */
+private fun trackGenres(context: Context): Map<Long, String> {
+    val result = HashMap<Long, String>()
+    val resolver = context.contentResolver
+    resolver.query(
+        MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
+        arrayOf(MediaStore.Audio.Genres._ID, MediaStore.Audio.Genres.NAME), null, null, null,
+    )?.use { g ->
+        while (g.moveToNext()) {
+            val name = g.getString(1)?.trim()?.takeIf { it.isNotEmpty() } ?: continue
+            resolver.query(
+                MediaStore.Audio.Genres.Members.getContentUri("external", g.getLong(0)),
+                arrayOf(MediaStore.Audio.Genres.Members.AUDIO_ID), null, null, null,
+            )?.use { m -> while (m.moveToNext()) result[m.getLong(0)] = name }
+        }
+    }
+    return result
 }
 
 private val AUDIO = setOf("mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wav", "mpc")

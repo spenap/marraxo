@@ -50,6 +50,8 @@ Done in a separate repository.
 
 ### A3. Library and visual design (brief Milestone 2)
 - [ ] Album/artist browsing, cached artwork, search, queue, favourites.
+      Done: tabs (Albums, Artists, Genres, Years) with artist/genre filters,
+      search ignoring accents and case. Still to do: queue, favourites.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
 - [ ] Radio v0: long-press a track → Start radio. Biases on tags and

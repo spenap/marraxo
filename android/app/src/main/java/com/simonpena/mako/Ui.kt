@@ -4,6 +4,15 @@ package com.simonpena.mako
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import java.text.Normalizer
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -94,6 +103,7 @@ private sealed interface Screen {
     data object NowPlaying : Screen
     data object About : Screen
     data object Hidden : Screen
+    data object Search : Screen
 }
 
 private fun fmt(ms: Long): String {
@@ -130,13 +140,19 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val currentTrack = currentAlbum?.tracks?.firstOrNull { it.id == player.currentTrackId }
     // What the library shows; the player above still finds hidden tracks it is playing.
     val visible = remember(library, hidden.albums, hidden.tracks) { hidden.filter(library) }
+    val libraryState = remember { LibraryState() }
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
-            visible, hasMini = currentTrack != null, status = status,
+            visible, libraryState, hasMini = currentTrack != null, status = status,
             onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
-            onHide = hidden::hide,
+            onSearch = { stack.add(Screen.Search) }, onHide = hidden::hide,
         ) { stack.add(Screen.AlbumDetail(it)) }
+        Screen.Search -> SearchScreen(
+            visible, onBack = { stack.removeAt(stack.lastIndex) },
+            onAlbum = { stack.add(Screen.AlbumDetail(it)) },
+            onPlay = { album, i -> player.play(album.tracks, i) },
+        )
         Screen.Hidden -> HiddenScreen(hidden) { stack.removeAt(stack.lastIndex) }
         Screen.About -> AboutScreen(library) { stack.removeAt(stack.lastIndex) }
         is Screen.AlbumDetail -> {
@@ -232,21 +248,38 @@ private fun PillButton(label: String, modifier: Modifier = Modifier, onClick: ()
 
 // ---------------------------------------------------------------- library
 
+private enum class Tab(val label: String) { Albums("Albums"), Artists("Artists"), Genres("Genres"), Years("Years") }
+
+/** Narrows the album grid to one artist or genre; shown as a removable chip. */
+private data class LibraryFilter(val label: String, val matches: (Album) -> Boolean)
+
+/** Library state that outlives visits to an album: tab, filter and scroll positions. */
+private class LibraryState {
+    var tab by mutableStateOf(Tab.Albums)
+    var filter by mutableStateOf<LibraryFilter?>(null)
+    val grid = LazyGridState()
+    val lists = Tab.entries.associateWith { LazyListState() } // each tab keeps its own scroll
+}
+
 @Composable
 private fun LibraryScreen(
     library: List<Album>,
+    state: LibraryState,
     hasMini: Boolean,
     status: String?,
     onRescan: () -> Unit,
     onAbout: () -> Unit,
     onHidden: () -> Unit,
+    onSearch: () -> Unit,
     onHide: (Album) -> Unit,
     onAlbum: (Long) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
+    val bottom = if (hasMini) 96.dp else 24.dp
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("Library", style = display(28), modifier = Modifier.weight(1f))
+            IconSpot(GlowIcons.Search, "Search", onClick = onSearch)
             Box {
                 IconSpot(GlowIcons.More, "More") { menu = true }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = GSheet) {
@@ -258,30 +291,169 @@ private fun LibraryScreen(
         }
         Text(
             status.orEmpty(), style = TextStyle(fontSize = 12.sp, color = GHi),
-            modifier = Modifier.padding(start = 16.dp, bottom = 10.dp).height(16.dp),
+            modifier = Modifier.padding(start = 16.dp).height(16.dp),
         )
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = if (hasMini) 96.dp else 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-            modifier = Modifier.navigationBarsPadding(),
-        ) {
-            items(library, key = { it.id }) { album ->
-                var options by remember { mutableStateOf(false) }
-                Column(Modifier.combinedClickable(onLongClick = { options = true }) { onAlbum(album.id) }) {
-                    AlbumArt(album.id, px = 336, corner = 8.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
-                    Text(
-                        album.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White),
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                    Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
-                    // Last in the column, so it opens below the album's name.
-                    DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                        DropdownMenuItem(text = { Text("Hide album", style = body) }, onClick = { options = false; onHide(album) })
+        Row(Modifier.padding(start = 8.dp, top = 2.dp, bottom = 10.dp)) {
+            Tab.entries.forEach { tab ->
+                val on = state.tab == tab
+                Column(
+                    Modifier.clip(RoundedCornerShape(6.dp)).clickable { state.tab = tab; if (tab != Tab.Albums) state.filter = null }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(tab.label, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (on) Color.White else GSoft))
+                    Box(Modifier.padding(top = 4.dp).size(18.dp, 2.dp).background(if (on) GHi else Color.Transparent))
+                }
+            }
+        }
+        val pick = { f: LibraryFilter -> state.filter = f; state.tab = Tab.Albums }
+        when (state.tab) {
+            Tab.Albums -> {
+                val filter = state.filter
+                val albums = if (filter == null) library else library.filter(filter.matches)
+                if (filter != null) {
+                    Row(Modifier.padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            Modifier.clip(CircleShape).background(Color.White.copy(alpha = .1f)).clickable { state.filter = null }
+                                .padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(filter.label, style = TextStyle(fontSize = 13.sp, color = Color.White))
+                            Icon(GlowIcons.Close, "Clear", tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
+                        }
+                        Text("${albums.size} albums", style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
                     }
                 }
+                AlbumGrid(albums, state.grid, bottom, onHide, onAlbum)
+            }
+            Tab.Artists -> {
+                val artists = remember(library) { library.groupBy { it.artist }.toList() } // already sorted by artist
+                LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
+                    items(artists, key = { it.first }) { (artist, albums) ->
+                        val songs = albums.sumOf { it.tracks.size }
+                        ListRow(albums.first().id, round = true, title = artist, detail = "${count(albums.size, "album")} · ${count(songs, "song")}") {
+                            pick(LibraryFilter(artist) { it.artist == artist })
+                        }
+                    }
+                }
+            }
+            Tab.Genres -> {
+                val genres = remember(library) {
+                    library.groupBy { it.genre.ifEmpty { "No genre" } }.toList().sortedBy { (g, _) -> if (g == "No genre") "\uffff" else g.lowercase() }
+                }
+                LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
+                    items(genres, key = { it.first }) { (genre, albums) ->
+                        ListRow(albums.first().id, round = false, title = genre, detail = count(albums.size, "album")) {
+                            pick(LibraryFilter(genre) { it.genre.ifEmpty { "No genre" } == genre })
+                        }
+                    }
+                }
+            }
+            Tab.Years -> {
+                val years = remember(library) { library.groupBy { it.year }.toList().sortedByDescending { (y, _) -> if (y > 0) y else -1 } }
+                LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
+                    years.forEach { (year, albums) ->
+                        item(key = "y$year") {
+                            Text(
+                                if (year > 0) "$year" else "Unknown year", style = display(20),
+                                modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
+                            )
+                        }
+                        items(albums, key = { it.id }) { album ->
+                            ListRow(album.id, round = false, title = album.title, detail = album.artist) { onAlbum(album.id) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun count(n: Int, noun: String) = if (n == 1) "1 $noun" else "$n ${noun}s"
+
+@Composable
+private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onHide: (Album) -> Unit, onAlbum: (Long) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        state = state,
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = bottom),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+        modifier = Modifier.navigationBarsPadding(),
+    ) {
+        items(albums, key = { it.id }) { album ->
+            var options by remember { mutableStateOf(false) }
+            Column(Modifier.combinedClickable(onLongClick = { options = true }) { onAlbum(album.id) }) {
+                AlbumArt(album.id, px = 336, corner = 8.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
+                Text(
+                    album.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White),
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
+                    DropdownMenuItem(text = { Text("Hide album", style = body) }, onClick = { options = false; onHide(album) })
+                }
+            }
+        }
+    }
+}
+
+/** A row with small artwork: artists (round), genres, albums by year, search results. */
+@Composable
+private fun ListRow(albumId: Long, round: Boolean, title: String, detail: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AlbumArt(albumId, px = 112, corner = if (round) 24.dp else 4.dp, modifier = Modifier.size(48.dp))
+        Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Text(title, style = body.copy(fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = TextStyle(fontSize = 13.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+private fun fold(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).replace(MARKS, "").lowercase()
+private val MARKS = Regex("\\p{Mn}+")
+
+/** Search albums, artists and songs; accents and case don't matter ("camaron" finds Camarón). */
+@Composable
+private fun SearchScreen(library: List<Album>, onBack: () -> Unit, onAlbum: (Long) -> Unit, onPlay: (Album, Int) -> Unit) {
+    var query by rememberSaveable { mutableStateOf("") }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    val index = remember(library) {
+        library.map { a -> Triple(a, fold("${a.title} ${a.artist}"), a.tracks.map { fold(it.title) }) }
+    }
+    val q = fold(query.trim())
+    val albums = if (q.isEmpty()) emptyList() else index.filter { q in it.second }.map { it.first }
+    val songs = if (q.isEmpty()) emptyList() else index.flatMap { (a, _, titles) ->
+        titles.mapIndexedNotNull { i, t -> if (q in t) a to i else null }
+    }.take(60)
+    Column(Modifier.fillMaxSize().statusBarsPadding()) {
+        Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp).height(56.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+            Box(Modifier.weight(1f).padding(start = 4.dp)) {
+                if (query.isEmpty()) Text("Albums, artists, songs", style = body.copy(color = GSoft))
+                BasicTextField(
+                    query, { query = it }, singleLine = true,
+                    textStyle = body, cursorBrush = SolidColor(GHi),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                )
+            }
+            if (query.isNotEmpty()) IconSpot(GlowIcons.Close, "Clear") { query = "" }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
+        LazyColumn(contentPadding = PaddingValues(bottom = 96.dp), modifier = Modifier.navigationBarsPadding().imePadding()) {
+            if (albums.isNotEmpty()) item { HiddenHeading("Albums") }
+            items(albums, key = { "a${it.id}" }) { a -> ListRow(a.id, round = false, title = a.title, detail = a.artist) { onAlbum(a.id) } }
+            if (songs.isNotEmpty()) item { HiddenHeading("Songs") }
+            items(songs, key = { (a, i) -> "s${a.tracks[i].id}" }) { (a, i) ->
+                ListRow(a.id, round = false, title = a.tracks[i].title, detail = "${a.tracks[i].artist} · ${a.title}") { onPlay(a, i) }
+            }
+            if (q.isNotEmpty() && albums.isEmpty() && songs.isEmpty()) item {
+                Text("Nothing matches “$query”.", style = body.copy(color = GSoft), modifier = Modifier.padding(20.dp))
             }
         }
     }
