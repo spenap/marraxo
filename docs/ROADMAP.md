@@ -112,9 +112,14 @@ Done with beets (`tools/beets/`), copying into
 `~/Music-clean`. Automatic pass first; skipped albums are
 reviewed interactively.
 - [x] Read-only inventory report (`tools/inventory/`).
-- [ ] Automatic pass over the whole collection (started 2026-10-30).
+- [x] Automatic pass over the whole collection (2026-10-30): 290 albums
+  (4,000 tracks) imported, 168 skipped. 135 of the skipped have clean tags
+  but no strong MusicBrainz match; the rest are compilations, singles or
+  badly tagged. Classes in `tools/beets/out/skip-classes.json`.
 - [ ] Interactive review of skipped albums (`out/import.log`).
-- [ ] Rerun the inventory on `Music-clean` and compare.
+- [x] Rerun the inventory on `Music-clean` and compare: of the imported
+  albums, 1 lacks artwork (was 144 of 472 overall); no tracks lack year or
+  track number; no artist spelling variants.
 - [ ] MusicBrainz/AcoustID matching with confidence scores and a review
       queue.
 
