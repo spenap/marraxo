@@ -9,4 +9,6 @@ S=${1:-}
 a() { if [ -n "$S" ]; then adb -s "$S" "$@"; else adb "$@"; fi </dev/null; }
 ./gradlew assembleRelease -q --console=plain
 a install -r app/build/outputs/apk/release/app-release.apk
-a shell cmd package compile -m speed-profile -f com.simonpena.mako
+# "speed", not "speed-profile": right after an install there is no usage
+# profile yet, so speed-profile compiles nothing and scrolling janks.
+a shell cmd package compile -m speed -f com.simonpena.mako
