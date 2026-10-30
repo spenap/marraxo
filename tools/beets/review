@@ -1,0 +1,11 @@
+#!/bin/sh
+# Interactive review of the album folders listed in FILE (one per line).
+# The whole terminal session is recorded to out/review-<time>.log, so every
+# decision can be checked afterwards (beets itself only logs skips).
+# Abort with B at any prompt. Usage: ./review FILE
+set -eu
+here=$(cd "$(dirname "$0")" && pwd)
+list=$(realpath "$1")
+log="$here/out/review-$(date +%Y%m%d-%H%M).log"
+echo "Recording to $log"
+script -q -c "tr '\n' '\0' < '$list' | xargs -0 -o '$here/beet' import --noincremental" "$log"
