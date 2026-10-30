@@ -95,7 +95,9 @@ class PlayRecorder(private val history: PlayHistory, private val player: Player)
                 put("title", meta.title?.toString())
                 put("artist", meta.artist?.toString())
                 put("album", meta.albumTitle?.toString())
-                put("duration_ms", player.duration.takeIf { it > 0 })
+                // From the item, not player.duration: during a transition the
+                // player already describes the next track.
+                put("duration_ms", meta.durationMs)
                 put("listened_ms", listenedMs)
                 put("ended", ended)
                 put("output", "phone")

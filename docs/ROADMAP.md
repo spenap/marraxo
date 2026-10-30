@@ -42,6 +42,9 @@ Done in a separate repository.
 - [ ] Play history recorded from day one: one row per play with track,
       start time, seconds played, skipped or not, and output device.
       Done when a day of listening shows up correctly in the database.
+      Recording since 2026-10-30 (`PlayHistory.kt`, `history.db`). Known
+      gap: a track in progress is lost if the process is killed (an
+      install, a crash) rather than stopped.
 - [ ] A basic but polished Now Playing screen.
 
 ### A3. Library and visual design (brief Milestone 2)
