@@ -18,6 +18,7 @@ import com.google.common.util.concurrent.ListenableFuture
  */
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
+    private var recorder: PlayRecorder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -32,6 +33,7 @@ class PlaybackService : MediaSessionService() {
             .setHandleAudioBecomingNoisy(true) // pause when headphones are unplugged
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
+        recorder = PlayRecorder(PlayHistory(this), player).also(player::addListener)
         // Tapping the notification (or the lock-screen controls) opens the app.
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
@@ -64,6 +66,8 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        recorder?.close()
+        recorder = null
         session?.run {
             player.release()
             release()
