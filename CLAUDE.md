@@ -37,8 +37,12 @@ current Android.
   libraries unless they ship both armeabi-v7a and arm64-v8a.
 
 ## Principles
-- Offline at runtime: no Internet, cloud services, accounts, analytics,
-  or Google Play Services. Internet is fine for desktop tooling and builds.
+- Offline at runtime: no Internet, cloud services, accounts, remote
+  analytics, or Google Play Services. Internet is fine for desktop tooling
+  and builds. Usage measured on the phone and read on the laptop (like play
+  history) is fine; nothing is ever sent elsewhere.
+- New ideas go to ROADMAP.md, "Ideas and not doing", until there is
+  evidence or a clear need.
 - Smallest maintainable stack; no premature abstraction.
 - Playback lives in a service, independent of the UI.
 - Design for the Nexus 4 first: keep image allocations, animations and

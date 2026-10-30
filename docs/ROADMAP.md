@@ -297,6 +297,44 @@ language.
       `Collator` for accents.
 - [ ] UI tests run in both languages.
 
+## Track U: Usage, measured
+Local only: a log on the phone, read on the laptop, never sent anywhere
+(like play history). Its job is to decide what to polish and what to drop.
+- [ ] Events table in the app: screen opened, card played, search used,
+      output changed, renderer stop or error, time from tap to music.
+      Nothing beyond what is already in the library and play history.
+- [ ] Pull it with the play history; a weekly report on the laptop that
+      answers:
+      - Which screens and features do I use (tabs, search, Years, cards,
+        liner notes, lyrics)?
+      - How often do I play on speakers or the TV, and which?
+      - How often does a renderer stop on its own or fail?
+      - How long from tapping the app to hearing music, per phone?
+- Rule: a feature unused for 30 days gets questioned (improve, hide or
+  remove), and the decision goes in the decision log.
+
+## Ideas and not doing
+New ideas wait here until there is evidence (Track U) or a clear need;
+then they move into a track with a "done when".
+
+Parked:
+- Full SystemUI theme for the Nexus 4 (overlay APK), only if the A6
+  basics aren't enough.
+- Glow boot animation; dock-mode clock.
+- Year in review story cards (A4) before a year of history exists.
+- Merging favourites and play history across both phones.
+- Musepack (.mpc) conversion for the 10 tracks Android can't play.
+
+Not doing (and why):
+- Audiobooks, or splitting the app into reusable modules for them:
+  out of scope (decided 2026-10-29).
+- Cloud sync, streaming services, accounts, Google Play Services: the
+  app is offline by design.
+- Remote analytics or remote feature flags: same reason; usage stays on
+  the phone (Track U).
+- Contributing to, or imitating, another player: its maintainer objects to
+  LLM-written code.
+
 ## Later (brief Milestone 5)
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.
 - Rotation: the collection (37 GB) is bigger than the Nexus 4's free
