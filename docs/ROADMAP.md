@@ -324,6 +324,11 @@ Parked:
 - Year in review story cards (A4) before a year of history exists.
 - Merging favourites and play history across both phones.
 - Musepack (.mpc) conversion for the 10 tracks Android can't play.
+- Gesture navigation on the Nexus 4. Android 8.1 has no system gestures
+  (they arrived in 9 and 10), so it would be in-app: swipe from the edge
+  to go back, swipe down to close Now Playing, and in home-screen mode
+  hide the navigation bar (immersive). Frees 48 dp of screen. Evidence
+  to look for: how often the back button is used (Track U).
 
 Not doing (and why):
 - Audiobooks, or splitting the app into reusable modules for them:
