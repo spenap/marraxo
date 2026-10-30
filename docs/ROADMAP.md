@@ -145,6 +145,12 @@ Needs A1 and B0.
       next, pause, back to the phone, play history per output. Volume keys
       reach the speaker only while it plays; when paused, Android sends
       them to the phone's own volume.
+- [ ] Poll the renderer less when nothing needs it: the rundown on
+      2026-10-30 drew ~300 mA paused as well as playing, because the app
+      asks the speaker for its state every second either way. Every few
+      seconds while paused, and GENA events instead of polling (B0),
+      should let Wi-Fi and the CPU sleep. Test first; measure again with
+      the rundown script.
 - [ ] Sonos groups (Estudio + Cocina), and the TV from the app.
 - [x] Shuffle and repeat on a renderer; they move with the queue between
       the phone and a speaker.
