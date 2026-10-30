@@ -30,6 +30,7 @@ import com.simonpena.mako.upnp.RendererPlayer
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
     private var recorder: PlayRecorder? = null
+    private lateinit var queue: QueueStore
     private lateinit var phone: ExoPlayer
     private var server: MediaServer? = null
 
@@ -47,6 +48,7 @@ class PlaybackService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
         recorder = PlayRecorder(PlayHistory(this), phone).also(phone::addListener)
+        queue = QueueStore(this).also { it.restore(phone); it.follow(phone) }
         // Tapping the notification (or the lock-screen controls) opens the app.
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
@@ -116,6 +118,7 @@ class PlaybackService : MediaSessionService() {
             }
         }
         recorder?.attach(new, renderer?.name ?: "phone")
+        queue.follow(new)
         if (items.isNotEmpty()) {
             new.setMediaItems(items, index, position)
             new.prepare()
@@ -134,6 +137,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        queue.stop()
         recorder?.close()
         recorder = null
         session?.run {
