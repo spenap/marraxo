@@ -93,11 +93,18 @@ Done in a separate repository.
 
 ### B1. Phone as HTTP server + controller (brief Milestone 3)
 Needs A1 and B0.
-- [ ] Embedded HTTP server serving only selected tracks, with range support.
-- [ ] Discovery, speaker/group selection, playback commands, state sync,
-      volume.
+- [x] Embedded HTTP server serving only selected tracks, with range support.
+      (`upnp/MediaServer.kt`: random tokens, DLNA headers, covers.)
+- [x] Discovery, speaker selection, playback commands, state sync, volume.
+      Verified on Estudio 2026-10-30: hand-over at the current position,
+      next, pause, back to the phone, play history per output. Volume keys
+      reach the speaker only while it plays; when paused, Android sends
+      them to the phone's own volume.
+- [ ] Sonos groups (Estudio + Cocina), and the TV from the app.
+- [ ] Shuffle and repeat on a renderer (not offered yet).
 - [ ] Done when a track from the phone plays on Sonos, seeks, and stays up
-      for a full album with the screen off.
+      for a full album with the screen off. (Nexus 4 Wi-Fi is weak on 5 GHz,
+      -90 dBm where it sits; the 2.4 GHz network needs its own password.)
 
 ## Track C: Music library tool (no phone needed)
 
@@ -124,8 +131,10 @@ reviewed interactively.
   badly tagged. Classes in `tools/beets/out/skip-classes.json`.
 - [x] Second automatic pass over the skipped albums (`tools/beets/pass2.yaml`:
   ~88% similarity, missing tracks allowed): 62 more imported, 103 left.
-- [ ] Spot-check pass-2 matches near 88%, and the 2 duplicate releases.
-- [ ] Interactive review of the 103 remaining (`out/import-pass2.log`).
+- [x] Spot-check pass-2 matches near 88%, and the 2 duplicate releases
+  (no wrong matches; duplicate copies removed after fingerprint checks).
+- [ ] Interactive review: 24 of 103 done, plus Totem, Dylan disc 1 and three
+  as-is imports; 79 left in `out/review-remaining.txt` (`./review`).
 - [x] Rerun the inventory on `Music-clean` and compare: of the imported
   albums, 1 lacks artwork (was 144 of 472 overall); no tracks lack year or
   track number; no artist spelling variants.
