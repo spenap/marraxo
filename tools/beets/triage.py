@@ -77,6 +77,11 @@ def decide(text):
         if not same_title(left, right):
             d.reason = f"“{left.strip()}” matched to “{right.strip()}”"
             return d
+    title = re.search(r"Match \([\d.]+%\):\n\s+.+? - (.+)", text)
+    local = folder.rstrip("/").rsplit("/", 1)[-1]
+    if title and not same_title(local, title.group(1)):
+        d.reason = f"album title differs: “{local}” vs “{title.group(1).strip()}”"
+        return d
     missing = re.search(r"Missing tracks \((\d+)/(\d+)", text)
     d.accept = True
     d.reason = f"{similarity}%" + (f", {missing.group(1)} of {missing.group(2)} missing" if missing else ", complete")

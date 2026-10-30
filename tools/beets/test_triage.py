@@ -67,3 +67,17 @@ def test_titles_differing_only_in_case_and_punctuation_are_the_same():
     assert triage.same_title("Mo Choill", "Mo Choill'")
     assert triage.same_title("Rock 'n' Roll Singer", "Rock ’n’ Roll Singer")
     assert not triage.same_title("The Rime of the Ancient Mariner", "An Danzza Theme")
+
+
+def test_a_release_with_another_title_is_left_for_a_person():
+    compilation = CLEAR.replace("/Altan/Local Ground (9 items)", "/Los Rodriguez/Sin documentos (9 items)").replace(
+        "  Altan - Local Ground\n", '  Los Rodríguez - Sus mejores temas y su álbum "Sin documentos" completo\n')
+    d = triage.decide(compilation)
+    assert not d.accept
+    assert "title" in d.reason
+
+
+def test_small_title_differences_still_pass():
+    ost = CLEAR.replace("/Altan/Local Ground (9 items)", "/Varios Artistas/Rob Roy OST (9 items)").replace(
+        "  Altan - Local Ground\n", "  Carter Burwell - Rob Roy\n")
+    assert triage.decide(ost).accept
