@@ -53,6 +53,9 @@ class RendererPlayer(
     private var playbackState = Player.STATE_IDLE
     private var positionMs = 0L
     private var positionAt = 0L // elapsedRealtime when positionMs was true
+    // The furthest point reached in this track: Sonos briefly reports 0:00 as a
+    // track ends, so the last position alone can't tell an end from a stop.
+    private var furthestMs = 0L
     private var volume = 0
     private var muted = false
     private var playerError: PlaybackException? = null
@@ -108,6 +111,12 @@ class RendererPlayer(
         positionAt = SystemClock.elapsedRealtime()
     }
 
+    /** A position the renderer reported while playing. */
+    private fun reached(ms: Long) {
+        setPosition(ms)
+        furthestMs = maxOf(furthestMs, ms)
+    }
+
     // ------------------------------------------------------------ commands
 
     override fun handleSetMediaItems(mediaItems: MutableList<MediaItem>, startIndex: Int, startPositionMs: Long): ListenableFuture<*> {
@@ -146,6 +155,7 @@ class RendererPlayer(
             if (playbackState != Player.STATE_IDLE) load()
         } else {
             setPosition(target)
+            furthestMs = target
             loadedAt = SystemClock.elapsedRealtime() // ignore stale positions for a moment
             call { avt("Seek", "Unit" to "REL_TIME", "Target" to formatUpnpTime(target)) }
         }
@@ -238,6 +248,7 @@ class RendererPlayer(
         val uri = item.localConfiguration?.uri ?: item.requestMetadata.mediaUri ?: return
         val start = positionMs
         val play = playWhenReady
+        furthestMs = start
         playbackState = Player.STATE_BUFFERING
         loadedAt = SystemClock.elapsedRealtime()
         loading = true
@@ -318,7 +329,7 @@ class RendererPlayer(
             "PLAYING" -> {
                 playbackState = Player.STATE_READY
                 if (!settling) {
-                    parseUpnpTime(position?.get("RelTime"))?.let(::setPosition)
+                    parseUpnpTime(position?.get("RelTime"))?.let(::reached)
                     if (!playWhenReady) { playWhenReady = true; updateLocks() } // resumed elsewhere
                 }
             }
@@ -332,7 +343,7 @@ class RendererPlayer(
             "TRANSITIONING" -> playbackState = Player.STATE_BUFFERING
             "STOPPED", "NO_MEDIA_PRESENT" -> if (!settling && playWhenReady) {
                 val duration = items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE
-                if (lastPosition >= duration - END_SLACK_MS) advance() else {
+                if (maxOf(lastPosition, furthestMs) >= duration - END_SLACK_MS) advance() else {
                     // Stopped elsewhere, mid-track.
                     playWhenReady = false
                     loadedUrl = null

@@ -218,6 +218,23 @@ class RendererPlayerTest {
         assertEquals(15, lead.volume) // the lead room alone is untouched
     }
 
+    @Test fun `a track end is recognised even if the speaker reports 0 just before stopping`() {
+        // Seen on Estudio: at the end of a track Sonos briefly said PLAYING at 0:00, then STOPPED.
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(2))
+        player.prepare()
+        player.play()
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        idle(5_000)
+        fake.positionMs = 199_000
+        eventually("near the end") { player.currentPosition >= 199_000 }
+        fake.positionMs = 0 // still PLAYING, position already reset
+        eventually("the player saw 0") { player.currentPosition < 5_000 }
+        fake.state = "STOPPED"
+        eventually("moves on to the next track") { player.currentMediaItemIndex == 1 && titleOnSpeaker(fake) == "Song 2" }
+        assertTrue(player.playWhenReady)
+    }
+
     @Test fun `follows a pause made elsewhere`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
