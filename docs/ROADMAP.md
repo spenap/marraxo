@@ -72,6 +72,41 @@ Done in a separate repository.
 - [ ] Prototype "Sounds like", Moods and Map in `mockups/prototype.html`.
 - [ ] Implement from `discovery.db` (C4/D2).
 
+### A6. Dedicated player (Nexus 4 only)
+The Nexus 4 becomes a music player, not a phone running a music app. The
+S25 keeps its own launcher; everything here is off by default and turned
+on per device. Settings are applied by a script that records the previous
+values, so the phone can be put back as it was.
+- [ ] **Mako as the home screen.** An `activity-alias` with the HOME
+      category, disabled in the APK and enabled on the Nexus 4
+      (`pm enable`, then `cmd package set-home-activity`). Home always
+      returns to the library. A ⋮ menu offers Mako settings, Android
+      Settings and "Other apps" (opens Trebuchet, which stays installed).
+      Done when Home lands in Mako and Android Settings is two taps away.
+- [ ] **No lock screen:** screen lock set to None, so waking the phone
+      lands in the player.
+- [ ] **Waking without the power button** (it is unreliable):
+      - plugging or unplugging the cable already wakes it
+        (`wake_when_plugged_or_unplugged=1`);
+      - volume keys: try LineageOS's volume-wake setting; if this build
+        lacks it, find another way;
+      - check whether double-tap-to-wake works on this kernel (enabled in
+        settings, probably unsupported by the hardware).
+- [ ] **Sleeping without it:** a "Screen off" action in Mako
+      (`DevicePolicyManager.lockNow`, device admin granted over ADB),
+      plus a short screen timeout.
+- [ ] **Dock mode:** on the cable, stay on (`stay_on_while_plugged_in`)
+      with a dimmed Now Playing (or a clock when idle).
+- [ ] **Own volume overlay:** in Mako, volume keys change the volume
+      without the system panel and show the Glow overlay from the
+      prototype; on a speaker they set the speaker's volume, paused or not.
+- [ ] **System look:** dark style plus the closest accent overlay (cyan),
+      a Glow wallpaper, a Glow boot animation (`/system/media`, root), and
+      the navigation bar hidden in Mako (immersive; swipe to reveal).
+      A full SystemUI theme (overlay APK) only if these aren't enough.
+- [ ] `android/scripts/appliance.sh [--undo]`: applies all of the above
+      over ADB and saves the previous values for `--undo`.
+
 ## Track B: Sonos and TV (no phone needed for B0)
 
 ### B0. Renderer feasibility from the laptop
