@@ -214,7 +214,7 @@ others run on demand.
 - [x] **T1. Unit tests** (JVM + Robolectric, no device): hiding, search
       folding, UPnP time/DIDL helpers, HTTP byte ranges, queue save and
       restore, play-history rows (completed/skipped/stopped, durations).
-- [ ] **T2. Fake renderer**: a local SOAP + HTTP server that behaves like
+- [x] **T2. Fake renderer**: a local SOAP + HTTP server that behaves like
       Sonos (downloads the whole file) or the TV (needs DLNA headers,
       streams with ranges). Tests hand-over, next, track end, pause and
       "taken over by another controller" through `RendererPlayer`.

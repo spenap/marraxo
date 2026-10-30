@@ -48,5 +48,10 @@ current Android.
   change manifest.
 - Record play history from the first version; stats depend on it and it
   cannot be rebuilt later.
+- New features are test-driven: write the failing test first, at the
+  cheapest level that can catch the behaviour (JVM unit test, Robolectric,
+  the fake renderer), then the code. `./gradlew testDebugUnitTest` must
+  pass before committing. A device check confirms; it doesn't replace a
+  test. Levels and plans: ROADMAP.md, Track T.
 - Verify protocol and compatibility assumptions against real hardware
   (both phones, the Sonos speakers, the TV) and record findings in `docs/`.
