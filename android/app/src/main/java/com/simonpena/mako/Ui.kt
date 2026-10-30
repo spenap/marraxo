@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -86,6 +88,7 @@ private sealed interface Screen {
     data object Library : Screen
     data class AlbumDetail(val albumId: Long) : Screen
     data object NowPlaying : Screen
+    data object About : Screen
 }
 
 private fun fmt(ms: Long): String {
@@ -98,6 +101,7 @@ fun MakoApp(
     hasPermission: Boolean,
     library: List<Album>?,
     player: PlayerHolder,
+    status: String?,
     onGrant: () -> Unit,
     onRescan: () -> Unit,
 ) {
@@ -106,13 +110,13 @@ fun MakoApp(
             !hasPermission -> Welcome(onGrant)
             library == null -> Message("Building your library…")
             library.isEmpty() -> Empty(onRescan)
-            else -> Main(library, player)
+            else -> Main(library, player, status, onRescan)
         }
     }
 }
 
 @Composable
-private fun Main(library: List<Album>, player: PlayerHolder) {
+private fun Main(library: List<Album>, player: PlayerHolder, status: String?, onRescan: () -> Unit) {
     val stack = remember { mutableStateListOf<Screen>(Screen.Library) }
     BackHandler(enabled = stack.size > 1) { stack.removeAt(stack.lastIndex) }
     val albumOfTrack = remember(library) { library.flatMap { a -> a.tracks.map { it.id to a } }.toMap() }
@@ -120,7 +124,11 @@ private fun Main(library: List<Album>, player: PlayerHolder) {
     val currentTrack = currentAlbum?.tracks?.firstOrNull { it.id == player.currentTrackId }
 
     when (val screen = stack.last()) {
-        Screen.Library -> LibraryScreen(library, hasMini = currentTrack != null) { stack.add(Screen.AlbumDetail(it)) }
+        Screen.Library -> LibraryScreen(
+            library, hasMini = currentTrack != null, status = status,
+            onRescan = onRescan, onAbout = { stack.add(Screen.About) },
+        ) { stack.add(Screen.AlbumDetail(it)) }
+        Screen.About -> AboutScreen(library) { stack.removeAt(stack.lastIndex) }
         is Screen.AlbumDetail -> {
             val album = library.firstOrNull { it.id == screen.albumId }
             if (album == null) stack.removeAt(stack.lastIndex) else AlbumScreen(
@@ -214,9 +222,30 @@ private fun PillButton(label: String, modifier: Modifier = Modifier, onClick: ()
 // ---------------------------------------------------------------- library
 
 @Composable
-private fun LibraryScreen(library: List<Album>, hasMini: Boolean, onAlbum: (Long) -> Unit) {
+private fun LibraryScreen(
+    library: List<Album>,
+    hasMini: Boolean,
+    status: String?,
+    onRescan: () -> Unit,
+    onAbout: () -> Unit,
+    onAlbum: (Long) -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        Text("Library", style = display(28), modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 14.dp))
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("Library", style = display(28), modifier = Modifier.weight(1f))
+            Box {
+                IconSpot(GlowIcons.More, "More") { menu = true }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = GSheet) {
+                    DropdownMenuItem(text = { Text("Rescan library", style = body) }, onClick = { menu = false; onRescan() })
+                    DropdownMenuItem(text = { Text("About", style = body) }, onClick = { menu = false; onAbout() })
+                }
+            }
+        }
+        Text(
+            status.orEmpty(), style = TextStyle(fontSize = 12.sp, color = GHi),
+            modifier = Modifier.padding(start = 16.dp, bottom = 10.dp).height(16.dp),
+        )
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = if (hasMini) 96.dp else 24.dp),
@@ -289,6 +318,36 @@ private fun AlbumScreen(
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
             }
         }
+    }
+}
+
+@Composable
+private fun AboutScreen(library: List<Album>, onBack: () -> Unit) {
+    val tracks = library.sumOf { it.tracks.size }
+    val hours = library.sumOf { a -> a.tracks.sumOf { it.durationMs } } / 3_600_000
+    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+        Box(Modifier.padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
+            IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+        }
+        Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Text("Mako", style = display(34))
+            AboutLine("Version", "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}), ${BuildConfig.COMMIT_DATE}")
+            AboutLine("Device", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+            AboutLine("Android", "${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})")
+            AboutLine("Library", "${library.size} albums · $tracks songs · $hours hours")
+            Text(
+                "An offline music player. Plays from the Music folder, on this phone or on speakers and TVs on the same Wi-Fi.",
+                style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutLine(label: String, value: String) {
+    Column {
+        Text(label.uppercase(), style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft))
+        Text(value, style = body, modifier = Modifier.padding(top = 2.dp))
     }
 }
 

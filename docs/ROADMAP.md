@@ -38,8 +38,8 @@ Done in a separate repository.
 - [ ] "Hide from library" on albums and tracks, stored in the app
       database and reversible. Done when a hidden album stays hidden after
       a rescan and can be restored.
-- [ ] Rescan without restarting the app (and pick up files pushed over
-      ADB/USB).
+- [x] Rescan without restarting the app (and pick up files pushed over
+      ADB/USB). Library ⋮ → Rescan library; scans only new and deleted files.
 - [ ] Play history recorded from day one: one row per play with track,
       start time, seconds played, skipped or not, and output device.
       Done when a day of listening shows up correctly in the database.
@@ -56,7 +56,7 @@ Done in a separate repository.
       history (decade, genre, artist, favourites, not recently played),
       randomness, no artist repeat within 5 tracks, 3 tracks queued ahead.
       See `discovery.md`.
-- [ ] About screen (from a ⋮ menu on the Library header, alongside
+- [ ] About screen (done except the licences list) (from a ⋮ menu on the Library header, alongside
       "Rescan library"): `versionName` from `git describe --tags --always
       --dirty`, `versionCode` from `git rev-list --count HEAD`, build date,
       device and Android version, and open-source licences via

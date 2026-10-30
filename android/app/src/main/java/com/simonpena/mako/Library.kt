@@ -6,8 +6,13 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.media.MediaScannerConnection
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 data class Track(
     val id: Long,
@@ -96,4 +101,41 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
             Album(albumId, first.album, first.artist, years[albumId] ?: 0, sorted)
         }
         .sortedWith(compareBy({ sortKey(it.artist) }, { it.year }, { it.title }))
+}
+
+private val AUDIO = setOf("mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wav", "mpc")
+
+/** What a rescan changed, for the message shown afterwards. */
+data class ScanResult(val added: Int, val removed: Int)
+
+/**
+ * Brings Android's media index up to date with the Music folder: files
+ * pushed over ADB or USB are not always indexed, and deleted files can
+ * linger. Only the differences are scanned; scanning a path that no longer
+ * exists removes it from the index.
+ */
+@Suppress("DEPRECATION") // DATA: the file path, still readable on every API level
+suspend fun rescanMusicFolder(context: Context): ScanResult = withContext(Dispatchers.IO) {
+    val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+    val onDisk = root.walkTopDown()
+        .filter { it.isFile && it.extension.lowercase() in AUDIO }
+        .map(File::getAbsolutePath)
+        .toSet()
+    val indexed = mutableSetOf<String>()
+    context.contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media.DATA),
+        "${MediaStore.Audio.Media.DATA} LIKE ?", arrayOf("${root.absolutePath}/%"), null,
+    )?.use { c -> while (c.moveToNext()) c.getString(0)?.let(indexed::add) }
+    val added = onDisk - indexed
+    val removed = indexed - onDisk
+    val paths = (added + removed).toTypedArray()
+    if (paths.isNotEmpty()) {
+        val done = CompletableDeferred<Unit>()
+        val left = AtomicInteger(paths.size)
+        MediaScannerConnection.scanFile(context, paths, null) { _, _ ->
+            if (left.decrementAndGet() == 0) done.complete(Unit)
+        }
+        withTimeoutOrNull(120_000) { done.await() } // never hang the UI on a lost callback
+    }
+    ScanResult(added.size, removed.size)
 }

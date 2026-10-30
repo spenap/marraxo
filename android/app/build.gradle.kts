@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Version from git, so every build says exactly what it was built from.
+// versionCode must grow with each install: the commit count does.
+fun git(vararg args: String) = providers.exec { commandLine("git", *args) }.standardOutput.asText.get().trim()
+
 android {
     namespace = "com.simonpena.mako"
     compileSdk = 35
@@ -12,8 +16,10 @@ android {
         applicationId = "com.simonpena.mako"
         minSdk = 27 // Nexus 4 on LineageOS 15.1 (Android 8.1)
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = git("rev-list", "--count", "HEAD").toInt()
+        versionName = git("describe", "--tags", "--always", "--dirty")
+        // The commit's date, not the build time, so rebuilding gives the same APK.
+        buildConfigField("String", "COMMIT_DATE", "\"${git("log", "-1", "--format=%cs")}\"")
     }
 
     buildTypes {
@@ -33,6 +39,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

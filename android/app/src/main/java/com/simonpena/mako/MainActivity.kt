@@ -17,12 +17,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var player: PlayerHolder
     private var hasPermission by mutableStateOf(false)
     private var library by mutableStateOf<List<Album>?>(null)
+    private var status by mutableStateOf<String?>(null)
 
     /** Android 13+ splits storage access by media type and adds a notification permission. */
     private val permissions =
@@ -56,7 +58,8 @@ class MainActivity : ComponentActivity() {
                 library = library,
                 player = player,
                 onGrant = { request.launch(permissions) },
-                onRescan = { loadLibraryAsync() },
+                status = status,
+                onRescan = ::rescan,
             )
         }
     }
@@ -69,6 +72,25 @@ class MainActivity : ComponentActivity() {
     private fun loadLibraryAsync() {
         lifecycleScope.launch { library = loadLibrary(this@MainActivity) }
     }
+
+    private fun rescan() {
+        lifecycleScope.launch {
+            status = "Rescanning the Music folder…"
+            val result = rescanMusicFolder(this@MainActivity)
+            library = loadLibrary(this@MainActivity)
+            status = when {
+                result.added == 0 && result.removed == 0 -> "Library is up to date"
+                else -> listOfNotNull(
+                    result.added.takeIf { it > 0 }?.let { "${files(it)} added" },
+                    result.removed.takeIf { it > 0 }?.let { "${files(it)} removed" },
+                ).joinToString(", ", prefix = "Library updated: ")
+            }
+            delay(4000)
+            status = null
+        }
+    }
+
+    private fun files(n: Int) = if (n == 1) "1 file" else "$n files"
 
     override fun onDestroy() {
         player.release()
