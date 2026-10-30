@@ -78,13 +78,52 @@ worked on the first try, with DIDL-Lite metadata and
   No `getcontentFeatures.dlna.org` request.
 - No laptop firewall changes were needed for an ephemeral port.
 
+## Playback test: The Frame TV (2026-10-30)
+
+Same probe, `--next` to test queueing. Works, once the server speaks DLNA:
+
+- **DLNA headers are required for seeking.** The TV sends
+  `getcontentFeatures.dlna.org: 1` on every request. Without a
+  `contentFeatures.dlna.org` answer containing `DLNA.ORG_OP=01` (byte
+  ranges supported), `Seek` fails with `701 Transition not available` and
+  the duration shows as 0:00:00. With the header, plus `duration` on the
+  DIDL `<res>`, both work. Use the same flags in the DIDL `protocolInfo`.
+- **Metadata comes only from the DIDL.** Unlike Sonos, it doesn't read the
+  file's tags. It fetched `upnp:albumArtURI` for each track (plain GET,
+  `Accept: */*`), a few seconds after playback started.
+- **It has a one-track queue.** `SetNextAVTransportURI` is supported and
+  echoed back as `NextURI`; at the end of the track it moved on by itself,
+  with ~2 s of `TRANSITIONING` (not gapless). The controller only has to
+  supply the following track each time.
+- **Request pattern:** HEAD first, then dozens of small `Range` requests
+  in a burst (8 KB steps, plus probes near the end of the file), then
+  streams at roughly playback speed rather than downloading everything.
+  The phone's server must handle many short concurrent requests.
+- **State reporting:** `GetTransportInfo` gives `NO_MEDIA_PRESENT` when
+  idle, `TRANSITIONING`, `PLAYING`, `STOPPED`; `GetPositionInfo` gives the
+  position in milliseconds. It only knows about media sent over UPnP, not
+  apps or live TV. The Samsung API (`:8001/api/v2/`) on this 2017 model
+  doesn't report power state.
+- AVTransport actions: Play, Stop, Pause, Seek, Next, Previous,
+  SetPlayMode, SetAVTransportURI, SetNextAVTransportURI,
+  GetMediaInfo, GetTransportInfo, GetPositionInfo, GetTransportSettings,
+  GetDeviceCapabilities, GetCurrentTransportActions.
+- No "allow this device" prompt appeared from the laptop.
+
+## Remote control from a second phone
+
+Both renderers report what they are playing to anyone on the LAN (polling
+or GENA). Sonos even fills in title, artist, album and art from the
+file's own tags. The track URL names the serving phone's IP and port, so
+a second phone running the app can recognise "ours, from that phone".
+Pause, seek and volume can go straight to the renderer. Skipping needs
+whoever owns the queue: the serving phone, or the Sonos queue
+(`AddURIToQueue`, Sonos only) if we choose to use it.
+
 ## Still to test
-- `SetAVTransportURI` + `Play` on the TV (done on Estudio).
-- Seek, duration reporting, byte ranges and request headers on the TV.
 - GENA event subscriptions (track end, state changes) on both.
 - Gapless or queued playback: `SetNextAVTransportURI`, or the Sonos queue.
 - Sonos: grouping the two rooms and playing to the group.
-- TV: does it need DIDL-Lite metadata with a matching `protocolInfo`? Does
-  it show an "allow this device" prompt the first time? Does it wake from
-  standby or Art Mode, and what does the screen show while audio plays?
+- TV: what the screen shows while audio plays (title, art?); waking from
+  standby or Art Mode.
 - Behaviour with the router's Internet uplink disconnected.

@@ -6,12 +6,16 @@ logs every request the renderer makes (method, Range and other headers),
 and drives AVTransport: SetAVTransportURI, Play, position polling, Seek,
 Pause, Stop. Volume is set low first and restored at the end.
 
-Usage: probe.py RENDERER FILE [--volume N] [--listen SECONDS]
+With --next, it queues a second file with SetNextAVTransportURI, seeks
+near the end of the first and checks that the renderer moves on by itself.
+
+Usage: probe.py RENDERER FILE [--next FILE] [--volume N] [--listen SECONDS]
 RENDERER is one of the names in RENDERERS below.
 """
 
 import argparse
 import html
+import io
 import mimetypes
 import os
 import re
@@ -32,15 +36,41 @@ RENDERERS = {
 AVT = "urn:schemas-upnp-org:service:AVTransport:1"
 RC = "urn:schemas-upnp-org:service:RenderingControl:1"
 
+# DLNA: OP=01 says byte-range seeking works; DLNA renderers (the TV) won't
+# seek without it. The flags mark a streaming transfer with background
+# transfer allowed, as most DLNA servers send.
+DLNA_FEATURES = "DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000"
+
 start = time.monotonic()
+
+
+def describe(path):
+    """Title, artist, album, H:MM:SS duration and embedded cover (bytes, mime).
+
+    Falls back to the file name alone without mutagen."""
+    info = {"title": os.path.splitext(os.path.basename(path))[0]}
+    try:
+        import mutagen
+    except ImportError:
+        return info
+    f = mutagen.File(path, easy=True)
+    seconds = int(f.info.length)
+    info["duration"] = f"{seconds // 3600}:{seconds // 60 % 60:02}:{seconds % 60:02}"
+    for key in ("title", "artist", "album"):
+        if f.get(key):
+            info[key] = f[key][0]
+    pictures = [t for t in (mutagen.File(path).tags or {}).values() if getattr(t, "FrameID", "") == "APIC"]
+    if pictures:
+        info["cover"] = (pictures[0].data, pictures[0].mime or "image/jpeg")
+    return info
 
 
 def log(msg):
     print(f"[{time.monotonic() - start:6.1f}s] {msg}", flush=True)
 
 
-def make_handler(path, url_path, mime):
-    size = os.path.getsize(path)
+def make_handler(files):
+    """files: {url_path: (path, mime)}. Nothing else is served."""
 
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -58,9 +88,11 @@ def make_handler(path, url_path, mime):
             interesting = {k: v for k, v in self.headers.items()
                            if k.lower() not in ("host", "connection")}
             log(f"HTTP {self.command} {self.path} from {self.client_address[0]} {interesting}")
-            if self.path != url_path:
+            if self.path not in files:
                 self.send_error(404)
                 return
+            path, mime = files[self.path]
+            size = len(path) if isinstance(path, bytes) else os.path.getsize(path)
             first, last = 0, size - 1
             m = re.fullmatch(r"bytes=(\d*)-(\d*)", self.headers.get("Range", ""))
             if m:
@@ -78,12 +110,14 @@ def make_handler(path, url_path, mime):
             self.send_header("Content-Length", str(last - first + 1))
             self.send_header("Accept-Ranges", "bytes")
             self.send_header("transferMode.dlna.org", "Streaming")
+            if "getcontentFeatures.dlna.org" in self.headers:
+                self.send_header("contentFeatures.dlna.org", DLNA_FEATURES)
             self.end_headers()
             if not body:
                 return
             sent = 0
             try:
-                with open(path, "rb") as f:
+                with (io.BytesIO(path) if isinstance(path, bytes) else open(path, "rb")) as f:
                     f.seek(first)
                     remaining = last - first + 1
                     while remaining:
@@ -125,15 +159,21 @@ def soap(host, port, control, service, action, args=()):
     return ok, fields
 
 
-def didl(url, mime, title):
+def didl(url, mime, info, art_url=None):
     item = (
         '<DIDL-Lite xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/" '
         'xmlns:dc="http://purl.org/dc/elements/1.1/" '
         'xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/">'
         '<item id="1" parentID="0" restricted="1">'
-        f"<dc:title>{html.escape(title)}</dc:title>"
-        "<upnp:class>object.item.audioItem.musicTrack</upnp:class>"
-        f'<res protocolInfo="http-get:*:{mime}:*">{html.escape(url)}</res>'
+        f"<dc:title>{html.escape(info['title'])}</dc:title>"
+        + "".join(f"<{tag}>{html.escape(info[key])}</{tag}>"
+                  for key, tag in (("artist", "dc:creator"), ("artist", "upnp:artist"),
+                                   ("album", "upnp:album")) if key in info)
+        + (f"<upnp:albumArtURI>{html.escape(art_url)}</upnp:albumArtURI>" if art_url else "")
+        + "<upnp:class>object.item.audioItem.musicTrack</upnp:class>"
+        f'<res protocolInfo="http-get:*:{mime}:{DLNA_FEATURES}"'
+        + (f' duration="{info["duration"]}.000"' if "duration" in info else "")
+        + f">{html.escape(url)}</res>"
         "</item></DIDL-Lite>"
     )
     return item
@@ -143,20 +183,35 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("renderer", choices=RENDERERS)
     p.add_argument("file")
+    p.add_argument("--next", help="second file, queued with SetNextAVTransportURI")
     p.add_argument("--volume", type=int, default=12)
     p.add_argument("--listen", type=int, default=20, help="seconds to play before seeking")
     a = p.parse_args()
 
     host, port, avt, rc = RENDERERS[a.renderer]
-    mime = mimetypes.guess_type(a.file)[0] or "audio/mpeg"
     probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     probe.connect((host, port))
     my_ip = probe.getsockname()[0]
-    url_path = "/track" + os.path.splitext(a.file)[1].lower()
-    server = ThreadingHTTPServer((my_ip, 0), make_handler(a.file, url_path, mime))
+    files = {}
+    infos = {}
+    for name, path in (("track", a.file), ("next", a.next)):
+        if path:
+            mime = mimetypes.guess_type(path)[0] or "audio/mpeg"
+            files[f"/{name}" + os.path.splitext(path)[1].lower()] = (path, mime)
+            infos[name] = describe(path)
+            if "cover" in infos[name]:
+                files[f"/{name}-cover"] = infos[name]["cover"]
+    server = ThreadingHTTPServer((my_ip, 0), make_handler(files))
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    url = f"http://{my_ip}:{server.server_port}{url_path}"
-    log(f"Serving {os.path.basename(a.file)} as {url} ({mime})")
+    urls = {}
+    for url_path, (path, mime) in files.items():
+        urls[url_path] = f"http://{my_ip}:{server.server_port}{url_path}"
+        what = f"cover, {len(path)} bytes" if isinstance(path, bytes) else os.path.basename(path)
+        log(f"Serving {what} as {urls[url_path]} ({mime})")
+    audio = [u for p, u in urls.items() if not p.endswith("-cover")]
+    url, next_url = audio + [None] * (2 - len(audio))
+    mime = files[next(iter(files))][1]
+    art = {n: urls.get(f"/{n}-cover") for n in infos}
 
     def avt_call(action, *args):
         return soap(host, port, avt, AVT, action, (("InstanceID", 0),) + args)
@@ -165,8 +220,8 @@ def main():
         _, t = avt_call("GetTransportInfo")
         _, pos = avt_call("GetPositionInfo")
         log(f"state={t.get('CurrentTransportState')} status={t.get('CurrentTransportStatus')} "
-            f"pos={pos.get('RelTime')} / {pos.get('TrackDuration')}")
-        return t.get("CurrentTransportState")
+            f"pos={pos.get('RelTime')} / {pos.get('TrackDuration')} uri=…{pos.get('TrackURI', '')[-10:]}")
+        return t.get("CurrentTransportState"), pos
 
     _, v = soap(host, port, rc, RC, "GetVolume", (("InstanceID", 0), ("Channel", "Master")))
     old_volume = v.get("CurrentVolume")
@@ -174,15 +229,32 @@ def main():
     soap(host, port, rc, RC, "SetVolume",
          (("InstanceID", 0), ("Channel", "Master"), ("DesiredVolume", a.volume)))
     try:
-        title = os.path.splitext(os.path.basename(a.file))[0]
         ok, _ = avt_call("SetAVTransportURI", ("CurrentURI", url),
-                         ("CurrentURIMetaData", didl(url, mime, title)))
+                         ("CurrentURIMetaData", didl(url, mime, infos["track"], art["track"])))
         log(f"SetAVTransportURI ok={ok}")
         ok, _ = avt_call("Play", ("Speed", 1))
         log(f"Play ok={ok}")
         for _ in range(a.listen // 2):
             time.sleep(2)
-            status()
+            _, pos = status()
+        if next_url:
+            next_mime = files["/next" + os.path.splitext(a.next)[1].lower()][1]
+            ok, _ = avt_call("SetNextAVTransportURI", ("NextURI", next_url),
+                             ("NextURIMetaData", didl(next_url, next_mime, infos["next"], art["next"])))
+            log(f"SetNextAVTransportURI ok={ok}")
+            _, m = avt_call("GetMediaInfo")
+            log(f"NextURI reported: {m.get('NextURI') or '(empty)'}")
+            reported = pos.get("TrackDuration", "0:00:00")
+            known = reported if reported != "0:00:00" else infos["track"].get("duration", reported)
+            h, mnt, sec = (int(float(x)) for x in known.split(":"))
+            end = max(0, h * 3600 + mnt * 60 + sec - 8)
+            target = f"{end // 3600}:{end // 60 % 60:02}:{end % 60:02}"
+            ok, _ = avt_call("Seek", ("Unit", "REL_TIME"), ("Target", target))
+            log(f"Seek to {target} (8 s before the end) ok={ok}")
+            for _ in range(10):
+                time.sleep(2)
+                status()
+            return
         ok, _ = avt_call("Seek", ("Unit", "REL_TIME"), ("Target", "0:01:30"))
         log(f"Seek to 1:30 ok={ok}")
         for _ in range(4):

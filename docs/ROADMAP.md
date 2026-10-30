@@ -82,7 +82,8 @@ Done in a separate repository.
 - [ ] Group behaviour: commands sent to the group coordinator play in sync.
 - [x] Samsung The Frame TV found as a DLNA renderer with AVTransport;
       accepts MP3/FLAC/AAC.
-- [ ] TV plays a served MP3 via `SetAVTransportURI` + `Play`.
+- [x] TV plays a served MP3 via `SetAVTransportURI` + `Play`, seeks and
+      queues the next track (needs DLNA headers).
 - [ ] Works with the router's Internet uplink disconnected.
 - Done when the findings are written to `docs/upnp-renderers.md`.
 
