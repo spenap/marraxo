@@ -18,7 +18,7 @@ import kotlin.concurrent.thread
  * The test moves the playback position and the transport state; the
  * player under test sees them by polling, as it does with real devices.
  */
-class FakeRenderer(private val kind: Kind) {
+class FakeRenderer(private val kind: Kind, private val room: String = if (kind == Kind.SONOS) "Estudio" else "The Frame") {
     enum class Kind { SONOS, TV }
 
     private val socket = ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))
@@ -32,10 +32,15 @@ class FakeRenderer(private val kind: Kind) {
         }
     }
 
+    val id = "RINCON_$room"
     val renderer = Renderer(
-        if (kind == Kind.SONOS) "Estudio" else "The Frame", if (kind == Kind.SONOS) "Sonos One SL" else "UE55LS003",
+        room, if (kind == Kind.SONOS) "Sonos One SL" else "UE55LS003",
         "http://127.0.0.1:${socket.localPort}/avt", "http://127.0.0.1:${socket.localPort}/rc",
+        id = id, groupRenderingControl = if (kind == Kind.SONOS) "http://127.0.0.1:${socket.localPort}/grc" else null,
     )
+    /** Sonos: the coordinator this speaker follows (x-rincon:…), or null when on its own. */
+    @Volatile var joinedTo: String? = null
+    @Volatile var groupVolume = 20
 
     @Volatile var state = "NO_MEDIA_PRESENT"
     @Volatile var uri = ""
@@ -75,6 +80,10 @@ class FakeRenderer(private val kind: Kind) {
         actions += action
         when (action) {
             "SetAVTransportURI" -> {
+                if (args.getValue("CurrentURI").startsWith("x-rincon:")) { // Sonos: join a group
+                    joinedTo = args.getValue("CurrentURI").removePrefix("x-rincon:")
+                    return emptyMap()
+                }
                 uri = args.getValue("CurrentURI")
                 metadata = args["CurrentURIMetaData"].orEmpty()
                 positionMs = 0
@@ -88,6 +97,7 @@ class FakeRenderer(private val kind: Kind) {
             }
             "Pause" -> state = "PAUSED_PLAYBACK"
             "Stop" -> { state = "STOPPED"; positionMs = 0 }
+            "BecomeCoordinatorOfStandaloneGroup" -> joinedTo = null
             "Seek" -> {
                 if (kind == Kind.TV && contentFeatures?.contains("DLNA.ORG_OP=01") != true) {
                     throw UpnpFault(701, "Transition not available")
@@ -98,6 +108,16 @@ class FakeRenderer(private val kind: Kind) {
             "GetPositionInfo" -> return mapOf(
                 "TrackURI" to uri, "RelTime" to formatUpnpTime(positionMs), "TrackDuration" to formatUpnpTime(durationMs()),
             )
+            else -> throw UpnpFault(401, "Invalid Action")
+        }
+        return emptyMap()
+    }
+
+    private fun groupRenderingControl(action: String, args: Map<String, String>): Map<String, String> {
+        actions += action
+        when (action) {
+            "GetGroupVolume" -> return mapOf("CurrentVolume" to "$groupVolume")
+            "SetGroupVolume" -> groupVolume = args.getValue("DesiredVolume").toInt()
             else -> throw UpnpFault(401, "Invalid Action")
         }
         return emptyMap()
@@ -143,7 +163,11 @@ class FakeRenderer(private val kind: Kind) {
         })
         val action = headers["soapaction"].orEmpty().substringAfter('#').trim('"')
         val args = Regex("<(\\w+)>([^<]*)</\\1>").findAll(body).associate { it.groupValues[1] to unescape(it.groupValues[2]) }
-        val handler: (String, Map<String, String>) -> Map<String, String> = if (path == "/rc") ::renderingControl else ::avTransport
+        val handler: (String, Map<String, String>) -> Map<String, String> = when (path) {
+            "/rc" -> ::renderingControl
+            "/grc" -> ::groupRenderingControl
+            else -> ::avTransport
+        }
         val (status, inner) = try {
             "200 OK" to handler(action, args).entries.joinToString("") { (k, v) -> "<$k>${escape(v)}</$k>" }
                 .let { "<u:${action}Response>$it</u:${action}Response>" }

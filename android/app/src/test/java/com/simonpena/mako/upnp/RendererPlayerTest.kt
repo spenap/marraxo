@@ -178,6 +178,46 @@ class RendererPlayerTest {
         assertTrue(player.isCommandAvailable(Player.COMMAND_SET_REPEAT_MODE))
     }
 
+    private fun group(): Triple<FakeRenderer, FakeRenderer, RendererPlayer> {
+        val lead = FakeRenderer(FakeRenderer.Kind.SONOS, "Cocina")
+        val member = FakeRenderer(FakeRenderer.Kind.SONOS, "Estudio")
+        val renderer = lead.renderer.copy(name = "Cocina + Estudio", model = "Sonos group", members = listOf(member.renderer))
+        val player = RendererPlayer(context, renderer, server, Random(1)) { null }
+        cleanup += { player.release(); lead.close(); member.close() }
+        return Triple(lead, member, player)
+    }
+
+    @Test fun `a group plays on the lead room with the others joined to it`() {
+        val (lead, member, player) = group()
+        player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        player.play()
+        eventually("the lead plays") { lead.state == "PLAYING" }
+        assertEquals("RINCON_Cocina", member.joinedTo)
+        assertTrue(member.actions.indexOf("SetAVTransportURI") >= 0)
+        assertEquals("", member.uri) // the member never gets the track itself
+    }
+
+    @Test fun `leaving a group sends every room back on its own`() {
+        val (lead, member, player) = group()
+        player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        player.play()
+        eventually("joined") { member.joinedTo != null && lead.state == "PLAYING" }
+        player.release()
+        eventually("left") { member.joinedTo == null }
+    }
+
+    @Test fun `a group's volume is the group volume`() {
+        val (lead, _, player) = group()
+        player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        eventually("polled") { player.deviceVolume == 20 }
+        player.increaseDeviceVolume(0)
+        eventually("group louder") { lead.groupVolume == 22 }
+        assertEquals(15, lead.volume) // the lead room alone is untouched
+    }
+
     @Test fun `follows a pause made elsewhere`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))

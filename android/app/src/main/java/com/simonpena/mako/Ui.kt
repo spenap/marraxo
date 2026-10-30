@@ -781,6 +781,7 @@ private fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClose
 
 private fun outputIcon(output: Renderer?) = when {
     output == null -> GlowIcons.Phone
+    output.isGroup -> GlowIcons.Speakers
     output.isSpeaker -> GlowIcons.Speaker
     else -> GlowIcons.Tv
 }
@@ -818,7 +819,8 @@ private fun OutputSheet(player: PlayerHolder, onClose: () -> Unit) {
     BackHandler(onBack = onClose)
     val current = player.output
     // Keep the current output listed even if this search missed it.
-    val renderers = (found.orEmpty() + listOfNotNull(current)).distinctBy { it.avTransport }
+    // A group shares its lead room's address, so compare whole entries.
+    val renderers = (found.orEmpty() + listOfNotNull(current)).distinct()
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .5f)).pointerInput(Unit) { detectTapGestures { onClose() } }) {
         Column(
             Modifier
@@ -837,7 +839,7 @@ private fun OutputSheet(player: PlayerHolder, onClose: () -> Unit) {
                 onClose()
             }
             renderers.forEach { r ->
-                OutputOption(outputIcon(r), r.name, r.model.ifEmpty { if (r.isSpeaker) "Speaker" else "TV" }, current?.avTransport == r.avTransport) {
+                OutputOption(outputIcon(r), r.name, r.model.ifEmpty { if (r.isSpeaker) "Speaker" else "TV" }, current == r) {
                     player.playOn(r)
                     onClose()
                 }

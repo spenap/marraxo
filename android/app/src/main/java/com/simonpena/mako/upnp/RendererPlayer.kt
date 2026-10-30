@@ -62,6 +62,7 @@ class RendererPlayer(
     private var loading = false // a load is on its way; loadedUrl not known yet
     private var loadedAt = 0L
     private var baseUrl: String? = null // only touched on the net thread
+    private var joined = false // net thread: group members follow the lead room
     private var polling = false
     private var released = false
 
@@ -167,7 +168,8 @@ class RendererPlayer(
         playWhenReady = false
         updateLocks()
         if (wasLoaded) call { avt("Stop") }
-        net.shutdown()
+        if (renderer.isGroup) call { leaveGroup() }
+        net.shutdown() // after the queued calls above have run
         return DONE
     }
 
@@ -210,7 +212,7 @@ class RendererPlayer(
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
         volume = deviceVolume.coerceIn(0, 100)
         val target = volume
-        call { rc("SetVolume", "Channel" to "Master", "DesiredVolume" to target) }
+        call { setRendererVolume(target) }
         return DONE
     }
 
@@ -220,7 +222,11 @@ class RendererPlayer(
 
     override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> {
         this.muted = muted
-        call { rc("SetMute", "Channel" to "Master", "DesiredMute" to if (muted) 1 else 0) }
+        val mute = if (muted) 1 else 0
+        call {
+            if (renderer.isGroup && renderer.groupRenderingControl != null) grc("SetGroupMute", "DesiredMute" to mute)
+            else rc("SetMute", "Channel" to "Master", "DesiredMute" to mute)
+        }
         return DONE
     }
 
@@ -238,6 +244,7 @@ class RendererPlayer(
         val host = java.net.URL(renderer.avTransport).host
         val meta = item.mediaMetadata
         call {
+            if (renderer.isGroup && !joined) joinGroup()
             val base = baseUrl ?: server.baseUrlFor(host).also { baseUrl = it }
             val (path, mime) = server.publishTrack(item.mediaId, uri)
             val url = base + path
@@ -269,9 +276,7 @@ class RendererPlayer(
                 net.execute {
                     val transport = runCatching { avt("GetTransportInfo") }.getOrNull()
                     val position = runCatching { avt("GetPositionInfo") }.getOrNull()
-                    val volume = renderer.renderingControl?.let {
-                        runCatching { rc("GetVolume", "Channel" to "Master")["CurrentVolume"]?.toIntOrNull() }.getOrNull()
-                    }
+                    val volume = runCatching { rendererVolume() }.getOrNull()
                     main.post {
                         polling = false
                         applyRemote(transport, position, volume)
@@ -407,6 +412,37 @@ class RendererPlayer(
             }
         }
     }
+
+    /** Sonos: the other rooms follow the lead room (x-rincon:<its id>). */
+    private fun joinGroup() {
+        renderer.members.forEach {
+            soap(it.avTransport, AV_TRANSPORT, "SetAVTransportURI", "InstanceID" to 0,
+                "CurrentURI" to "x-rincon:${renderer.id}", "CurrentURIMetaData" to "")
+        }
+        joined = true
+    }
+
+    private fun leaveGroup() {
+        renderer.members.forEach {
+            runCatching { soap(it.avTransport, AV_TRANSPORT, "BecomeCoordinatorOfStandaloneGroup", "InstanceID" to 0) }
+        }
+        joined = false
+    }
+
+    /** Net thread: the volume people hear; for a group, the whole group's. */
+    private fun rendererVolume(): Int? = when {
+        renderer.isGroup && renderer.groupRenderingControl != null -> grc("GetGroupVolume")["CurrentVolume"]?.toIntOrNull()
+        renderer.renderingControl != null -> rc("GetVolume", "Channel" to "Master")["CurrentVolume"]?.toIntOrNull()
+        else -> null
+    }
+
+    private fun setRendererVolume(volume: Int) {
+        if (renderer.isGroup && renderer.groupRenderingControl != null) grc("SetGroupVolume", "DesiredVolume" to volume)
+        else rc("SetVolume", "Channel" to "Master", "DesiredVolume" to volume)
+    }
+
+    private fun grc(action: String, vararg args: Pair<String, Any>) =
+        soap(renderer.groupRenderingControl ?: error("no GroupRenderingControl"), GROUP_RENDERING_CONTROL, action, "InstanceID" to 0, *args)
 
     private fun avt(action: String, vararg args: Pair<String, Any>) =
         soap(renderer.avTransport, AV_TRANSPORT, action, "InstanceID" to 0, *args)

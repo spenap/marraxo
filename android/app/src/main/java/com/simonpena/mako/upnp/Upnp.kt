@@ -15,32 +15,58 @@ import java.net.URL
 
 const val AV_TRANSPORT = "urn:schemas-upnp-org:service:AVTransport:1"
 const val RENDERING_CONTROL = "urn:schemas-upnp-org:service:RenderingControl:1"
+const val GROUP_RENDERING_CONTROL = "urn:schemas-upnp-org:service:GroupRenderingControl:1"
 
 /** DLNA flags: OP=01 says byte ranges work. The TV refuses to seek without it. */
 const val DLNA_FEATURES = "DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=01700000000000000000000000000000"
 
-/** A device that can play what we serve: a Sonos room or the TV. */
+/**
+ * A device that can play what we serve: a Sonos room, the TV, or several
+ * Sonos rooms together. A group is driven through its first room (the
+ * coordinator); [members] join it while it plays.
+ */
 data class Renderer(
     val name: String,
     val model: String,
     val avTransport: String,
     val renderingControl: String?,
+    val id: String? = null, // the device's UDN without "uuid:" (Sonos: RINCON_…)
+    val groupRenderingControl: String? = null, // Sonos: volume for the whole group
+    val members: List<Renderer> = emptyList(),
 ) {
     val isSpeaker get() = model.contains("Sonos", ignoreCase = true) || name.contains("Sonos", ignoreCase = true)
+    val isGroup get() = members.isNotEmpty()
 
-    fun toBundle() = Bundle().apply {
+    fun toBundle(): Bundle = Bundle().apply {
         putString("name", name)
         putString("model", model)
         putString("avTransport", avTransport)
         putString("renderingControl", renderingControl)
+        putString("id", id)
+        putString("groupRenderingControl", groupRenderingControl)
+        putParcelableArrayList("members", ArrayList(members.map { it.toBundle() }))
     }
 
     companion object {
-        fun fromBundle(b: Bundle) = Renderer(
+        @Suppress("DEPRECATION") // the typed getParcelableArrayList needs API 33
+        fun fromBundle(b: Bundle): Renderer = Renderer(
             b.getString("name").orEmpty(), b.getString("model").orEmpty(),
             b.getString("avTransport").orEmpty(), b.getString("renderingControl"),
+            b.getString("id"), b.getString("groupRenderingControl"),
+            b.getParcelableArrayList<Bundle>("members").orEmpty().map(::fromBundle),
         )
     }
+}
+
+/**
+ * Adds "all Sonos rooms together" when there are two or more. The first
+ * room by name leads; the others join it while it plays.
+ */
+fun withSonosGroup(renderers: List<Renderer>): List<Renderer> {
+    val rooms = renderers.filter { it.isSpeaker && it.id != null && !it.isGroup }.sortedBy { it.name }
+    if (rooms.size < 2) return renderers
+    val lead = rooms.first()
+    return renderers + lead.copy(name = rooms.joinToString(" + ") { it.name }, model = "Sonos group", members = rooms.drop(1))
 }
 
 private const val SEARCH = "M-SEARCH * HTTP/1.1\r\n" +
@@ -77,9 +103,10 @@ fun discoverRenderers(context: Context, timeoutMs: Long = 2500): List<Renderer> 
     } finally {
         lock.release()
     }
-    return locations.mapNotNull { runCatching { describe(it) }.getOrNull() }
+    val found = locations.mapNotNull { runCatching { describe(it) }.getOrNull() }
         .distinctBy { it.avTransport }
         .sortedBy { it.name }
+    return withSonosGroup(found)
 }
 
 private val LOCATION = Regex("(?im)^location:\\s*(\\S+)")
@@ -87,7 +114,11 @@ private val SERVICE = Regex("<service>(.*?)</service>", RegexOption.DOT_MATCHES_
 
 private fun describe(location: String): Renderer? {
     val conn = URL(location).openConnection().apply { connectTimeout = 2000; readTimeout = 2000 }
-    val xml = conn.getInputStream().bufferedReader().use { it.readText() }
+    return parseDescription(conn.getInputStream().bufferedReader().use { it.readText() }, location)
+}
+
+/** A renderer from its device description XML, fetched from [location]. */
+fun parseDescription(xml: String, location: String): Renderer? {
     fun tag(name: String, s: String = xml) = Regex("<$name>([^<]*)</$name>").find(s)?.groupValues?.get(1)?.let(::unescape)
     val services = SERVICE.findAll(xml).map { it.groupValues[1] }.toList()
     fun control(type: String) = services.firstOrNull { "service:$type:" in it }
@@ -96,7 +127,11 @@ private fun describe(location: String): Renderer? {
     val avTransport = control("AVTransport") ?: return null
     // Sonos: friendlyName is "<ip> - Sonos One SL - RINCON_…"; the room is in roomName.
     val name = tag("roomName") ?: tag("friendlyName")?.removePrefix("[TV] ") ?: return null
-    return Renderer(name, tag("modelName").orEmpty(), avTransport, control("RenderingControl"))
+    return Renderer(
+        name, tag("modelName").orEmpty(), avTransport, control("RenderingControl"),
+        id = tag("UDN")?.removePrefix("uuid:"), // the first UDN is the device itself
+        groupRenderingControl = control("GroupRenderingControl"),
+    )
 }
 
 class UpnpException(message: String) : Exception(message)
