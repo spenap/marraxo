@@ -34,6 +34,8 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     private var prepared = false
     private var positionMs = 0L
     private var discontinuity: Int? = null
+    private var repeat = Player.REPEAT_MODE_OFF
+    private var shuffle = false
 
     override fun getState(): State {
         val b = State.Builder()
@@ -42,6 +44,8 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
             .setPlayWhenReady(playWhenReady, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
             .setPlaybackState(if (items.isNotEmpty() && prepared) Player.STATE_READY else Player.STATE_IDLE)
             .setContentPositionMs(positionMs)
+            .setRepeatMode(repeat)
+            .setShuffleModeEnabled(shuffle)
         if (items.isNotEmpty()) b.setCurrentMediaItemIndex(index)
         discontinuity?.let { b.setPositionDiscontinuity(it, 0) }
         discontinuity = null
@@ -77,6 +81,9 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
         this.positionMs = if (positionMs == C.TIME_UNSET) 0 else positionMs
         return done
     }
+
+    override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> { repeat = repeatMode; return done }
+    override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> { shuffle = shuffleModeEnabled; return done }
 
     private val done = Futures.immediateVoidFuture()
 }

@@ -38,9 +38,9 @@ class RendererPlayerTest {
     private fun item(id: Long, title: String, f: File, durationMs: Long): MediaItem =
         track(id, title, durationMs = durationMs).copy(uri = Uri.fromFile(f)).toMediaItem()
 
-    private fun start(kind: FakeRenderer.Kind): Pair<FakeRenderer, RendererPlayer> {
+    private fun start(kind: FakeRenderer.Kind, random: Random = Random(1)): Pair<FakeRenderer, RendererPlayer> {
         val fake = FakeRenderer(kind)
-        val player = RendererPlayer(context, fake.renderer, server) { null }
+        val player = RendererPlayer(context, fake.renderer, server, random) { null }
         cleanup += { player.release(); fake.close() }
         return fake to player
     }
@@ -88,6 +88,94 @@ class RendererPlayerTest {
         assertTrue("<dc:title>Riots</dc:title>" in unescape(fake.metadata))
         // Play history counts this as "completed" only if the reason is AUTO.
         assertEquals(Player.MEDIA_ITEM_TRANSITION_REASON_AUTO, transitions.last())
+    }
+
+    private fun album(n: Int) = (1..n).map { item(it.toLong(), "Song $it", file("s$it.mp3", 20_000), 200_000) }
+
+    /** Plays the current track to its end on the fake, the way the earlier test does. */
+    private fun finishCurrentTrack(fake: FakeRenderer, player: RendererPlayer) {
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        idle(5_000)
+        fake.positionMs = 199_000
+        eventually("near the end") { player.currentPosition >= 199_000 }
+        fake.finishTrack()
+    }
+
+    private fun titleOnSpeaker(fake: FakeRenderer) = Regex("<dc:title>([^<]*)").find(unescape(fake.metadata))?.groupValues?.get(1)
+
+    @Test fun `repeat one plays the same track again`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(3))
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        player.prepare()
+        player.play()
+        finishCurrentTrack(fake, player)
+        eventually("loaded again") { fake.actions.count { it == "SetAVTransportURI" } == 2 && fake.state == "PLAYING" }
+        assertEquals(0, player.currentMediaItemIndex)
+        assertEquals("Song 1", titleOnSpeaker(fake))
+    }
+
+    @Test fun `repeat all goes back to the first track after the last`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(2), 1, 0)
+        player.repeatMode = Player.REPEAT_MODE_ALL
+        player.prepare()
+        player.play()
+        finishCurrentTrack(fake, player)
+        eventually("first track") { player.currentMediaItemIndex == 0 && titleOnSpeaker(fake) == "Song 1" && fake.state == "PLAYING" }
+    }
+
+    @Test fun `without repeat the album ends after the last track`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(2), 1, 0)
+        player.prepare()
+        player.play()
+        finishCurrentTrack(fake, player)
+        eventually("ended") { player.playbackState == Player.STATE_ENDED }
+    }
+
+    @Test fun `shuffle plays every track once, in a different order, for next and track ends alike`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(6))
+        player.shuffleModeEnabled = true
+        player.prepare()
+        player.play()
+        eventually("first plays") { fake.state == "PLAYING" && titleOnSpeaker(fake) != null }
+        val heard = mutableListOf(titleOnSpeaker(fake)!!)
+        repeat(3) {
+            player.seekToNext()
+            eventually("next loads") { titleOnSpeaker(fake) !in heard && fake.state == "PLAYING" }
+            heard += titleOnSpeaker(fake)!!
+        }
+        repeat(2) {
+            finishCurrentTrack(fake, player)
+            eventually("next by itself") { titleOnSpeaker(fake) !in heard && fake.state == "PLAYING" }
+            heard += titleOnSpeaker(fake)!!
+        }
+        val album = (1..6).map { "Song $it" }
+        assertEquals(album.toSet(), heard.toSet()) // all six, none twice
+        assertTrue("shuffled, not in album order: $heard", heard != album)
+    }
+
+    @Test fun `turning shuffle off restores album order from the current track`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(6))
+        player.shuffleModeEnabled = true
+        player.prepare()
+        player.play()
+        eventually("plays") { fake.state == "PLAYING" }
+        player.seekToNext()
+        eventually("second loads") { fake.actions.count { it == "SetAVTransportURI" } == 2 && fake.state == "PLAYING" }
+        val current = titleOnSpeaker(fake)!!
+        player.shuffleModeEnabled = false
+        assertEquals((1..6).map { "Song $it" }, (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaMetadata.title })
+        assertEquals(current, player.currentMediaItem?.mediaMetadata?.title) // still on the same song
+    }
+
+    @Test fun `shuffle and repeat can be turned on`() {
+        val (_, player) = start(FakeRenderer.Kind.SONOS)
+        assertTrue(player.isCommandAvailable(Player.COMMAND_SET_SHUFFLE_MODE))
+        assertTrue(player.isCommandAvailable(Player.COMMAND_SET_REPEAT_MODE))
     }
 
     @Test fun `follows a pause made elsewhere`() {

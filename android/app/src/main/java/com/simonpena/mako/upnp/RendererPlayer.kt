@@ -16,6 +16,7 @@ import androidx.media3.common.SimpleBasePlayer
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.Executors
+import kotlin.random.Random
 
 /**
  * A Media3 player that plays on a UPnP renderer instead of the phone.
@@ -33,6 +34,7 @@ class RendererPlayer(
     context: Context,
     val renderer: Renderer,
     private val server: MediaServer,
+    private val random: Random = Random.Default,
     private val cover: (MediaItem) -> ByteArray?,
 ) : SimpleBasePlayer(Looper.getMainLooper()) {
     private val main = Handler(Looper.getMainLooper())
@@ -42,8 +44,10 @@ class RendererPlayer(
     private val wakeLock = context.getSystemService(PowerManager::class.java)
         .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "mako:renderer").apply { setReferenceCounted(false) }
 
-    private var items: List<MediaItem> = emptyList()
+    private var items: List<MediaItem> = emptyList() // in play order
     private var uids: List<Any> = emptyList()
+    private var albumOrder: List<Any>? = null // uids in their original order while shuffled
+    private var repeatMode = Player.REPEAT_MODE_OFF
     private var index = 0
     private var playWhenReady = false
     private var playbackState = Player.STATE_IDLE
@@ -71,6 +75,8 @@ class RendererPlayer(
             .setPlayWhenReady(playWhenReady, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
             .setPlaybackState(if (items.isEmpty() && playbackState != Player.STATE_ENDED) Player.STATE_IDLE else playbackState)
             .setPlayerError(playerError)
+            .setRepeatMode(repeatMode)
+            .setShuffleModeEnabled(albumOrder != null)
             .setDeviceInfo(DEVICE_INFO)
             .setDeviceVolume(volume)
             .setIsDeviceMuted(muted)
@@ -107,6 +113,7 @@ class RendererPlayer(
         items = mediaItems.toList()
         uids = items.map { Any() }
         index = if (startIndex == C.INDEX_UNSET) 0 else startIndex.coerceIn(0, maxOf(0, items.size - 1))
+        if (albumOrder != null) shuffle()
         setPosition(if (startPositionMs == C.TIME_UNSET) 0 else startPositionMs)
         if (playbackState != Player.STATE_IDLE) load()
         return DONE
@@ -162,6 +169,42 @@ class RendererPlayer(
         if (wasLoaded) call { avt("Stop") }
         net.shutdown()
         return DONE
+    }
+
+    override fun handleSetRepeatMode(repeatMode: Int): ListenableFuture<*> {
+        this.repeatMode = repeatMode
+        return DONE
+    }
+
+    /**
+     * Media3 1.5's SimpleBasePlayer walks the playlist in order even with
+     * shuffle on, so shuffling reorders the queue itself: the current track
+     * first, the rest at random. Next, previous and the notification then
+     * work unchanged. Turning it off restores album order.
+     */
+    override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> {
+        if (shuffleModeEnabled && albumOrder == null) shuffle()
+        if (!shuffleModeEnabled && albumOrder != null) unshuffle()
+        return DONE
+    }
+
+    private fun shuffle() {
+        albumOrder = uids
+        if (items.isEmpty()) return
+        val order = listOf(index) + (items.indices - index).shuffled(random)
+        items = order.map(items::get)
+        uids = order.map(uids::get)
+        index = 0
+    }
+
+    private fun unshuffle() {
+        val original = albumOrder ?: return
+        albumOrder = null
+        val byUid = uids.zip(items).toMap()
+        val current = uids.getOrNull(index)
+        uids = original
+        items = original.map(byUid::getValue)
+        index = maxOf(0, original.indexOf(current))
     }
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
@@ -296,10 +339,16 @@ class RendererPlayer(
         invalidateState()
     }
 
-    /** The renderer finished the current track. */
+    /** The renderer finished the current track: next, again, or the end. */
     private fun advance() {
-        if (index + 1 < items.size) {
-            index++
+        val next = when {
+            repeatMode == Player.REPEAT_MODE_ONE -> index
+            index + 1 < items.size -> index + 1
+            repeatMode == Player.REPEAT_MODE_ALL -> 0
+            else -> null
+        }
+        if (next != null) {
+            index = next
             setPosition(0)
             discontinuity = Player.DISCONTINUITY_REASON_AUTO_TRANSITION
             load()
@@ -379,6 +428,7 @@ class RendererPlayer(
             Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, Player.COMMAND_SEEK_TO_PREVIOUS,
             Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_MEDIA_ITEM,
             Player.COMMAND_SET_MEDIA_ITEM, Player.COMMAND_CHANGE_MEDIA_ITEMS,
+            Player.COMMAND_SET_SHUFFLE_MODE, Player.COMMAND_SET_REPEAT_MODE,
             Player.COMMAND_GET_CURRENT_MEDIA_ITEM, Player.COMMAND_GET_TIMELINE, Player.COMMAND_GET_METADATA,
             Player.COMMAND_GET_DEVICE_VOLUME, Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS,
             Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS,

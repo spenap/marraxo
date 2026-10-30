@@ -143,7 +143,8 @@ Needs A1 and B0.
       reach the speaker only while it plays; when paused, Android sends
       them to the phone's own volume.
 - [ ] Sonos groups (Estudio + Cocina), and the TV from the app.
-- [ ] Shuffle and repeat on a renderer (not offered yet).
+- [x] Shuffle and repeat on a renderer; they move with the queue between
+      the phone and a speaker.
 - [ ] Done when a track from the phone plays on Sonos, seeks, and stays up
       for a full album with the screen off. (Nexus 4 Wi-Fi is weak on 5 GHz,
       -90 dBm where it sits; the 2.4 GHz network needs its own password.)

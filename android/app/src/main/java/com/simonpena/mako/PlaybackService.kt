@@ -105,12 +105,6 @@ class PlaybackService : MediaSessionService() {
         if (old is RendererPlayer && old.renderer == renderer) return
         if (old === phone && renderer == null) return
 
-        val items = List(old.mediaItemCount) { old.getMediaItemAt(it) }
-        val index = old.currentMediaItemIndex
-        val position = old.currentPosition
-        val play = old.playWhenReady
-        old.stop()
-
         val new: Player = if (renderer == null) phone else {
             val server = server ?: MediaServer(this).also { server = it }
             RendererPlayer(this, renderer, server) { item ->
@@ -119,11 +113,7 @@ class PlaybackService : MediaSessionService() {
         }
         recorder?.attach(new, renderer?.name ?: "phone")
         queue.follow(new)
-        if (items.isNotEmpty()) {
-            new.setMediaItems(items, index, position)
-            new.prepare()
-        }
-        new.playWhenReady = play
+        handOver(old, new)
         session.player = new
         if (old is RendererPlayer) old.release()
         session.setSessionExtras(Bundle().apply { renderer?.let { putBundle(EXTRA_OUTPUT, it.toBundle()) } })
@@ -155,4 +145,20 @@ class PlaybackService : MediaSessionService() {
         const val SET_OUTPUT = "com.simonpena.mako.SET_OUTPUT"
         const val EXTRA_OUTPUT = "output"
     }
+}
+
+/** Moves the queue, position, play state, shuffle and repeat from one player to another, and stops the first. */
+internal fun handOver(from: Player, to: Player) {
+    val items = List(from.mediaItemCount) { from.getMediaItemAt(it) }
+    val index = from.currentMediaItemIndex
+    val position = from.currentPosition
+    val play = from.playWhenReady
+    from.stop()
+    to.repeatMode = from.repeatMode
+    if (items.isNotEmpty()) {
+        to.setMediaItems(items, index, position)
+        to.shuffleModeEnabled = from.shuffleModeEnabled // after the items: a speaker shuffles what it has
+        to.prepare()
+    }
+    to.playWhenReady = play
 }
