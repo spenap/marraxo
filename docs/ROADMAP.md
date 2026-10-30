@@ -7,7 +7,7 @@ being flashed.
 Each item has a "done when" criterion. Tick items off as they're completed
 and record decisions in the log at the bottom.
 
-## Track A: Phone (blocked on ROM)
+## Track A: Phone
 
 ### A0. ROM chosen and flashed
 Done in a separate repository.
@@ -18,10 +18,11 @@ Done in a separate repository.
 - [ ] Gradle project in `android/` with dependency versions pinned
       against the Nexus 4 API. Done when `./gradlew assembleDebug` builds and the same APK
       installs and launches on both the Nexus 4 and the S25.
+      (Nexus 4 done since 2026-10-29; S25 not tried yet.)
 - [x] Compose vs Views decision. Done when a trivial scrolling album grid
       exists in the chosen toolkit, it scrolls smoothly on the device, and
       the decision is logged below. (Compose: 1.3% janky frames.)
-- [ ] Local MP3 playback with Media3. Done when a pushed MP3 plays.
+- [x] Local MP3 playback with Media3. Done when a pushed MP3 plays.
 - [ ] Background playback. Done when playback continues with the screen
       off for 10+ minutes and lock-screen/media-session controls work.
 - [ ] Headphone unplug pauses playback; Bluetooth audio works.
@@ -31,7 +32,7 @@ Done in a separate repository.
       sleep.
 
 ### A2. Minimal music player (brief Milestone 1)
-- [ ] MediaStore library scan, basic metadata, play/pause/next/prev/seek.
+- [x] MediaStore library scan, basic metadata, play/pause/next/prev/seek.
 - [ ] Playback state survives app restart.
 - [x] Library limited to the shared `Music/` folder.
 - [ ] "Hide from library" on albums and tracks, stored in the app
