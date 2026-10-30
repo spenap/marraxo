@@ -89,6 +89,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mikepenz.aboutlibraries.Libs
+import com.mikepenz.aboutlibraries.util.withContext
 import com.simonpena.mako.upnp.Renderer
 import com.simonpena.mako.upnp.discoverRenderers
 import kotlinx.coroutines.Dispatchers
@@ -119,6 +121,7 @@ private sealed interface Screen {
     data object About : Screen
     data object Hidden : Screen
     data object Search : Screen
+    data object Licences : Screen
 }
 
 private fun fmt(ms: Long): String {
@@ -177,7 +180,8 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             onPlay = { album, i -> player.play(album.tracks, i) },
         )
         Screen.Hidden -> HiddenScreen(hidden) { stack.removeAt(stack.lastIndex) }
-        Screen.About -> AboutScreen(library) { stack.removeAt(stack.lastIndex) }
+        Screen.About -> AboutScreen(library, onLicences = { stack.add(Screen.Licences) }) { stack.removeAt(stack.lastIndex) }
+        Screen.Licences -> LicencesScreen { stack.removeAt(stack.lastIndex) }
         is Screen.AlbumDetail -> {
             val album = visible.firstOrNull { it.id == screen.albumId }
             if (album == null) stack.removeAt(stack.lastIndex) else AlbumScreen(
@@ -683,7 +687,7 @@ private fun HiddenRow(key: String, onShow: () -> Unit) {
 }
 
 @Composable
-private fun AboutScreen(library: List<Album>, onBack: () -> Unit) {
+private fun AboutScreen(library: List<Album>, onLicences: () -> Unit, onBack: () -> Unit) {
     val tracks = library.sumOf { it.tracks.size }
     val hours = library.sumOf { a -> a.tracks.sumOf { it.durationMs } } / 3_600_000
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
@@ -700,6 +704,57 @@ private fun AboutScreen(library: List<Album>, onBack: () -> Unit) {
                 "An offline music player. Plays from the Music folder, on this phone or on speakers and TVs on the same Wi-Fi.",
                 style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
             )
+            Text(
+                "Open-source licences",
+                style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = GHi),
+                modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onLicences).padding(vertical = 8.dp),
+            )
+        }
+    }
+}
+
+/** Every library the app is built on, with its licence: collected at build time, shown offline. */
+@Composable
+private fun LicencesScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val libraries = remember {
+        Libs.Builder().withContext(context).build().libraries.sortedBy { it.name.lowercase() }
+    }
+    val counts = remember(libraries) {
+        libraries.flatMap { it.licenses.map { l -> l.name } }.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }
+    }
+    var open by remember { mutableStateOf<String?>(null) }
+    LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 96.dp)) {
+        item {
+            Box(Modifier.padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
+                IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+            }
+            Text("Licences", style = display(28), modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
+            Text(
+                "Mako is built on ${libraries.size} open-source libraries: " +
+                    counts.joinToString { (name, n) -> "$n under the $name" } + ". Tap one to read its licence.",
+                style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+            )
+        }
+        items(libraries, key = { it.uniqueId }) { lib ->
+            val expanded = open == lib.uniqueId
+            Column(Modifier.fillMaxWidth().clickable { open = if (expanded) null else lib.uniqueId }.padding(horizontal = 20.dp, vertical = 9.dp)) {
+                Text(lib.name, style = body, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(
+                    listOfNotNull(lib.artifactVersion, lib.licenses.joinToString { it.name }.ifEmpty { null }).joinToString(" · "),
+                    style = TextStyle(fontSize = 12.sp, color = GSoft),
+                )
+                if (expanded) {
+                    lib.licenses.forEach { licence ->
+                        Text(
+                            licence.licenseContent ?: licence.url.orEmpty(),
+                            style = TextStyle(fontSize = 11.sp, color = GSoft, fontFamily = FontFamily.Monospace, lineHeight = 15.sp),
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }

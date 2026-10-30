@@ -40,6 +40,9 @@ Done in a separate repository.
       a rescan and can be restored.
 - [x] Rescan without restarting the app (and pick up files pushed over
       ADB/USB). Library ⋮ → Rescan library; scans only new and deleted files.
+      Open: after the first big sync (2,000 files added, 660 removed) the
+      rescan finished but the screen kept the old library until the app
+      restarted. Reproduce with a test before fixing.
 - [ ] Play history recorded from day one: one row per play with track,
       start time, seconds played, skipped or not, and output device.
       Done when a day of listening shows up correctly in the database.
@@ -63,7 +66,8 @@ Done in a separate repository.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
-- [ ] About screen (done except the licences list) (from a ⋮ menu on the Library header, alongside
+- [x] About screen, with open-source licences (AboutLibraries: 89
+      libraries, Apache 2.0 and MIT, texts readable offline) (from a ⋮ menu on the Library header, alongside
       "Rescan library"): `versionName` from `git describe --tags --always
       --dirty`, `versionCode` from `git rev-list --count HEAD`, build date,
       device and Android version, and open-source licences via

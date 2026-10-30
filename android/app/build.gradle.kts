@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Collects every dependency's licence at build time, for the About screen (offline).
+    alias(libs.plugins.aboutlibraries)
 }
 
 // Version from git, so every build says exactly what it was built from.
@@ -68,6 +70,7 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
     implementation(libs.guava)
+    implementation(libs.aboutlibraries.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
