@@ -1,0 +1,158 @@
+package com.simonpena.mako.upnp
+
+import android.net.Uri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.test.core.app.ApplicationProvider
+import com.simonpena.mako.idle
+import com.simonpena.mako.toMediaItem
+import com.simonpena.mako.track
+import org.junit.After
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.random.Random
+
+/** RendererPlayer and MediaServer against a fake Sonos or TV on localhost. */
+@RunWith(RobolectricTestRunner::class)
+class RendererPlayerTest {
+    @get:Rule val tmp = TemporaryFolder()
+
+    private val context = ApplicationProvider.getApplicationContext<android.app.Application>()
+    private val server = MediaServer(context)
+    private val cleanup = mutableListOf<() -> Unit>({ server.close() })
+
+    @After fun tearDown() = cleanup.forEach { it() }
+
+    private fun file(name: String, size: Int = 300_000): File =
+        tmp.newFile(name).apply { writeBytes(Random(name.hashCode()).nextBytes(size)) }
+
+    private fun item(id: Long, title: String, f: File, durationMs: Long): MediaItem =
+        track(id, title, durationMs = durationMs).copy(uri = Uri.fromFile(f)).toMediaItem()
+
+    private fun start(kind: FakeRenderer.Kind): Pair<FakeRenderer, RendererPlayer> {
+        val fake = FakeRenderer(kind)
+        val player = RendererPlayer(context, fake.renderer, server) { null }
+        cleanup += { player.release(); fake.close() }
+        return fake to player
+    }
+
+    /** Lets fake time pass and background calls finish until [condition] holds. */
+    private fun eventually(what: String, condition: () -> Boolean) {
+        repeat(150) {
+            if (condition()) return
+            idle(200)
+            Thread.sleep(10)
+        }
+        throw AssertionError("timed out waiting for: $what")
+    }
+
+    @Test fun `hands over at the phone's position and serves the whole file`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        val f = file("saya.mp3")
+        player.setMediaItems(listOf(item(1, "O... Saya", f, 215_000)), 0, 30_000)
+        player.prepare()
+        player.play()
+        eventually("the speaker plays") { fake.state == "PLAYING" && player.isPlaying }
+        assertEquals(1, fake.actions.count { it == "SetAVTransportURI" }) // loaded once, not again by play()
+        assertArrayEquals(f.readBytes(), fake.downloaded) // Sonos downloads it all up front
+        assertTrue(fake.uri.matches(Regex("http://127\\.0\\.0\\.1:\\d+/t/[0-9a-f]{18}\\.mp3")))
+        assertEquals(30_000L, fake.positionMs) // continued where the phone was
+        assertTrue("<dc:title>O... Saya</dc:title>" in unescape(fake.metadata))
+    }
+
+    @Test fun `moves to the next track when the renderer finishes one`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        val transitions = mutableListOf<Int>()
+        player.addListener(object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) { transitions += reason }
+        })
+        player.setMediaItems(listOf(item(1, "O... Saya", file("a.mp3"), 215_000), item(2, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        player.play()
+        eventually("first track plays") { fake.state == "PLAYING" && player.isPlaying }
+        val first = fake.uri
+        idle(5_000) // past the settling time after a load
+        fake.positionMs = 214_000
+        eventually("the player sees the end coming") { player.currentPosition >= 214_000 }
+        fake.finishTrack()
+        eventually("second track loads") { player.currentMediaItemIndex == 1 && fake.uri != first && fake.state == "PLAYING" }
+        assertTrue("<dc:title>Riots</dc:title>" in unescape(fake.metadata))
+        // Play history counts this as "completed" only if the reason is AUTO.
+        assertEquals(Player.MEDIA_ITEM_TRANSITION_REASON_AUTO, transitions.last())
+    }
+
+    @Test fun `follows a pause made elsewhere`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        player.play()
+        eventually("plays") { player.isPlaying }
+        idle(5_000)
+        fake.state = "PAUSED_PLAYBACK"
+        eventually("pauses here too") { !player.playWhenReady }
+    }
+
+    @Test fun `steps aside when another controller takes over, and takes back on play`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        player.play()
+        eventually("plays") { player.isPlaying }
+        val ours = fake.uri
+        idle(5_000)
+        fake.takeOver("x-rincon-queue:RINCON_000E58D4E5F601400#2")
+        eventually("stops claiming to play") { !player.playWhenReady }
+        assertTrue(fake.uri.startsWith("x-rincon")) // and leaves the speaker alone
+        player.play()
+        eventually("takes the speaker back") { fake.uri == ours && fake.state == "PLAYING" }
+    }
+
+    @Test fun `the TV gets DLNA features, so it can seek`() {
+        val (fake, player) = start(FakeRenderer.Kind.TV)
+        player.setMediaItems(listOf(item(1, "Daily Growing", file("c.mp3"), 293_000)))
+        player.prepare()
+        player.play()
+        eventually("plays") { fake.state == "PLAYING" }
+        assertEquals(DLNA_FEATURES, fake.contentFeatures)
+        idle(5_000)
+        player.seekTo(90_000)
+        eventually("seeks") { fake.positionMs == 90_000L }
+        assertEquals(null, player.playerError)
+    }
+
+    @Test fun `volume goes both ways`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "Riots", file("b.mp3"), 121_000)))
+        player.prepare()
+        eventually("polled once") { player.deviceVolume == 15 }
+        player.increaseDeviceVolume(0)
+        eventually("speaker louder") { fake.volume == 17 }
+        fake.volume = 40 // changed in the Sonos app
+        eventually("phone follows") { player.deviceVolume == 40 }
+    }
+
+    @Test fun `the server only serves what was published`() {
+        val f = file("d.mp3", 1_000)
+        val (path, _) = server.publishTrack("9", Uri.fromFile(f))
+        val base = server.baseUrlFor("127.0.0.1")
+        fun status(p: String, range: String? = null) = (URL(base + p).openConnection() as HttpURLConnection).run {
+            range?.let { setRequestProperty("Range", it) }
+            responseCode.also { disconnect() }
+        }
+        assertEquals(200, status(path))
+        assertEquals(206, status(path, "bytes=100-"))
+        assertEquals(416, status(path, "bytes=5000-"))
+        assertEquals(404, status("/t/notatoken.mp3"))
+        assertEquals(404, status("/../../etc/hosts"))
+        assertEquals(404, status(f.absolutePath)) // never a filesystem path
+    }
+}

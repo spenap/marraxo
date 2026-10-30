@@ -55,6 +55,7 @@ class RendererPlayer(
     private var discontinuity: Int? = null
 
     private var loadedUrl: String? = null // what the renderer should be playing
+    private var loading = false // a load is on its way; loadedUrl not known yet
     private var loadedAt = 0L
     private var baseUrl: String? = null // only touched on the net thread
     private var polling = false
@@ -123,7 +124,7 @@ class RendererPlayer(
         updateLocks()
         when {
             // The renderer was taken over by something else: take it back.
-            playWhenReady && loadedUrl == null && items.isNotEmpty() -> load()
+            playWhenReady && loadedUrl == null && !loading && items.isNotEmpty() -> load()
             loadedUrl != null -> call { avt(if (playWhenReady) "Play" else "Pause", *(if (playWhenReady) arrayOf("Speed" to 1) else emptyArray())) }
         }
         return DONE
@@ -190,6 +191,7 @@ class RendererPlayer(
         val play = playWhenReady
         playbackState = Player.STATE_BUFFERING
         loadedAt = SystemClock.elapsedRealtime()
+        loading = true
         val host = java.net.URL(renderer.avTransport).host
         val meta = item.mediaMetadata
         call {
@@ -197,7 +199,13 @@ class RendererPlayer(
             val (path, mime) = server.publishTrack(item.mediaId, uri)
             val url = base + path
             val art = cover(item)?.let { base + server.publishCover(item.mediaId, it) }
-            main.post { if (items.getOrNull(index) === item) loadedUrl = url }
+            main.post {
+                loading = false
+                if (items.getOrNull(index) !== item) return@post
+                loadedUrl = url
+                // Play or pause asked for while loading; queued after this load's own calls.
+                if (playWhenReady != play) call { avt(if (playWhenReady) "Play" else "Pause", *(if (playWhenReady) arrayOf("Speed" to 1) else emptyArray())) }
+            }
             val metadata = didl(
                 url, mime, meta.title?.toString(), meta.artist?.toString(), meta.albumTitle?.toString(),
                 meta.durationMs, art,
@@ -319,6 +327,7 @@ class RendererPlayer(
             } catch (e: Exception) {
                 Log.w(TAG, "${renderer.name}: ${e.message}")
                 main.post {
+                    loading = false
                     if (released) return@post
                     playerError = PlaybackException(
                         "${renderer.name} didn't respond", e, PlaybackException.ERROR_CODE_REMOTE_ERROR,
