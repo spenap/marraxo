@@ -35,8 +35,8 @@ Done in a separate repository.
 - [x] MediaStore library scan, basic metadata, play/pause/next/prev/seek.
 - [x] Playback state survives app restart.
 - [x] Library limited to the shared `Music/` folder.
-- [ ] "Hide from library" on albums and tracks, stored in the app
-      database and reversible. Done when a hidden album stays hidden after
+- [x] "Hide from library" on albums and tracks, stored in the app
+      database and reversible. (Long-press; ⋮ → Hidden to show again.) Done when a hidden album stays hidden after
       a rescan and can be restored.
 - [x] Rescan without restarting the app (and pick up files pushed over
       ADB/USB). Library ⋮ → Rescan library; scans only new and deleted files.

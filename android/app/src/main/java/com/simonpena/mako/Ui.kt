@@ -1,9 +1,12 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class) // combinedClickable (long-press)
+
 package com.simonpena.mako
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +26,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -89,6 +93,7 @@ private sealed interface Screen {
     data class AlbumDetail(val albumId: Long) : Screen
     data object NowPlaying : Screen
     data object About : Screen
+    data object Hidden : Screen
 }
 
 private fun fmt(ms: Long): String {
@@ -101,6 +106,7 @@ fun MakoApp(
     hasPermission: Boolean,
     library: List<Album>?,
     player: PlayerHolder,
+    hidden: Hidden,
     status: String?,
     onGrant: () -> Unit,
     onRescan: () -> Unit,
@@ -110,31 +116,36 @@ fun MakoApp(
             !hasPermission -> Welcome(onGrant)
             library == null -> Message("Building your library…")
             library.isEmpty() -> Empty(onRescan)
-            else -> Main(library, player, status, onRescan)
+            else -> Main(library, player, hidden, status, onRescan)
         }
     }
 }
 
 @Composable
-private fun Main(library: List<Album>, player: PlayerHolder, status: String?, onRescan: () -> Unit) {
+private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, status: String?, onRescan: () -> Unit) {
     val stack = remember { mutableStateListOf<Screen>(Screen.Library) }
     BackHandler(enabled = stack.size > 1) { stack.removeAt(stack.lastIndex) }
     val albumOfTrack = remember(library) { library.flatMap { a -> a.tracks.map { it.id to a } }.toMap() }
     val currentAlbum = player.currentTrackId?.let { albumOfTrack[it] }
     val currentTrack = currentAlbum?.tracks?.firstOrNull { it.id == player.currentTrackId }
+    // What the library shows; the player above still finds hidden tracks it is playing.
+    val visible = remember(library, hidden.albums, hidden.tracks) { hidden.filter(library) }
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
-            library, hasMini = currentTrack != null, status = status,
-            onRescan = onRescan, onAbout = { stack.add(Screen.About) },
+            visible, hasMini = currentTrack != null, status = status,
+            onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
+            onHide = hidden::hide,
         ) { stack.add(Screen.AlbumDetail(it)) }
+        Screen.Hidden -> HiddenScreen(hidden) { stack.removeAt(stack.lastIndex) }
         Screen.About -> AboutScreen(library) { stack.removeAt(stack.lastIndex) }
         is Screen.AlbumDetail -> {
-            val album = library.firstOrNull { it.id == screen.albumId }
+            val album = visible.firstOrNull { it.id == screen.albumId }
             if (album == null) stack.removeAt(stack.lastIndex) else AlbumScreen(
                 album, currentTrack, hasMini = currentTrack != null,
                 onBack = { stack.removeAt(stack.lastIndex) },
                 onPlay = { player.play(album.tracks, it) },
+                onHide = hidden::hide,
             )
         }
         Screen.NowPlaying ->
@@ -228,6 +239,8 @@ private fun LibraryScreen(
     status: String?,
     onRescan: () -> Unit,
     onAbout: () -> Unit,
+    onHidden: () -> Unit,
+    onHide: (Album) -> Unit,
     onAlbum: (Long) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -238,6 +251,7 @@ private fun LibraryScreen(
                 IconSpot(GlowIcons.More, "More") { menu = true }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = GSheet) {
                     DropdownMenuItem(text = { Text("Rescan library", style = body) }, onClick = { menu = false; onRescan() })
+                    DropdownMenuItem(text = { Text("Hidden", style = body) }, onClick = { menu = false; onHidden() })
                     DropdownMenuItem(text = { Text("About", style = body) }, onClick = { menu = false; onAbout() })
                 }
             }
@@ -254,7 +268,8 @@ private fun LibraryScreen(
             modifier = Modifier.navigationBarsPadding(),
         ) {
             items(library, key = { it.id }) { album ->
-                Column(Modifier.clickable { onAlbum(album.id) }) {
+                var options by remember { mutableStateOf(false) }
+                Column(Modifier.combinedClickable(onLongClick = { options = true }) { onAlbum(album.id) }) {
                     AlbumArt(album.id, px = 336, corner = 8.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
                     Text(
                         album.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -262,6 +277,10 @@ private fun LibraryScreen(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                     Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                    // Last in the column, so it opens below the album's name.
+                    DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
+                        DropdownMenuItem(text = { Text("Hide album", style = body) }, onClick = { options = false; onHide(album) })
+                    }
                 }
             }
         }
@@ -275,6 +294,7 @@ private fun AlbumScreen(
     hasMini: Boolean,
     onBack: () -> Unit,
     onPlay: (Int) -> Unit,
+    onHide: (Track) -> Unit,
 ) {
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
@@ -308,16 +328,65 @@ private fun AlbumScreen(
             val on = current?.id == track.id
             val color = if (on) GHi else Color.White
             val soft = if (on) GHi else GSoft
+            var options by remember { mutableStateOf(false) }
             Row(
-                Modifier.fillMaxWidth().clickable { onPlay(i) }.padding(horizontal = 20.dp, vertical = 11.dp),
+                Modifier.fillMaxWidth().combinedClickable(onLongClick = { options = true }) { onPlay(i) }
+                    .padding(horizontal = 20.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
+                    DropdownMenuItem(text = { Text("Hide song", style = body) }, onClick = { options = false; onHide(track) })
+                }
                 Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft), modifier = Modifier.width(28.dp))
                 Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
             }
         }
+    }
+}
+
+/** Everything hidden from the library, each with a way back. */
+@Composable
+private fun HiddenScreen(hidden: Hidden, onBack: () -> Unit) {
+    val albums = hidden.albums.sortedBy { hiddenLabel(it).first.lowercase() }
+    val tracks = hidden.tracks.sortedBy { hiddenLabel(it).first.lowercase() }
+    LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 96.dp)) {
+        item {
+            Box(Modifier.padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
+                IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+            }
+            Text("Hidden", style = display(28), modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
+            Text(
+                if (albums.isEmpty() && tracks.isEmpty()) "Nothing is hidden. Long-press an album or a song to hide it."
+                else "Hidden from the library. The files stay on the phone.",
+                style = TextStyle(fontSize = 13.sp, color = GSoft), modifier = Modifier.padding(horizontal = 20.dp),
+            )
+        }
+        if (albums.isNotEmpty()) item { HiddenHeading("Albums") }
+        items(albums.size) { HiddenRow(albums[it]) { hidden.showAlbum(albums[it]) } }
+        if (tracks.isNotEmpty()) item { HiddenHeading("Songs") }
+        items(tracks.size) { HiddenRow(tracks[it]) { hidden.showTrack(tracks[it]) } }
+    }
+}
+
+@Composable
+private fun HiddenHeading(text: String) {
+    Text(text.uppercase(), style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft), modifier = Modifier.padding(start = 20.dp, top = 22.dp, bottom = 4.dp))
+}
+
+@Composable
+private fun HiddenRow(key: String, onShow: () -> Unit) {
+    val (title, detail) = hiddenLabel(key)
+    Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = body, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Text(
+            "Show", style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = GHi),
+            modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onShow).padding(horizontal = 12.dp, vertical = 8.dp),
+        )
     }
 }
 

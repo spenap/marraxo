@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var player: PlayerHolder
+    private lateinit var hidden: Hidden
     private var hasPermission by mutableStateOf(false)
     private var library by mutableStateOf<List<Album>?>(null)
     private var status by mutableStateOf<String?>(null)
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         player = PlayerHolder(this)
+        hidden = Hidden(this)
         // Volume keys: music volume on this phone, even when paused. On a
         // speaker or the TV, let the system send them to the session, which
         // sets the renderer's volume.
@@ -57,6 +59,7 @@ class MainActivity : ComponentActivity() {
                 hasPermission = hasPermission,
                 library = library,
                 player = player,
+                hidden = hidden,
                 onGrant = { request.launch(permissions) },
                 status = status,
                 onRescan = ::rescan,
