@@ -1,5 +1,7 @@
 #!/bin/sh
 # Runs beets with this project's config and state (tools/beets/out).
+# BEETS_OVERLAY=<file> layers extra settings on top of config.yaml.
 here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$here/out"
-BEETSDIR="$here/out" exec "$here/../.venv/bin/beet" -c "$here/config.yaml" "$@"
+ln -sf ../config.yaml "$here/out/config.yaml" # base config, always loaded
+BEETSDIR="$here/out" exec "$here/../.venv/bin/beet" -c "$here/${BEETS_OVERLAY:-config.yaml}" "$@"
