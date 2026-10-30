@@ -187,12 +187,14 @@ reviewed interactively.
 ### C3. Liner notes (offline "X-ray")
 Learn more about a track, album or artist, offline, from data fetched on
 the desktop.
-- [ ] Fetch once per MusicBrainz ID (release, recording, work, artist,
+- [x] Fetch once per MusicBrainz ID (release, recording, work, artist,
       with relationships) and cache the JSON; respect MusicBrainz's 1
       request/s and send a User-Agent. Optionally a Wikipedia summary via
-      Wikidata (CC BY-SA: show attribution).
+      Wikidata (CC BY-SA: show attribution). (`tools/linernotes/fetch.py`;
+      Spanish summary first, else English.)
 - [ ] Build `linernotes.db` (SQLite) keyed by the track's path inside
-      `Music-clean`, and push it with the music.
+      `Music-clean`, and push it with the music. Built
+      (`tools/linernotes/build.py`, schema 1); pushing it is still to do.
 - [ ] App: a Liner notes screen for track, album and artist. Credits,
       studios and dates, "first released on", other versions in your
       library, and connections between your albums through shared
