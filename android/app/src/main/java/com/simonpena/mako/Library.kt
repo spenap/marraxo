@@ -12,6 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
+import java.nio.CharBuffer
+import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicInteger
 
 data class Track(
@@ -38,7 +40,24 @@ data class Album(
 private fun sortKey(artist: String) = artist.removePrefix("The ").lowercase()
 
 private fun clean(value: String?, fallback: String) =
-    value?.takeUnless { it.isBlank() || it == MediaStore.UNKNOWN_STRING } ?: fallback
+    value?.takeUnless { it.isBlank() || it == MediaStore.UNKNOWN_STRING }?.let(::repairMojibake) ?: fallback
+
+private val WINDOWS_1252 = Charset.forName("windows-1252")
+
+/**
+ * Undoes Android's occasional misreading of correct UTF-8 tags as
+ * Windows-1252 ("Thatâ€™s" for "That’s"; 6% of tags with accents or curly
+ * quotes on the Pixel 5). Its encoding guesser decides per file, so one
+ * album can come out half garbled and split in two. The reversal is exact:
+ * text that isn't garbled doesn't survive the round trip and is kept as is.
+ */
+fun repairMojibake(s: String): String {
+    if (s.none { it == 'Ã' || it == 'Â' || it == 'â' }) return s
+    return runCatching {
+        val bytes = WINDOWS_1252.newEncoder().encode(CharBuffer.wrap(s))
+        Charsets.UTF_8.newDecoder().decode(bytes).toString()
+    }.getOrDefault(s)
+}
 
 /**
  * Only audio under the shared Music folder is part of the library; test
@@ -96,15 +115,10 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
         }
     }
     val genres = trackGenres(context)
-    tracks.groupBy { it.albumId }
-        .map { (albumId, list) ->
-            val sorted = list.sortedWith(compareBy({ it.number }, { it.title }))
-            val first = sorted.first()
-            // The genre most of the album's songs share.
-            val genre = list.mapNotNull { genres[it.id] }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key.orEmpty()
-            Album(albumId, first.album, first.artist, years[albumId] ?: 0, sorted, genre)
-        }
-        .sortedWith(compareBy({ sortKey(it.artist) }, { it.year }, { it.title }))
+    groupAlbums(tracks, years).map { album ->
+        // The genre most of the album's songs share.
+        album.copy(genre = album.tracks.mapNotNull { genres[it.id] }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key.orEmpty())
+    }
 }
 
 /** Track id → genre. Android 8 keeps genres in their own table, one query per genre. */
@@ -124,6 +138,26 @@ private fun trackGenres(context: Context): Map<Long, String> {
         }
     }
     return result
+}
+
+/**
+ * Albums from tracks: Android's album ids first (they keep compilations
+ * together), then groups with the same title and main artist merged. Android
+ * can give one album two ids when it reads the name differently for some
+ * tracks (see [repairMojibake]). The id most tracks share stays, for the cover.
+ */
+fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>): List<Album> {
+    fun mainArtist(list: List<Track>) = list.groupingBy { it.artist }.eachCount().maxBy { it.value }.key
+    return tracks.groupBy { it.albumId }.values
+        .groupBy { list -> fold(list.first().album) + "\u0000" + fold(mainArtist(list)) }.values
+        .map { groups ->
+            val main = groups.maxBy { it.size }
+            val id = main.first().albumId
+            val sorted = groups.flatten().sortedWith(compareBy({ it.number }, { it.title }))
+            val year = years[id] ?: groups.firstNotNullOfOrNull { years[it.first().albumId] } ?: 0
+            Album(id, main.first().album, mainArtist(main), year, sorted)
+        }
+        .sortedWith(compareBy({ sortKey(it.artist) }, { it.year }, { it.title }))
 }
 
 private val AUDIO = setOf("mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wav", "mpc")

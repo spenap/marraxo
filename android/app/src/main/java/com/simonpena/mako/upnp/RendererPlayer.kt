@@ -330,20 +330,24 @@ class RendererPlayer(
                 playbackState = Player.STATE_READY
                 if (!settling) {
                     parseUpnpTime(position?.get("RelTime"))?.let(::reached)
-                    if (!playWhenReady) { playWhenReady = true; updateLocks() } // resumed elsewhere
+                    if (!playWhenReady) { playWhenReady = true; updateLocks(); Log.i(TAG, "${renderer.name}: resumed elsewhere") }
                 }
             }
             "PAUSED_PLAYBACK" -> {
                 playbackState = Player.STATE_READY
                 if (!settling) {
                     parseUpnpTime(position?.get("RelTime"))?.let(::setPosition)
-                    if (playWhenReady) { playWhenReady = false; updateLocks() } // paused elsewhere
+                    if (playWhenReady) { playWhenReady = false; updateLocks(); Log.i(TAG, "${renderer.name}: paused elsewhere") }
                 }
             }
             "TRANSITIONING" -> playbackState = Player.STATE_BUFFERING
             "STOPPED", "NO_MEDIA_PRESENT" -> if (!settling && playWhenReady) {
                 val duration = items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE
-                if (maxOf(lastPosition, furthestMs) >= duration - END_SLACK_MS) advance() else {
+                val ended = maxOf(lastPosition, furthestMs) >= duration - END_SLACK_MS
+                // One line per decision, so a wrong one can be explained afterwards.
+                Log.i(TAG, "${renderer.name}: $state at last=$lastPosition furthest=$furthestMs duration=$duration " +
+                    "reported=${position?.get("RelTime")} → ${if (ended) "track ended" else "stopped elsewhere"}")
+                if (ended) advance() else {
                     // Stopped elsewhere, mid-track.
                     playWhenReady = false
                     loadedUrl = null
@@ -357,6 +361,7 @@ class RendererPlayer(
 
     /** The renderer finished the current track: next, again, or the end. */
     private fun advance() {
+        Log.i(TAG, "${renderer.name}: advancing from $index of ${items.size}, repeat=$repeatMode")
         val next = when {
             repeatMode == Player.REPEAT_MODE_ONE -> index
             index + 1 < items.size -> index + 1
