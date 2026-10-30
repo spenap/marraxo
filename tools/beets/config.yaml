@@ -11,6 +11,9 @@ per_disc_numbering: yes # disc 2 starts again at track 1
 # only from v2.3's TYER and shows no year for v2.4 files (checked on the
 # Pixel 5, Android 17, 2026-10-30).
 id3v23: yes
+# Year = when the music first came out (Castillo de arena: 1977), not the
+# reissue that was matched (2018). The release's own date stays in beets.
+original_date: yes
 library: tools/beets/out/library.db
 
 import:
