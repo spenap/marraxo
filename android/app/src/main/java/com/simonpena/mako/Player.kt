@@ -114,7 +114,7 @@ class PlayerHolder(context: Context) {
 
 const val EXTRA_ALBUM_ID = "albumId"
 
-private fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
+internal fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(id.toString())
     .setUri(uri)
     .setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(uri).build())

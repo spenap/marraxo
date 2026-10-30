@@ -211,7 +211,7 @@ desktop and shipped as `discovery.db`.
 Every check done by hand on a device should end up as a test at the
 cheapest level that can catch it. CI runs levels 1–3 on every push; the
 others run on demand.
-- [ ] **T1. Unit tests** (JVM + Robolectric, no device): hiding, search
+- [x] **T1. Unit tests** (JVM + Robolectric, no device): hiding, search
       folding, UPnP time/DIDL helpers, HTTP byte ranges, queue save and
       restore, play-history rows (completed/skipped/stopped, durations).
 - [ ] **T2. Fake renderer**: a local SOAP + HTTP server that behaves like

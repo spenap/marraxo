@@ -98,19 +98,10 @@ class MediaServer(context: Context) {
         val pfd = entry.uri?.let { uri -> resolver.openFileDescriptor(uri, "r") }
         pfd.use {
             val size = entry.bytes?.size?.toLong() ?: pfd!!.statSize
-            var first = 0L
-            var last = size - 1
-            val range = RANGE.matchEntire(headers["range"].orEmpty())
-            if (range != null) {
-                val (a, b) = range.destructured
-                if (a.isNotEmpty()) {
-                    first = a.toLong()
-                    if (b.isNotEmpty()) last = minOf(b.toLong(), size - 1)
-                } else if (b.isNotEmpty()) {
-                    first = maxOf(0, size - b.toLong())
-                }
-            }
-            if (first > last) {
+            val range = byteRange(headers["range"], size)
+            val first = range?.first ?: 0L
+            val last = range?.last ?: (size - 1)
+            if (range != null && range.isEmpty()) {
                 out.write("HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */$size\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
                 out.flush()
                 return
@@ -161,7 +152,20 @@ class MediaServer(context: Context) {
         }
     }
 
-    private companion object {
-        val RANGE = Regex("bytes=(\\d*)-(\\d*)")
+}
+
+private val RANGE = Regex("bytes=(\\d*)-(\\d*)")
+
+/**
+ * The bytes a Range header asks for, clamped to the file: null for the
+ * whole file (no or unparseable header), an empty range if unsatisfiable.
+ */
+internal fun byteRange(header: String?, size: Long): LongRange? {
+    val (a, b) = RANGE.matchEntire(header?.trim().orEmpty())?.destructured ?: return null
+    val range = when {
+        a.isNotEmpty() -> a.toLong()..(if (b.isNotEmpty()) minOf(b.toLong(), size - 1) else size - 1)
+        b.isNotEmpty() -> maxOf(0, size - b.toLong())..(size - 1) // suffix: the last N bytes
+        else -> return null
     }
+    return if (range.first > range.last || range.first >= size) LongRange.EMPTY else range
 }

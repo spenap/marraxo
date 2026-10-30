@@ -4,7 +4,6 @@ package com.simonpena.mako
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
-import java.text.Normalizer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
@@ -414,23 +413,15 @@ private fun ListRow(albumId: Long, round: Boolean, title: String, detail: String
     }
 }
 
-private fun fold(s: String) = Normalizer.normalize(s, Normalizer.Form.NFD).replace(MARKS, "").lowercase()
-private val MARKS = Regex("\\p{Mn}+")
-
 /** Search albums, artists and songs; accents and case don't matter ("camaron" finds Camarón). */
 @Composable
 private fun SearchScreen(library: List<Album>, onBack: () -> Unit, onAlbum: (Long) -> Unit, onPlay: (Album, Int) -> Unit) {
     var query by rememberSaveable { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
-    val index = remember(library) {
-        library.map { a -> Triple(a, fold("${a.title} ${a.artist}"), a.tracks.map { fold(it.title) }) }
-    }
-    val q = fold(query.trim())
-    val albums = if (q.isEmpty()) emptyList() else index.filter { q in it.second }.map { it.first }
-    val songs = if (q.isEmpty()) emptyList() else index.flatMap { (a, _, titles) ->
-        titles.mapIndexedNotNull { i, t -> if (q in t) a to i else null }
-    }.take(60)
+    val index = remember(library) { SearchIndex(library) }
+    val (albums, songs) = index.search(query)
+    val q = query.trim()
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp).height(56.dp), verticalAlignment = Alignment.CenterVertically) {
             IconSpot(GlowIcons.Back, "Back", onClick = onBack)

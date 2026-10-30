@@ -37,6 +37,10 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    testOptions {
+        // Robolectric runs Android classes (Uri, Bundle, SQLite) on the JVM.
+        unitTests.isIncludeAndroidResources = true
+    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -55,4 +59,8 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
     implementation(libs.guava)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }
