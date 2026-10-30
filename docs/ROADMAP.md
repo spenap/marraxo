@@ -79,7 +79,7 @@ The Nexus 4 becomes a music player, not a phone running a music app. The
 S25 keeps its own launcher; everything here is off by default and turned
 on per device. Settings are applied by a script that records the previous
 values, so the phone can be put back as it was.
-- [ ] **Mako as the home screen.** An `activity-alias` with the HOME
+- [x] **Mako as the home screen.** An `activity-alias` with the HOME
       category, disabled in the APK and enabled on the Nexus 4
       (`pm enable`, then `cmd package set-home-activity`). Home always
       returns to the library. A ⋮ menu offers Mako settings, Android
@@ -109,7 +109,8 @@ values, so the phone can be put back as it was.
       status bar stays (battery, Wi-Fi, time).
       A full SystemUI theme (overlay APK) only if these aren't enough.
 - [ ] `android/scripts/appliance.sh [--undo]`: applies all of the above
-      over ADB and saves the previous values for `--undo`.
+      over ADB and saves the previous values for `--undo`. Done so far:
+      the home screen (on the Nexus 4 since 2026-10-30).
 
 ## Track B: Sonos and TV (no phone needed for B0)
 
