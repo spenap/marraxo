@@ -145,6 +145,11 @@ Needs A1 and B0.
       next, pause, back to the phone, play history per output. Volume keys
       reach the speaker only while it plays; when paused, Android sends
       them to the phone's own volume.
+- [ ] Let the renderer advance by itself: hand it the next track ahead
+      (`SetNextAVTransportURI`; the TV supports it, check Sonos), so the
+      app no longer has to judge where a track ends. Today it counts a stop
+      in the last fifth of a track as its end, because Sonos's position
+      drifts behind the audio of VBR MP3s (3:23 reported of 3:35).
 - [ ] Poll the renderer less when nothing needs it: the rundown on
       2026-10-30 drew ~300 mA paused as well as playing, because the app
       asks the speaker for its state every second either way. Every few
