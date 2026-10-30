@@ -116,7 +116,10 @@ reviewed interactively.
   (4,000 tracks) imported, 168 skipped. 135 of the skipped have clean tags
   but no strong MusicBrainz match; the rest are compilations, singles or
   badly tagged. Classes in `tools/beets/out/skip-classes.json`.
-- [ ] Interactive review of skipped albums (`out/import.log`).
+- [x] Second automatic pass over the skipped albums (`tools/beets/pass2.yaml`:
+  ~88% similarity, missing tracks allowed): 62 more imported, 103 left.
+- [ ] Spot-check pass-2 matches near 88%, and the 2 duplicate releases.
+- [ ] Interactive review of the 103 remaining (`out/import-pass2.log`).
 - [x] Rerun the inventory on `Music-clean` and compare: of the imported
   albums, 1 lacks artwork (was 144 of 472 overall); no tracks lack year or
   track number; no artist spelling variants.
