@@ -236,6 +236,12 @@ desktop and shipped as `discovery.db`.
       when used), matches on the phone, and opens the album.
 - AcoustID fingerprints from beets don't fit this: they identify clean
   whole files, not noisy clips.
+- Implement from the paper, not from AGPL code (Olaf, Panako): Wang,
+  "An Industrial-Strength Audio Search Algorithm", ISMIR 2003. Its main
+  patent, US 6,990,453 (filed 2001), shows "Expired – Lifetime" on Google
+  Patents (2026-10-30). Before publishing, have the continuations
+  (US 8,190,435, 8,386,258, 8,700,407, 9,899,030) confirmed expired, and
+  stick to the 2003 method, not later refinements.
 
 ### C2. Safe writing (Phase 5)
 - [ ] Backup, change manifest, reversible writes, validation.
