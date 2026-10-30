@@ -85,7 +85,8 @@ values, so the phone can be put back as it was.
       Done when Home lands in Mako and Android Settings is two taps away.
 - [ ] **No lock screen:** screen lock set to None, so waking the phone
       lands in the player.
-- [ ] **Waking without the power button** (it is unreliable):
+- [ ] **Waking without the power button** (worn: it misses presses, so
+      nothing should depend on it):
       - plugging or unplugging the cable already wakes it
         (`wake_when_plugged_or_unplugged=1`);
       - volume keys: try LineageOS's volume-wake setting; if this build
@@ -102,7 +103,8 @@ values, so the phone can be put back as it was.
       prototype; on a speaker they set the speaker's volume, paused or not.
 - [ ] **System look:** dark style plus the closest accent overlay (cyan),
       a Glow wallpaper, a Glow boot animation (`/system/media`, root), and
-      the navigation bar hidden in Mako (immersive; swipe to reveal).
+      the navigation bar hidden in Mako (immersive; swipe to reveal). The
+      status bar stays (battery, Wi-Fi, time).
       A full SystemUI theme (overlay APK) only if these aren't enough.
 - [ ] `android/scripts/appliance.sh [--undo]`: applies all of the above
       over ADB and saves the previous values for `--undo`.
