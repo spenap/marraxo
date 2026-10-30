@@ -1,0 +1,182 @@
+<title>Mako Home Cards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: one phone-width column (the app's Home), shelves scroll sideways, a sheet explains each card's rule.
+   Single dark theme on purpose: it is the app's own Glow look (docs/mockups/prototype.html). */
+:root {
+  color-scheme: dark;
+  --bg: #0C1112;
+  --sheet: #161D1E;
+  --hi: #9FD6CF;
+  --ink: #FFFFFF;
+  --soft: rgba(255, 255, 255, .64);
+  --faint: rgba(255, 255, 255, .14);
+  --display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --body: "Figtree", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.app { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 26px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+h1 { font: 800 30px/1 var(--display); letter-spacing: -.02em; margin: 0; }
+.tabs { display: flex; gap: 18px; font-weight: 600; font-size: 14px; color: var(--soft); }
+.tabs span { padding-bottom: 6px; }
+.tabs .on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--hi); }
+.note { font-size: 13px; color: var(--soft); margin: 0; max-width: 60ch; }
+.note b { color: var(--hi); font-weight: 600; }
+
+section { display: flex; flex-direction: column; gap: 10px; }
+h2 { font: 800 19px/1.1 var(--display); margin: 0; text-wrap: balance; }
+.sub { font-size: 12.5px; color: var(--soft); margin: -6px 0 0; }
+.shelf {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 12px;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none;
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+}
+.shelf::-webkit-scrollbar { display: none; }
+.card { all: unset; cursor: pointer; scroll-snap-align: start; display: flex; flex-direction: column; gap: 7px; }
+.card:focus-visible .cover { outline: 2px solid var(--hi); outline-offset: 2px; }
+.cover {
+  aspect-ratio: 1; border-radius: 8px; padding: 10px; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  background: linear-gradient(155deg, var(--t, #24525A) 0%, color-mix(in oklab, var(--t, #24525A) 45%, #070D0E) 100%);
+}
+.cover .big { font: 800 24px/.95 var(--display); letter-spacing: -.02em; text-wrap: balance; }
+.cover .big.long { font-size: 19px; }
+.cover .kind { position: absolute; top: 9px; left: 10px; font: 400 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.cover .n { position: absolute; top: 7px; right: 9px; font: 600 12px/1 var(--body); color: rgba(255,255,255,.8); font-variant-numeric: tabular-nums; }
+.card .t { font-weight: 600; font-size: 13.5px; line-height: 1.25; }
+.card .w { font-size: 12px; color: var(--soft); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.later .cover { filter: saturate(.35) brightness(.7); }
+.later .w { color: var(--hi); }
+.empty .cover { background: none; border: 1.5px dashed var(--faint); align-items: center; justify-content: center; text-align: center; }
+.empty .big { font-size: 15px; color: var(--soft); font-family: var(--body); font-weight: 500; }
+
+/* The sheet: what a card is made of */
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 5; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; margin: 0 auto; max-width: 472px;
+  background: var(--sheet); border-radius: 14px 14px 0 0; display: flex; flex-direction: column; gap: 12px;
+  padding: 10px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  max-height: 82%; overflow-y: auto; box-shadow: 0 -12px 32px rgba(0,0,0,.5);
+}
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: up .22s cubic-bezier(.2,.8,.2,1); } }
+@keyframes up { from { transform: translateY(24px); opacity: .6; } }
+.grab { width: 36px; height: 4px; border-radius: 2px; background: var(--faint); align-self: center; }
+.sheet h3 { font: 800 24px/1.05 var(--display); margin: 4px 0 0; }
+.sheet .why { color: var(--soft); margin: 0; }
+.rule { font: 400 12.5px/1.6 var(--mono); background: rgba(255,255,255,.05); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; color: #D5ECE8; }
+.rule .k { color: var(--hi); }
+.tracks { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.tracks li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 5px 0; border-bottom: 1px solid var(--faint); }
+.tracks li span:last-child { color: var(--soft); font-size: 12.5px; text-align: right; }
+.actions { display: flex; gap: 10px; }
+.btn { all: unset; cursor: pointer; padding: 10px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; }
+.btn.play { background: var(--hi); color: #0B1A1A; }
+.btn.radio { box-shadow: inset 0 0 0 1.5px var(--faint); }
+.btn:focus-visible { outline: 2px solid var(--hi); outline-offset: 2px; }
+.toast { font-size: 12.5px; color: var(--hi); min-height: 1.2em; margin: 0; }
+</style>
+
+<div class="app">
+  <header>
+    <h1>Home</h1>
+    <div class="tabs"><span class="on">Home</span><span>Library</span><span>Search</span></div>
+    <p class="note">A mockup with your real library. Every card is a smart playlist with a rule you can read. <b>Tap a card</b> to see it.</p>
+  </header>
+  <div id="shelves"></div>
+</div>
+
+<script>
+const T = ["#24525A", "#5E2238", "#7A4F1E", "#2D455C", "#3F474E", "#5C4A2A", "#3E5A2C", "#4A2F5C"];
+const shelves = [
+  { title: "Jump back in", sub: "From what you played on this phone", cards: [
+    ["Out and About", "Cherish the Ladies", "Album", "Played today", T[2], "album = “Out and About”\norder  album order"],
+    ["A Son de Guerra", "Juan Luis Guerra", "Album", "Played today", T[5], "album = “A Son de Guerra”\norder  album order"],
+    ["Delirium", "Capercaillie", "Album", "Played today, all 13 tracks", T[3], "album = “Delirium”\norder  album order"],
+    ["Slumdog Millionaire", "A.R. Rahman", "Album", "Played today", T[1], "album = “Slumdog Millionaire”\norder  album order"],
+  ]},
+  { title: "Your favourites", sub: "Nothing yet", cards: [
+    ["Tap ♥ on a song or an album", "", "empty", "Favourites show up here, and go first when the phone is synced", null, null],
+  ]},
+  { title: "Your genres", sub: "The genres most of your albums share", cards: [
+    ["Celtic", "84 albums", "Genre", "84 albums, from Altan to Silly Wizard", T[0], "select genre = Celtic\norder  shuffle\nlimit  100 tracks", ["Daily Growing · Altan", "Rann na Mòna · Capercaillie", "Róisín Dubh · Cherish the Ladies", "Spring the Summer Long · Aly Bain & Phil Cunningham"]],
+    ["Pop", "66 albums", "Genre", "66 albums", T[1], "select genre = Pop\norder  shuffle\nlimit  100 tracks"],
+    ["Rock", "40 albums", "Genre", "40 albums", T[4], "select genre = Rock\norder  shuffle\nlimit  100 tracks"],
+    ["Pop español", "21 albums", "Genre", "21 albums", T[5], "select genre = Pop español\norder  shuffle\nlimit  100 tracks"],
+    ["Soundtrack", "26 albums", "Genre", "26 albums, from Rob Roy to The Two Towers", T[3], "select genre = Soundtrack\norder  shuffle\nlimit  100 tracks"],
+  ]},
+  { title: "Decades", sub: "By the year the music first came out", cards: [
+    ["2000s", "170 albums", "Decade", "170 albums from 2000 to 2009", T[6], "select original year 2000–2009\norder  shuffle\nlimit  100 tracks"],
+    ["1990s", "138 albums", "Decade", "138 albums from 1990 to 1999", T[7], "select original year 1990–1999\norder  shuffle\nlimit  100 tracks"],
+    ["1980s", "49 albums", "Decade", "49 albums from 1980 to 1989", T[1], "select original year 1980–1989\norder  shuffle\nlimit  100 tracks"],
+    ["1970s", "15 albums", "Decade", "15 albums, Abraxas and Castillo de arena among them", T[2], "select original year 1970–1979\norder  shuffle\nlimit  100 tracks"],
+  ]},
+  { title: "Players in your collection", sub: "From the liner notes: musicians on three or more of your albums", cards: [
+    ["Phil Cunningham", "8 albums", "Musician", "Plays on 8 of your albums: accordion, bodhrán, whistles", T[0], "select credit.name = “Phil Cunningham”\n       role in (instrument, vocal)\norder  by album, then shuffle\nlimit  100 tracks", ["Spring the Summer Long · Aly Bain & Phil Cunningham", "The Pearl · Aly Bain & Phil Cunningham", "The Ruby · Aly Bain & Phil Cunningham", "Caledonia’s Hardy Sons · Silly Wizard"]],
+    ["Phil Collins", "11 albums", "Musician", "Drums and keyboards on 11 albums, producer on 10", T[4], "select credit.name = “Phil Collins”\n       role in (instrument, vocal, producer)\norder  shuffle\nlimit  100 tracks"],
+    ["Johnny Cunningham", "6 albums", "Musician", "Fiddle, viola and bouzouki on 6 of your albums", T[5], "select credit.name = “Johnny Cunningham”\n       role in (instrument, vocal)\norder  shuffle"],
+    ["Nathan East", "6 albums", "Musician", "Bass on 6 albums by different artists", T[3], "select credit.name = “Nathan East”\n       role = instrument\norder  shuffle"],
+  ]},
+  { title: "Recorded at", sub: "Studios that appear on more than one of your albums", cards: [
+    ["AIR Studios", "9 albums", "Studio", "9 albums recorded at AIR Studios", T[7], "select credit.role = “recorded at”\n       name = “AIR Studios”\norder  by year"],
+    ["The Town House", "8 albums", "Studio", "8 albums recorded in London’s Town House", T[2], "select credit.role = “recorded at”\n       name = “The Town House”\norder  by year"],
+    ["Windmill Lane", "5 albums", "Studio", "5 albums recorded at Windmill Lane, Dublin", T[6], "select credit.role = “recorded at”\n       name = “Windmill Lane Studios”\norder  by year"],
+  ]},
+  { title: "Moods", sub: "Needs the discovery data (roadmap C4)", later: true, cards: [
+    ["Calm", "", "Mood", "Coming with discovery", T[3], "select mood.calm ≥ 0.7   (from discovery.db)\norder  most calm first"],
+    ["Energetic", "", "Mood", "Coming with discovery", T[1], "select mood.energetic ≥ 0.7\norder  shuffle"],
+    ["Melancholic", "", "Mood", "Coming with discovery", T[4], "select mood.melancholic ≥ 0.7\norder  shuffle"],
+  ]},
+];
+
+const root = document.getElementById("shelves");
+root.style.cssText = "display:flex;flex-direction:column;gap:26px";
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+shelves.forEach((s, si) => {
+  const sec = document.createElement("section");
+  sec.innerHTML = `<h2>${esc(s.title)}</h2><p class="sub">${esc(s.sub)}</p><div class="shelf"></div>`;
+  const row = sec.querySelector(".shelf");
+  s.cards.forEach((c, ci) => {
+    const [title, count, kind, why, tint] = c;
+    const b = document.createElement("button");
+    b.className = "card" + (s.later ? " later" : "") + (kind === "empty" ? " empty" : "");
+    b.id = `card-${si}-${ci}`;
+    const long = title.length > 12 ? " long" : "";
+    b.innerHTML = kind === "empty"
+      ? `<div class="cover"><div class="big">♥</div></div><div class="t">${esc(title)}</div><div class="w">${esc(why)}</div>`
+      : `<div class="cover" style="--t:${tint}"><span class="kind">${esc(kind)}</span>${count ? `<span class="n">${esc(count.split(" ")[0])}</span>` : ""}<div class="big${long}">${esc(title)}</div></div>
+         <div class="t">${esc(title)}</div><div class="w">${esc(why)}</div>`;
+    if (c[5]) b.addEventListener("click", () => openSheet(c, s.later));
+    row.appendChild(b);
+  });
+  root.appendChild(sec);
+});
+
+function openSheet([title, count, kind, why, tint, rule, tracks], later) {
+  const scrim = document.createElement("div"); scrim.className = "scrim";
+  const sheet = document.createElement("div"); sheet.className = "sheet"; sheet.setAttribute("role", "dialog");
+  const ruleHtml = esc(rule).replace(/^(select|order|limit)/gm, '<span class="k">$1</span>');
+  sheet.innerHTML = `<div class="grab"></div><h3>${esc(title)}</h3><p class="why">${esc(why)}</p>
+    <div class="rule">${ruleHtml}</div>
+    ${tracks ? `<ul class="tracks">${tracks.map(t => { const [a, b] = t.split(" · "); return `<li><span>${esc(a)}</span><span>${esc(b)}</span></li>`; }).join("")}</ul>` :
+      `<p class="why">The tracks are chosen from the rule when you open the card, so it follows your library as it changes.</p>`}
+    <div class="actions"><button class="btn play" id="act-play">Play</button><button class="btn radio" id="act-radio">Radio from here</button></div>
+    <p class="toast" id="toast"></p>`;
+  const close = () => { scrim.remove(); sheet.remove(); };
+  scrim.addEventListener("click", close);
+  document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", k); } });
+  document.body.append(scrim, sheet);
+  const toast = sheet.querySelector("#toast");
+  sheet.querySelector("#act-play").addEventListener("click", () => toast.textContent = later ? "This card needs the discovery data first." : "In the app this plays the card’s tracks in its order.");
+  sheet.querySelector("#act-radio").addEventListener("click", () => toast.textContent = "Radio keeps going past the card, choosing similar tracks with the same rule as a bias.");
+  sheet.querySelector("#act-play").focus();
+}
+</script>

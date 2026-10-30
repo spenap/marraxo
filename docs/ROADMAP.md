@@ -60,6 +60,9 @@ Done in a separate repository.
       history (decade, genre, artist, favourites, not recently played),
       randomness, no artist repeat within 5 tracks, 3 tracks queued ahead.
       See `discovery.md`.
+- [ ] Favourites and a Home of cards (smart playlists with a readable
+      rule: genres, decades, players and studios from the liner notes,
+      moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
 - [ ] About screen (done except the licences list) (from a ⋮ menu on the Library header, alongside
       "Rescan library"): `versionName` from `git describe --tags --always
       --dirty`, `versionCode` from `git rev-list --count HEAD`, build date,
