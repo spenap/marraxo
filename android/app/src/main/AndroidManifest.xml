@@ -19,7 +19,7 @@
 
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="Mako"
+        android:label="${appLabel}"
         android:theme="@style/Theme.Mako"
         android:usesCleartextTraffic="true">
 

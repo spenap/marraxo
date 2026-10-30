@@ -19,10 +19,19 @@ android {
         versionCode = git("rev-list", "--count", "HEAD").toInt()
         versionName = git("describe", "--tags", "--always", "--dirty")
         // The commit's date, not the build time, so rebuilding gives the same APK.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["appLabel"] = "Mako"
         buildConfigField("String", "COMMIT_DATE", "\"${git("log", "-1", "--format=%cs")}\"")
     }
 
     buildTypes {
+        debug {
+            // A separate app next to the real one: instrumented tests install
+            // and then uninstall it, which must never wipe the real app's
+            // play history, queue or hidden list.
+            applicationIdSuffix = ".debug"
+            manifestPlaceholders["appLabel"] = "Mako debug"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
@@ -63,4 +72,10 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

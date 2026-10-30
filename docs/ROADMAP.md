@@ -222,13 +222,27 @@ others run on demand.
       APK (`./gradlew testDebugUnitTest assembleRelease`). Written for
       GitHub Actions (`.github/workflows/ci.yml`); not run yet, as the repo
       has no remote. Also runs pytest for `tools/`.
-- [ ] **T4. UI tests** (Compose, emulator in CI or the Nexus 4 locally):
-      tabs and filters, hide and show, search plays a result, the queue
-      restored after the app is killed, rescan messages.
+- [x] **T4. UI tests** (Compose; `./gradlew connectedDebugAndroidTest` on
+      the Nexus 4, or an API 27 emulator in CI): tabs and filters, hide and
+      show, search plays a result. The debug build is a separate app
+      (`com.simonpena.mako.debug`), so test runs never touch real data.
+      Not covered here: queue restore (unit-tested) and rescan (needs real
+      files in MediaStore).
 - [x] **T5. Performance gate**: `scroll-bench.sh` fails above 5% janky
       frames (`MAX_JANKY`) or under 100 frames drawn. Real phone only.
 - [ ] **T6. Hardware smoke tests**: `tools/upnp/probe.py` with assertions,
       against the real speakers and TV, run by hand.
+
+## Track I: Languages
+The UI is English with hard-coded strings; Spanish should be a first-class
+language.
+- [ ] Move UI text to string resources, with `plurals` for counts (the
+      "1 albums" bug came from an English-only plural helper).
+- [ ] Spanish translation; follow the phone's language.
+- [ ] Locale-aware sorting: artists sort ignoring "The" today, which is
+      English-only ("Los Planetas", "Les Négresses Vertes"); use a
+      `Collator` for accents.
+- [ ] UI tests run in both languages.
 
 ## Later (brief Milestone 5)
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.

@@ -320,7 +320,7 @@ private fun LibraryScreen(
                             Text(filter.label, style = TextStyle(fontSize = 13.sp, color = Color.White))
                             Icon(GlowIcons.Close, "Clear", tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
                         }
-                        Text("${albums.size} albums", style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
+                        Text(count(albums.size, "album"), style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
                     }
                 }
                 AlbumGrid(albums, state.grid, bottom, onHide, onAlbum)
