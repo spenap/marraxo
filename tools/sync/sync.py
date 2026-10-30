@@ -59,7 +59,10 @@ def select(albums, free, margin, already, seed=0, reclaimable=0):
     random.Random(seed).shuffle(rest)
     chosen, used = [], 0
     for a in played + rest:
-        if used + a.bytes <= budget:
+        # An album already on the phone may use the margin: removing it just to
+        # restore a few MB of headroom would make every sync churn.
+        room = budget + (margin if a.path in already else 0)
+        if used + a.bytes <= room:
             chosen.append(a)
             used += a.bytes
     return chosen

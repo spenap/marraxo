@@ -60,3 +60,12 @@ def test_space_freed_by_removals_counts():
     albums = [album(f"A/{i}", 1) for i in range(10)]
     chosen = sync.select(albums, free=2 * GB, margin=0, already=[], reclaimable=3 * GB)
     assert len(chosen) == 5
+
+
+def test_a_second_run_right_after_a_sync_changes_nothing():
+    # Files take a little more room on the phone, so free space ends just under the margin.
+    albums = [album(f"A/{i}", 1) for i in range(10)]
+    first = sync.select(albums, free=6 * GB, margin=GB, already=[])
+    on_phone = [a.path for a in first]
+    again = sync.select(albums, free=int(0.9 * GB), margin=GB, already=on_phone)
+    assert [a.path for a in again] == on_phone
