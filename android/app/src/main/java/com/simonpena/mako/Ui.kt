@@ -96,6 +96,9 @@ private fun display(size: Int) = TextStyle(
 )
 private val body = TextStyle(fontSize = 15.sp, color = Color.White)
 
+/** What changes when Mako is the phone's home screen (roadmap A6). */
+private class HomeActions(val isHome: Boolean, val presses: Int, val onAndroidSettings: () -> Unit, val onOtherApps: () -> Unit)
+
 private sealed interface Screen {
     data object Library : Screen
     data class AlbumDetail(val albumId: Long) : Screen
@@ -119,21 +122,29 @@ fun MakoApp(
     status: String?,
     onGrant: () -> Unit,
     onRescan: () -> Unit,
+    isHome: Boolean = false,
+    homePresses: Int = 0,
+    onAndroidSettings: () -> Unit = {},
+    onOtherApps: () -> Unit = {},
 ) {
     Box(Modifier.fillMaxSize().background(GBg)) {
         when {
             !hasPermission -> Welcome(onGrant)
             library == null -> Message("Building your library…")
             library.isEmpty() -> Empty(onRescan)
-            else -> Main(library, player, hidden, status, onRescan)
+            else -> Main(library, player, hidden, status, onRescan, HomeActions(isHome, homePresses, onAndroidSettings, onOtherApps))
         }
     }
 }
 
 @Composable
-private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, status: String?, onRescan: () -> Unit) {
+private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, status: String?, onRescan: () -> Unit, home: HomeActions) {
     val stack = remember { mutableStateListOf<Screen>(Screen.Library) }
+    // As the home screen there is nowhere to go back to from the library.
+    BackHandler(enabled = home.isHome && stack.size == 1) {}
     BackHandler(enabled = stack.size > 1) { stack.removeAt(stack.lastIndex) }
+    // Home pressed while Mako is open: back to the library.
+    LaunchedEffect(home.presses) { if (home.presses > 0) stack.removeRange(1, stack.size) }
     val albumOfTrack = remember(library) { library.flatMap { a -> a.tracks.map { it.id to a } }.toMap() }
     val currentAlbum = player.currentTrackId?.let { albumOfTrack[it] }
     val currentTrack = currentAlbum?.tracks?.firstOrNull { it.id == player.currentTrackId }
@@ -145,7 +156,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
         Screen.Library -> LibraryScreen(
             visible, libraryState, hasMini = currentTrack != null, status = status,
             onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
-            onSearch = { stack.add(Screen.Search) }, onHide = hidden::hide,
+            onSearch = { stack.add(Screen.Search) }, onHide = hidden::hide, home = home,
         ) { stack.add(Screen.AlbumDetail(it)) }
         Screen.Search -> SearchScreen(
             visible, onBack = { stack.removeAt(stack.lastIndex) },
@@ -271,6 +282,7 @@ private fun LibraryScreen(
     onHidden: () -> Unit,
     onSearch: () -> Unit,
     onHide: (Album) -> Unit,
+    home: HomeActions,
     onAlbum: (Long) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -285,6 +297,10 @@ private fun LibraryScreen(
                     DropdownMenuItem(text = { Text("Rescan library", style = body) }, onClick = { menu = false; onRescan() })
                     DropdownMenuItem(text = { Text("Hidden", style = body) }, onClick = { menu = false; onHidden() })
                     DropdownMenuItem(text = { Text("About", style = body) }, onClick = { menu = false; onAbout() })
+                    if (home.isHome) {
+                        DropdownMenuItem(text = { Text("Android settings", style = body) }, onClick = { menu = false; home.onAndroidSettings() })
+                        DropdownMenuItem(text = { Text("Other apps", style = body) }, onClick = { menu = false; home.onOtherApps() })
+                    }
                 }
             }
         }

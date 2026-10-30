@@ -33,6 +33,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Mako as the home screen: off unless enabled on the device
+             (android/scripts/appliance.sh), so it never replaces a launcher. -->
+        <activity-alias
+            android:name="com.simonpena.mako.Home"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
         <service
             android:name=".PlaybackService"
             android:exported="true"
