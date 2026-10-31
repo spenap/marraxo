@@ -39,6 +39,11 @@ if [ -z "$undo" ]; then
         a shell pm disable-user --user 0 "$p" >/dev/null
         a shell "grep -q '^camera=$p\$' $saved || echo camera=$p >> $saved"
     done
+    # Mako hides the navigation bar; skip Android's one-time "Viewing full screen" notice.
+    if ! a shell "grep -q '^immersive=' $saved"; then
+        a shell "echo immersive=$(a shell settings get secure immersive_mode_confirmations | tr -d '\r') >> $saved"
+    fi
+    a shell settings put secure immersive_mode_confirmations confirmed
     echo "Camera: off ($(a shell cat $saved | sed -n 's/^camera=//p' | tr -d '\r' | tr '\n' ' '))"
 else
     previous=$(a shell "cat $saved 2>/dev/null" | sed -n 's/^home=//p' | tr -d '\r')
@@ -46,6 +51,11 @@ else
     a shell cmd package set-home-activity "$previous" >/dev/null
     a shell pm disable "$home" >/dev/null
     for p in $(a shell cat $saved | sed -n 's/^camera=//p' | tr -d '\r'); do a shell pm enable "$p" >/dev/null; done
+    immersive=$(a shell cat $saved | sed -n 's/^immersive=//p' | tr -d '\r')
+    case "$immersive" in
+        ''|null) a shell settings delete secure immersive_mode_confirmations >/dev/null ;;
+        *) a shell settings put secure immersive_mode_confirmations "$immersive" ;;
+    esac
     gesture=$(a shell cat $saved | sed -n 's/^gesture=//p' | tr -d '\r')
     case "$gesture" in
         ''|null) a shell settings delete secure camera_double_tap_power_gesture_disabled >/dev/null ;;
