@@ -182,6 +182,18 @@ class RendererPlayerTest {
         eventually("ended") { player.playbackState == Player.STATE_ENDED }
     }
 
+    @Test fun `songs added while the last one plays come next, as a radio adds them`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        val songs = album(3)
+        player.setMediaItems(songs.take(1))
+        player.prepare()
+        player.play()
+        player.addMediaItems(songs.drop(1))
+        assertEquals(3, player.mediaItemCount)
+        finishCurrentTrack(fake, player)
+        eventually("the added song plays") { player.currentMediaItemIndex == 1 && titleOnSpeaker(fake) == "Song 2" && fake.state == "PLAYING" }
+    }
+
     @Test fun `shuffle plays every track once, in a different order, for next and track ends alike`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         player.setMediaItems(album(6))

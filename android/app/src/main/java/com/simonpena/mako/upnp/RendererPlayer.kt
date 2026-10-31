@@ -133,6 +133,16 @@ class RendererPlayer(
         return DONE
     }
 
+    /** A radio adds songs ahead; while shuffled they go at the end of album order too. */
+    override fun handleAddMediaItems(index: Int, mediaItems: MutableList<MediaItem>): ListenableFuture<*> {
+        val added = mediaItems.map { Any() }
+        items = items.take(index) + mediaItems + items.drop(index)
+        uids = uids.take(index) + added + uids.drop(index)
+        albumOrder = albumOrder?.plus(added)
+        if (index <= this.index && items.size > mediaItems.size) this.index += mediaItems.size
+        return DONE
+    }
+
     override fun handlePrepare(): ListenableFuture<*> {
         playerError = null
         if (items.isNotEmpty()) load()
