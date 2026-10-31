@@ -154,12 +154,10 @@ Needs A1 and B0.
       app no longer has to judge where a track ends. Today it counts a stop
       in the last fifth of a track as its end, because Sonos's position
       drifts behind the audio of VBR MP3s (3:23 reported of 3:35).
-- [ ] Poll the renderer less when nothing needs it: the rundown on
-      2026-10-30 drew ~300 mA paused as well as playing, because the app
-      asks the speaker for its state every second either way. Every few
+- [ ] Poll the renderer less when nothing needs it: the app asks the
+      speaker for its state every second, paused or playing. Every few
       seconds while paused, and GENA events instead of polling (B0),
-      should let Wi-Fi and the CPU sleep. Test first; measure again with
-      the rundown script.
+      should let Wi-Fi and the CPU sleep. Test first; measure again.
 - [ ] Recover when a speaker stops by itself. Overnight on 2026-10-31,
       after 50 clean track changes in 3 h, Estudio stopped 10 s into a
       track (00:49:49) with Mako's URL still loaded, status OK and Wi-Fi
@@ -167,10 +165,13 @@ Needs A1 and B0.
       stops early in a track and still holds our URL, resume once (Seek +
       Play) before giving up. Test first with the fake renderer; also log
       the media server's requests to see if the phone served too slowly.
-- [ ] Measure the phone's baseline draw: 30 min, screen off, Wi-Fi on,
-      charging off, Mako stopped. The app's share is playing minus
-      baseline (292 mA playing to a speaker on 2026-10-30, baseline not
-      yet measured). Repeat both after the polling fix to quantify it.
+- [ ] Measure the phone's baseline draw and Mako's share properly.
+      Overnight 2026-10-31: 122 mA average streaming to Estudio (battery
+      chip's charge counter, 1,104 mAh in 9 h); `current_now` polled over
+      adb reads ~2.5× too high because adb wakes the phone. Log on the
+      phone itself with USB unplugged, read the BMS counter, and compare
+      idle, playing to a speaker, and playing to headphones, before and
+      after the polling fix.
 - [ ] Sonos groups (Estudio + Cocina), and the TV from the app.
 - [x] Shuffle and repeat on a renderer; they move with the queue between
       the phone and a speaker.
