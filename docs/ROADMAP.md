@@ -160,6 +160,13 @@ Needs A1 and B0.
       seconds while paused, and GENA events instead of polling (B0),
       should let Wi-Fi and the CPU sleep. Test first; measure again with
       the rundown script.
+- [ ] Recover when a speaker stops by itself. Overnight on 2026-10-31,
+      after 50 clean track changes in 3 h, Estudio stopped 10 s into a
+      track (00:49:49) with Mako's URL still loaded, status OK and Wi-Fi
+      up; Mako took it as "stopped elsewhere" and paused. When a renderer
+      stops early in a track and still holds our URL, resume once (Seek +
+      Play) before giving up. Test first with the fake renderer; also log
+      the media server's requests to see if the phone served too slowly.
 - [ ] Measure the phone's baseline draw: 30 min, screen off, Wi-Fi on,
       charging off, Mako stopped. The app's share is playing minus
       baseline (292 mA playing to a speaker on 2026-10-30, baseline not
