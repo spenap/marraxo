@@ -36,8 +36,8 @@ data class Album(
     val genre: String = "",
 )
 
-/** Artists sort ignoring a leading "The", so The Strokes is under S. */
-private fun sortKey(artist: String) = artist.removePrefix("The ").lowercase()
+/** Artists sort ignoring a leading "The", so The Strokes is under S, and ignoring accents. */
+fun sortKey(artist: String) = fold(artist.removePrefix("The "))
 
 private fun clean(value: String?, fallback: String) =
     value?.takeUnless { it.isBlank() || it == MediaStore.UNKNOWN_STRING }?.let(::repairMojibake) ?: fallback

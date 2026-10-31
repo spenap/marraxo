@@ -360,11 +360,15 @@ private fun LibraryScreen(
             }
             Tab.Artists -> {
                 val artists = remember(library) { library.groupBy { it.artist }.toList() } // already sorted by artist
-                LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
-                    items(artists, key = { it.first }) { (artist, albums) ->
-                        val songs = albums.sumOf { it.tracks.size }
-                        ListRow(albums.first().id, round = true, title = artist, detail = "${count(albums.size, "album")} · ${count(songs, "song")}") {
-                            pick(LibraryFilter(artist) { it.artist == artist })
+                val scrub = remember(artists) { letterMarks(artists.map { initial(it.first) }) }
+                val list = state.lists.getValue(state.tab)
+                Lettered(scrub, { list.firstVisibleItemIndex }, { list.layoutInfo.visibleItemsInfo.size }, list::scrollToItem, bottom) { end ->
+                    LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = end)) {
+                        items(artists, key = { it.first }) { (artist, albums) ->
+                            val songs = albums.sumOf { it.tracks.size }
+                            ListRow(albums.first().id, round = true, title = artist, detail = "${count(albums.size, "album")} · ${count(songs, "song")}") {
+                                pick(LibraryFilter(artist) { it.artist == artist })
+                            }
                         }
                     }
                 }
@@ -439,8 +443,9 @@ private fun YearsList(library: List<Album>, list: LazyListState, bottom: Dp, onA
                 }
             }
         }
-        YearScrubber(
-            rows, list,
+        Scrubber(
+            rows.scrub, { list.firstVisibleItemIndex },
+            tag = "yearScrubber",
             onDrag = { fraction ->
                 dragging = true
                 showLabel = true
@@ -460,17 +465,60 @@ private fun YearsList(library: List<Album>, list: LazyListState, bottom: Dp, onA
     }
 }
 
-/** The strip on the right of the Years list: decade marks, a thumb, and touch to jump. */
+/**
+ * A long list with a letter scrubber on the right, once it's more than three
+ * screens long: drag or tap it to jump; the letter shows while dragging.
+ * [content] gets the end padding that keeps it clear of the strip.
+ */
 @Composable
-private fun YearScrubber(
-    rows: YearRows,
-    list: LazyListState,
+private fun Lettered(
+    scrub: Scrub,
+    firstVisible: () -> Int,
+    visible: () -> Int,
+    scrollTo: suspend (row: Int) -> Unit,
+    bottom: Dp,
+    content: @Composable (end: Dp) -> Unit,
+) {
+    val show by remember(scrub) { derivedStateOf { needsScrubber(scrub.size, visible()) } }
+    var dragRow by remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
+    Box(Modifier.fillMaxSize()) {
+        content(if (show) 28.dp else 0.dp)
+        if (show) {
+            Scrubber(
+                scrub, firstVisible,
+                onDrag = { fraction ->
+                    val row = scrub.rowAt(fraction)
+                    dragRow = row
+                    scope.launch { scrollTo(row) }
+                },
+                onRelease = { dragRow = null },
+                modifier = Modifier.align(Alignment.TopEnd).padding(bottom = bottom).navigationBarsPadding(),
+            )
+        }
+        dragRow?.let { row ->
+            Text(
+                scrub.labelAt(row), style = display(22),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
+                    .clip(RoundedCornerShape(20.dp)).background(GSheet).padding(horizontal = 18.dp, vertical = 8.dp)
+                    .testTag("scrubLabel"),
+            )
+        }
+    }
+}
+
+/** The strip on the right of a long list: section marks, a thumb, and touch to jump. */
+@Composable
+private fun Scrubber(
+    scrub: Scrub,
+    firstVisible: () -> Int,
     onDrag: (fraction: Float) -> Unit,
     onRelease: () -> Unit,
     modifier: Modifier,
+    tag: String = "scrubber",
 ) {
     BoxWithConstraints(
-        modifier.fillMaxHeight().width(28.dp).testTag("yearScrubber").pointerInput(rows) {
+        modifier.fillMaxHeight().width(28.dp).testTag(tag).pointerInput(scrub) {
             awaitEachGesture {
                 val down = awaitFirstDown()
                 onDrag(down.position.y / size.height)
@@ -487,13 +535,13 @@ private fun YearScrubber(
     ) {
         val height = constraints.maxHeight.toFloat()
         val minGap = with(LocalDensity.current) { 16.dp.toPx() }
-        rows.visibleMarks(height, minGap).forEach { mark ->
+        scrub.visibleMarks(height, minGap).forEach { mark ->
             Text(
                 mark.label, style = TextStyle(fontSize = 10.sp, color = GSoft),
                 modifier = Modifier.align(Alignment.TopCenter).offset { IntOffset(0, (mark.fraction * height).toInt()) },
             )
         }
-        val thumb by remember(rows) { derivedStateOf { rows.fractionOf(list.firstVisibleItemIndex) } }
+        val thumb by remember(scrub) { derivedStateOf { scrub.fractionOf(firstVisible()) } }
         Box(
             Modifier.align(Alignment.TopEnd).offset { IntOffset(0, (thumb * height).toInt()) }
                 .size(3.dp, 22.dp).clip(RoundedCornerShape(2.dp)).background(GHi),
@@ -505,26 +553,30 @@ private fun count(n: Int, noun: String) = if (n == 1) "1 $noun" else "$n ${noun}
 
 @Composable
 private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onHide: (Album) -> Unit, onAlbum: (Long) -> Unit) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        state = state,
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = bottom),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-        modifier = Modifier.navigationBarsPadding(),
-    ) {
-        items(albums, key = { it.id }) { album ->
-            var options by remember { mutableStateOf(false) }
-            Column(Modifier.combinedClickable(onLongClick = { options = true }) { onAlbum(album.id) }) {
-                AlbumArt(album.id, px = 336, corner = 8.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
-                Text(
-                    album.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White),
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-                Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
-                DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                    DropdownMenuItem(text = { Text("Hide album", style = body) }, onClick = { options = false; onHide(album) })
+    // Albums are sorted by artist, so the letters are the artists' (as on the Artists tab).
+    val scrub = remember(albums) { letterMarks(albums.map { initial(it.artist) }) }
+    Lettered(scrub, { state.firstVisibleItemIndex }, { state.layoutInfo.visibleItemsInfo.size }, state::scrollToItem, bottom) { end ->
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            state = state,
+            contentPadding = PaddingValues(start = 16.dp, end = maxOf(16.dp, end), bottom = bottom),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+            modifier = Modifier.navigationBarsPadding(),
+        ) {
+            items(albums, key = { it.id }) { album ->
+                var options by remember { mutableStateOf(false) }
+                Column(Modifier.combinedClickable(onLongClick = { options = true }) { onAlbum(album.id) }) {
+                    AlbumArt(album.id, px = 336, corner = 8.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
+                    Text(
+                        album.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White),
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                    Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                    DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
+                        DropdownMenuItem(text = { Text("Hide album", style = body) }, onClick = { options = false; onHide(album) })
+                    }
                 }
             }
         }

@@ -57,6 +57,10 @@ Done in a separate repository.
       search ignoring accents and case. Still to do: queue, favourites.
 - [x] Years tab: a scrubber with decade marks (drag or tap to jump) and a
       label that shows the decade while scrolling fast, the year when slow.
+- [x] Letter scrubbers on Albums and Artists (2026-10-31): any list more
+      than three screens long gets one. Letters come from the sort key, so
+      "The Corrs" is C and accented names sort and letter with their base
+      letter (the sort now folds accents too).
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
 - [ ] Radio v0: long-press a track → Start radio. Biases on tags and

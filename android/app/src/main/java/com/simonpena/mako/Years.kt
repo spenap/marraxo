@@ -16,37 +16,24 @@ class YearRows(groups: List<Pair<Int, Int>>) {
     fun yearAt(row: Int): Int = years[row.coerceIn(0, years.lastIndex)]
 
     /** A mark on the scrubber where each decade begins. */
-    data class Mark(val label: String, val row: Int, val fraction: Float)
-
-    val decades: List<Mark> = buildList {
+    val decades: List<ScrubMark> = buildList {
         var last: Int? = null
         years.forEachIndexed { row, year ->
             val decade = decadeOf(year)
             if (decade != last) {
-                add(Mark(shortDecade(year), row, row.toFloat() / years.size))
+                add(ScrubMark(shortDecade(year), row, row.toFloat() / years.size))
                 last = decade
             }
         }
     }
 
-    /**
-     * The marks that fit on a scrubber [heightPx] tall, at least [minGapPx]
-     * apart. Where two would collide, the decade with more rows (albums)
-     * keeps its mark.
-     */
-    fun visibleMarks(heightPx: Float, minGapPx: Float): List<Mark> {
-        val span = decades.mapIndexed { i, m -> m to ((decades.getOrNull(i + 1)?.row ?: years.size) - m.row) }
-        val kept = mutableListOf<Mark>()
-        for ((mark, _) in span.sortedByDescending { it.second }) {
-            if (kept.none { kotlin.math.abs(it.fraction - mark.fraction) * heightPx < minGapPx }) kept += mark
-        }
-        return kept.sortedBy { it.row }
-    }
+    val scrub = Scrub(years.size, decades)
 
-    /** The row at a position along the scrubber, 0 (top) to 1 (bottom). */
-    fun rowAt(fraction: Float): Int = (fraction.coerceIn(0f, 1f) * years.size).toInt().coerceAtMost(years.lastIndex)
+    fun visibleMarks(heightPx: Float, minGapPx: Float) = scrub.visibleMarks(heightPx, minGapPx)
 
-    fun fractionOf(row: Int): Float = (row + 0.5f) / years.size
+    fun rowAt(fraction: Float) = scrub.rowAt(fraction)
+
+    fun fractionOf(row: Int) = scrub.fractionOf(row)
 
     private fun decadeOf(year: Int) = if (year > 0) year / 10 else -1
 
