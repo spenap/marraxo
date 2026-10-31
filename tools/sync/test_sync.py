@@ -153,3 +153,25 @@ def test_rotating_is_asked_for():
     first = [a.path for a in sync.select(albums, free=5 * GB, margin=0, already=[])]
     rotated = [a.path for a in sync.select(albums, free=0, margin=0, already=first, seed=1, rotate=True)]
     assert set(rotated) != set(first)
+
+
+def test_included_albums_come_in_and_push_out_unplayed_ones_only():
+    played = album("P/1", 1, plays=3)
+    on_phone = [album(f"A/{i}", 1) for i in range(3)]
+    new = album("New/Trance", 1)
+    chosen = sync.select([played, new] + on_phone, free=0, margin=0, already=["P/1"] + [a.path for a in on_phone], include=["New/Trance"])
+    paths = {a.path for a in chosen}
+    assert {"P/1", "New/Trance"} <= paths
+    assert len(paths & {a.path for a in on_phone}) == 2  # one unplayed album made room
+
+
+def test_making_room_for_new_albums_keeps_the_margin():
+    # The margin may be eaten only to avoid churn, never to fit something new.
+    on_phone = [album(f"A/{i}", 1) for i in range(3)]
+    new = album("New/Trance", 1)
+    free, margin = int(0.5 * GB), GB
+    chosen = sync.select(on_phone + [new], free=free, margin=margin, already=[a.path for a in on_phone], include=["New/Trance"])
+    paths = {a.path for a in chosen}
+    removed = sum(a.bytes for a in on_phone if a.path not in paths)
+    assert "New/Trance" in paths
+    assert free - new.bytes + removed >= margin

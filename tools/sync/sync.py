@@ -55,10 +55,11 @@ class Plan:
     kept: list  # picked, but on the phone as copied by hand: left alone
 
 
-def select(albums, free, margin, already, seed=0, reclaimable=0, rotate=False):
-    """Played albums first (most played first), then the ones already on the
-    phone, then the rest in a stable order, while they fit. [rotate]: forget
-    what's on the phone, so a new [seed] brings a different unplayed part.
+def select(albums, free, margin, already, seed=0, reclaimable=0, rotate=False, include=()):
+    """Played albums first (most played first), then those asked for by
+    [include], then the ones already on the phone, then the rest in a stable
+    order, while they fit. [rotate]: forget what's on the phone, so a new
+    [seed] brings a different unplayed part.
 
     Each album's place comes from a hash of its own path, not a shuffle of
     the whole list: adding albums to the collection must not reorder (and so
@@ -69,15 +70,18 @@ def select(albums, free, margin, already, seed=0, reclaimable=0, rotate=False):
     budget = free - margin + reclaimable + sum(a.bytes for a in albums if a.path in already)
     played = sorted((a for a in albums if a.plays > 0), key=lambda a: -a.plays)
     kept = set(already) if not rotate else set()
-    rest = sorted((a for a in albums if a.plays == 0), key=lambda a: (a.path not in kept, fill_key(a.path, seed)))
-    chosen, used = [], 0
+    wanted = set(include)
+    rest = sorted((a for a in albums if a.plays == 0), key=lambda a: (a.path not in wanted, a.path not in kept, fill_key(a.path, seed)))
+    chosen, used, adding = [], 0, False
     for a in played + rest:
         # An album already on the phone may use the margin: removing it just to
-        # restore a few MB of headroom would make every sync churn.
-        room = budget + (margin if a.path in already else 0)
+        # restore a few MB of headroom would make every sync churn. Not once
+        # something new is coming in: then the margin is kept.
+        room = budget + (margin if a.path in already and not adding else 0)
         if used + a.bytes <= room:
             chosen.append(a)
             used += a.bytes
+            adding = adding or a.path not in already
     return chosen
 
 
@@ -202,16 +206,21 @@ def main():
     p.add_argument("--margin-gb", type=float, default=1.5)
     p.add_argument("--seed", type=int, default=0, help="with --rotate, which unplayed part comes")
     p.add_argument("--rotate", action="store_true", help="replace unplayed albums on the phone with others")
+    p.add_argument("--include", action="append", default=[], metavar="ARTIST/ALBUM",
+                   help="put this album on the phone, making room by removing unplayed ones (repeatable)")
     p.add_argument("--replace-unmanaged", action="store_true", help="also remove music not copied by this script")
     p.add_argument("--apply", action="store_true")
     a = p.parse_args()
+    unknown = [x for x in a.include if not (COLLECTION / x).is_dir()]
+    if unknown:
+        sys.exit(f"Not in {COLLECTION}: {', '.join(unknown)}")
 
     on_phone, managed = phone_albums(a.serial), phone_manifest(a.serial)
     albums = collection_albums(plays_by_album(a.serial))
     unmanaged = [x for x in on_phone if x not in managed]
     reclaimable = phone_bytes(a.serial, unmanaged) if a.replace_unmanaged else 0
     chosen = select(albums, phone_free(a.serial), int(a.margin_gb * GB), [x for x in on_phone if x in managed],
-                    a.seed, reclaimable, a.rotate)
+                    a.seed, reclaimable, a.rotate, a.include)
     todo = plan([c.path for c in chosen], managed, on_phone, a.replace_unmanaged)
     size = {x.path: x.bytes for x in albums}
     print(f"{len(chosen)} of {len(albums)} albums fit ({sum(c.bytes for c in chosen) / GB:.1f} GB).")
