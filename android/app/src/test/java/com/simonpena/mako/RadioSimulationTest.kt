@@ -23,7 +23,8 @@ class RadioSimulationTest {
     private val notesFile = File(tools, "linernotes/out/linernotes.db")
 
     private fun collection(): List<Album> {
-        val tracks = inventory.readLines().map(::JSONObject).filter { it.optString("kind") == "audio" }
+        // Files without tags (Musepack, which Android doesn't play) never reach the phone's library.
+        val tracks = inventory.readLines().map(::JSONObject).filter { it.optString("kind") == "audio" && it.has("tags") }
         val folders = tracks.groupBy { it.getString("path").substringBeforeLast('/') }
         return folders.entries.mapIndexed { a, (_, files) ->
             val tags = files.first().getJSONObject("tags")

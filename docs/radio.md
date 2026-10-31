@@ -102,15 +102,22 @@ it again at every step, from what's playing.
 ## Simulation baseline
 
 `RadioSimulationTest` (JVM, skipped without `tools/inventory/out-clean`
-and `tools/linernotes/out`): the clean collection, 290 albums, 4,000
-songs, 233 albums with notes; 20 seeds × 100 songs per mode.
+and `tools/linernotes/out`): the clean collection, 20 seeds × 100 songs
+per mode.
+
+2026-10-31, after genre synonyms: 386 albums, 5,175 songs, 298 albums
+with notes (files without tags, such as Musepack, are skipped like the
+phone skips them).
 
 | Mode | Wider | Artist within 5 | Album within 3 | ms/pick (laptop) | Albums per 100 | Shares | Genre | Decade |
 |---|---|---|---|---|---|---|---|---|
-| Similar | 0% | 0 | 0 | 1.2 | 41 | 9% | 75% | 17% |
-| Era | 0% | 0 | 0 | 1.0 | 60 | 0% | 0% | 100% |
-| People | 1.7% | 0 | 0 | 1.3 | 37 | 80% | 16% | 3% |
-| Anything | 11.5% | 0 | 0 | 1.1 | 87 | 1% | 13% | 75% |
+| Similar | 0% | 0 | 0 | 1.3 | 50 | 2% | 88% | 10% |
+| Era | 0% | 0 | 0 | 1.2 | 67 | 0% | 0% | 100% |
+| People | 3.7% | 0 | 0 | 1.4 | 48 | 69% | 23% | 2% |
+| Anything | 13.7% | 0 | 0 | 1.3 | 90 | 1% | 14% | 72% |
+
+First run (290 albums, 4,000 songs, before the second import pass):
+Similar 41 albums per 100 with 75% genre; People 80% shares.
 
 Gate: no repeats; Similar and Era widen under 5%; People explains over
 60% of picks by the liner notes.
