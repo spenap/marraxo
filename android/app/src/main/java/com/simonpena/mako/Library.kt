@@ -7,10 +7,9 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.media.MediaScannerConnection
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.nio.CharBuffer
 import java.nio.charset.Charset
@@ -162,8 +161,28 @@ fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>): List<Album> {
 
 private val AUDIO = setOf("mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wav", "mpc")
 
-/** What a rescan changed, for the message shown afterwards. */
-data class ScanResult(val added: Int, val removed: Int)
+/** What a rescan changed, for the message shown afterwards; [complete] is false if the scanner stopped answering. */
+data class ScanResult(val added: Int, val removed: Int, val complete: Boolean = true)
+
+/**
+ * Progress of a batch of media-scanner callbacks: [finished] when every file
+ * has answered, [stalled] when none has for [stallMs]. A long scan that
+ * keeps going is waited for to the end (2,660 files take minutes on the
+ * Nexus 4); only silence ends the wait.
+ */
+class ScanProgress(val total: Int, private val stallMs: Long = 30_000, private val now: () -> Long = System::currentTimeMillis) {
+    private val done = AtomicInteger(0)
+    @Volatile private var last = now()
+
+    val scanned: Int get() = done.get()
+    val finished: Boolean get() = scanned >= total
+    val stalled: Boolean get() = !finished && now() - last > stallMs
+
+    fun onScanned() {
+        done.incrementAndGet()
+        last = now()
+    }
+}
 
 /**
  * Brings Android's media index up to date with the Music folder: files
@@ -172,7 +191,7 @@ data class ScanResult(val added: Int, val removed: Int)
  * exists removes it from the index.
  */
 @Suppress("DEPRECATION") // DATA: the file path, still readable on every API level
-suspend fun rescanMusicFolder(context: Context): ScanResult = withContext(Dispatchers.IO) {
+suspend fun rescanMusicFolder(context: Context, onProgress: (scanned: Int, total: Int) -> Unit = { _, _ -> }): ScanResult = withContext(Dispatchers.IO) {
     val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
     val onDisk = root.walkTopDown()
         .filter { it.isFile && it.extension.lowercase() in AUDIO }
@@ -186,13 +205,13 @@ suspend fun rescanMusicFolder(context: Context): ScanResult = withContext(Dispat
     val added = onDisk - indexed
     val removed = indexed - onDisk
     val paths = (added + removed).toTypedArray()
+    val progress = ScanProgress(paths.size)
     if (paths.isNotEmpty()) {
-        val done = CompletableDeferred<Unit>()
-        val left = AtomicInteger(paths.size)
-        MediaScannerConnection.scanFile(context, paths, null) { _, _ ->
-            if (left.decrementAndGet() == 0) done.complete(Unit)
+        MediaScannerConnection.scanFile(context, paths, null) { _, _ -> progress.onScanned() }
+        while (!progress.finished && !progress.stalled) { // never hang the UI on a lost callback
+            onProgress(progress.scanned, paths.size)
+            delay(500)
         }
-        withTimeoutOrNull(120_000) { done.await() } // never hang the UI on a lost callback
     }
-    ScanResult(added.size, removed.size)
+    ScanResult(added.size, removed.size, complete = progress.finished)
 }

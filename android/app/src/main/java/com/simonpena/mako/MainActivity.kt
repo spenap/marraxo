@@ -100,9 +100,12 @@ class MainActivity : ComponentActivity() {
     private fun rescan() {
         lifecycleScope.launch {
             status = "Rescanning the Music folder…"
-            val result = rescanMusicFolder(this@MainActivity)
+            val result = rescanMusicFolder(this@MainActivity) { scanned, total ->
+                status = "Rescanning… $scanned of ${files(total)}"
+            }
             library = loadLibrary(this@MainActivity)
             status = when {
+                !result.complete -> "Rescan stopped early; rescan again to finish"
                 result.added == 0 && result.removed == 0 -> "Library is up to date"
                 else -> listOfNotNull(
                     result.added.takeIf { it > 0 }?.let { "${files(it)} added" },

@@ -41,9 +41,11 @@ Done in a separate repository.
       a rescan and can be restored.
 - [x] Rescan without restarting the app (and pick up files pushed over
       ADB/USB). Library ⋮ → Rescan library; scans only new and deleted files.
-      Open: after the first big sync (2,000 files added, 660 removed) the
-      rescan finished but the screen kept the old library until the app
-      restarted. Reproduce with a test before fixing.
+      Fixed 2026-10-31: after the first big sync (2,000 files added, 660
+      removed) the screen kept the old library until a restart, because
+      the wait for the scanner had a fixed 120 s limit and the library
+      reloaded half-indexed. It now waits while files keep coming (gives
+      up after 30 s of silence) and shows "Rescanning… n of m files".
 - [ ] Play history recorded from day one: one row per play with track,
       start time, seconds played, skipped or not, and output device.
       Done when a day of listening shows up correctly in the database.
