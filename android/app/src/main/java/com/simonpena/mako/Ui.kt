@@ -466,7 +466,7 @@ private class CoverEntry(
 private fun Covers(entries: List<CoverEntry>, tiles: Boolean, list: LazyListState, grid: LazyGridState, bottom: Dp, end: Dp = 0.dp) {
     if (tiles) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(GRID_MIN),
             state = grid,
             contentPadding = PaddingValues(start = 16.dp, end = maxOf(16.dp, end), bottom = bottom),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -486,6 +486,8 @@ private fun Covers(entries: List<CoverEntry>, tiles: Boolean, list: LazyListStat
 
 /** Decode size of a tile's cover: about 100 dp on screen. */
 private const val TILE_COVER_PX = 224
+/** Grid columns are at least this wide: two on a phone, three on an 8" tablet. */
+private val GRID_MIN = 150.dp
 
 /**
  * A tile for a genre or an artist: its name, what it opens, and one of its
@@ -707,7 +709,7 @@ private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onH
     val scrub = remember(albums) { letterMarks(albums.map { initial(it.artist) }) }
     Lettered(scrub, { state.firstVisibleItemIndex }, { state.layoutInfo.visibleItemsInfo.size }, state::scrollToItem, bottom) { end ->
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(GRID_MIN),
             state = state,
             contentPadding = PaddingValues(start = 16.dp, end = maxOf(16.dp, end), bottom = bottom),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
