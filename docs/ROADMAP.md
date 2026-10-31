@@ -116,8 +116,18 @@ values, so the phone can be put back as it was.
       Recents can't be intercepted by apps, so it stays one swipe away.
       Not lock task (kiosk): it would also block the notification shade
       and the way out to Settings. Frees 48 dp.
-- [ ] **No lock screen:** screen lock set to None, so waking the phone
-      lands in the player.
+- [x] **System settings** (2026-10-31), agreed in a settings review
+      (artifact, 30 settings): airplane mode on with only the cell radio
+      off (no SIM, so it kept searching); location, NFC, mobile data off;
+      no touch, lock or dial sounds; no auto-rotate, screen saver,
+      heads-up or lock-screen notifications; LED for charging only; shade
+      tiles Wi-Fi, Bluetooth, Volume, Torch, Airplane (brightness slider
+      stays); status bar without signal or airplane icons, with battery
+      percentage; time zone Europe/Madrid. Unchanged on purpose: 30 s
+      timeout, adaptive brightness, vibrate on touch, Wi-Fi during sleep,
+      Doze, battery saver off.
+- [-] ~~No lock screen~~: dropped. Swipe stays, so a press in a bag lands
+      on the lock screen; Mako's lock-screen player shows the music.
 - [ ] **Waking without the power button** (worn: it works only when
       pressed firmly, so offer easier ways; it stays the fallback):
       - plugging or unplugging the cable already wakes it
@@ -141,7 +151,9 @@ values, so the phone can be put back as it was.
 - [ ] `android/scripts/appliance.sh [--undo]`: applies all of the above
       over ADB and saves the previous values for `--undo`. Done so far:
       the home screen (on the Nexus 4 since 2026-10-30); the camera and
-      its double-press-power gesture off (2026-10-31).
+      its double-press-power gesture off, and the system settings above
+      (2026-10-31). Every previous value is saved; --undo was checked to
+      restore all of them exactly.
 
 ## Track B: Sonos and TV (no phone needed for B0)
 
