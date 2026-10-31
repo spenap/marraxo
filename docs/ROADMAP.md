@@ -471,6 +471,15 @@ New ideas wait here until there is evidence (Track U) or a clear need;
 then they move into a track with a "done when".
 
 Parked:
+- Party light (2026-11-01, "another Homer's car idea"): pulse the torch on
+  the beat. Feasible: `CameraManager.setTorchMode()` works from API 23
+  (Nexus 4 included), needs no camera permission, switches in ~10-30 ms.
+  Beat from the tempo per song (Discovery D0), not `Visualizer`, which
+  needs the microphone permission. Constraints if ever built: at most 3
+  flashes a second (WCAG 2.3.1, photosensitive epilepsy), off by default,
+  a toggle in ⋮; phone playback only (Sonos and the TV play with their
+  own delay, so it would flash off the beat); mind LED heat and battery.
+  Need: D0's tempo data, and wanting it for a dark room.
 - Genre families from data instead of shared words. MusicBrainz has
   "subgenre of" links (britpop → alternative rock, not pop), shown on
   its genre pages but not returned by its web service (`inc=genre-rels`
