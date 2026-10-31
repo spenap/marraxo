@@ -230,25 +230,37 @@ class ScanProgress(val total: Int, private val stallMs: Long = 30_000, private v
 @Suppress("DEPRECATION") // DATA: the file path, still readable on every API level
 suspend fun rescanMusicFolder(context: Context, onProgress: (scanned: Int, total: Int) -> Unit = { _, _ -> }): ScanResult = withContext(Dispatchers.IO) {
     val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+    fun indexed() = mutableSetOf<String>().also { paths ->
+        context.contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media.DATA),
+            "${MediaStore.Audio.Media.DATA} LIKE ?", arrayOf("${root.absolutePath}/%"), null,
+        )?.use { c -> while (c.moveToNext()) c.getString(0)?.let(paths::add) }
+    }
+    suspend fun scan(paths: Array<String>, progress: ScanProgress, report: Boolean) {
+        MediaScannerConnection.scanFile(context, paths, null) { _, _ -> progress.onScanned() }
+        while (!progress.finished && !progress.stalled) { // never hang the UI on a lost callback
+            if (report) onProgress(progress.scanned, paths.size)
+            delay(500)
+        }
+    }
+    val before = indexed()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        // Since Android 11 listing a shared folder shows only what MediaStore
+        // already knows, so new files can't be found by walking it: ask the
+        // scanner to walk the folder itself. It answers once, at the end.
+        val progress = ScanProgress(1, stallMs = 10 * 60_000)
+        scan(arrayOf(root.absolutePath), progress, report = false)
+        val after = indexed()
+        return@withContext ScanResult((after - before).size, (before - after).size, complete = progress.finished)
+    }
     val onDisk = root.walkTopDown()
         .filter { it.isFile && it.extension.lowercase() in AUDIO }
         .map(File::getAbsolutePath)
         .toSet()
-    val indexed = mutableSetOf<String>()
-    context.contentResolver.query(
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media.DATA),
-        "${MediaStore.Audio.Media.DATA} LIKE ?", arrayOf("${root.absolutePath}/%"), null,
-    )?.use { c -> while (c.moveToNext()) c.getString(0)?.let(indexed::add) }
-    val added = onDisk - indexed
-    val removed = indexed - onDisk
+    val added = onDisk - before
+    val removed = before - onDisk
     val paths = (added + removed).toTypedArray()
     val progress = ScanProgress(paths.size)
-    if (paths.isNotEmpty()) {
-        MediaScannerConnection.scanFile(context, paths, null) { _, _ -> progress.onScanned() }
-        while (!progress.finished && !progress.stalled) { // never hang the UI on a lost callback
-            onProgress(progress.scanned, paths.size)
-            delay(500)
-        }
-    }
+    if (paths.isNotEmpty()) scan(paths, progress, report = true)
     ScanResult(added.size, removed.size, complete = progress.finished)
 }

@@ -74,10 +74,13 @@ def test_a_second_run_right_after_a_sync_changes_nothing():
 class FakePhone:
     """adb, for the liner notes copy: remembers what is on the phone and what was pushed."""
 
-    def __init__(self, notes_md5=None):
-        self.notes_md5, self.pushed = notes_md5, []
+    def __init__(self, notes_md5=None, sdk=35):
+        self.notes_md5, self.pushed, self.sdk, self.commands = notes_md5, [], sdk, []
 
     def __call__(self, serial, *args, check=True):
+        self.commands.append(args[-1])
+        if args[-1] == "getprop ro.build.version.sdk":
+            return f"{self.sdk}\n"
         if args[0] == "push":
             self.pushed.append(args[2])
             return ""
@@ -110,3 +113,18 @@ def test_no_liner_notes_built_is_not_an_error(tmp_path, monkeypatch):
     phone = FakePhone()
     monkeypatch.setattr(sync, "adb", phone)
     assert sync.sync_notes("serial", tmp_path / "missing.db") is False
+
+
+def test_android_10_and_later_is_asked_to_index_the_copied_music(monkeypatch):
+    # adb push doesn't index; since Android 11 Mako can't see unindexed files to index them.
+    phone = FakePhone(sdk=35)
+    monkeypatch.setattr(sync, "adb", phone)
+    assert sync.index_music("serial") is True
+    assert "content call --uri content://media --method scan_volume --arg external_primary" in phone.commands
+
+
+def test_older_android_is_left_to_makos_rescan(monkeypatch):
+    phone = FakePhone(sdk=27)  # the Nexus 4: Mako's rescan finds the files there
+    monkeypatch.setattr(sync, "adb", phone)
+    assert sync.index_music("serial") is False
+    assert not any("scan_volume" in c for c in phone.commands)

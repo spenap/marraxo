@@ -145,6 +145,17 @@ def sync_notes(serial, local=NOTES):
     return True
 
 
+def index_music(serial):
+    """Asks Android 10+ to index the Music folder; adb push doesn't, and since
+    Android 11 Mako can't see files that aren't indexed. Older Android is left
+    to Mako's rescan, which finds them there. True if asked."""
+    sdk = adb(serial, "shell", "getprop ro.build.version.sdk", check=False).strip()
+    if not sdk.isdigit() or int(sdk) < 29:
+        return False
+    adb(serial, "shell", "content call --uri content://media --method scan_volume --arg external_primary", check=False)
+    return True
+
+
 def plays_by_album(serial):
     """(artist, album) → plays, from Mako's history on the phone (needs adb root); empty if unavailable."""
     adb(serial, "root", check=False)
@@ -215,6 +226,8 @@ def main():
         print(f"  {n}/{len(todo.copy)} {x}", flush=True)
     if sync_notes(a.serial):
         print("Liner notes copied.")
+    if (todo.copy or todo.remove) and index_music(a.serial):
+        print("Indexed by Android.")
     print("Done. In Mako: ⋮ → Rescan library.")
 
 
