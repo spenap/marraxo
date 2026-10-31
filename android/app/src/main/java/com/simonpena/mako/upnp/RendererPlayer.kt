@@ -22,7 +22,8 @@ import kotlin.random.Random
  * A Media3 player that plays on a UPnP renderer instead of the phone.
  *
  * The queue stays on the phone; the renderer gets one track at a time from
- * [MediaServer] and is polled every second for its state. Media3 treats it
+ * [MediaServer] and is polled for its state: every second near a track's
+ * end and after a command, every few seconds otherwise. Media3 treats it
  * like any other player, so the notification, lock screen, volume keys and
  * play history work unchanged.
  *
@@ -283,23 +284,58 @@ class RendererPlayer(
         }
     }
 
+    /** Asks the renderer for its state; the next poll is scheduled from what it says. */
     private val poll = object : Runnable {
         override fun run() {
-            if (released) return
-            if (!polling) {
-                polling = true
-                net.execute {
-                    val transport = runCatching { avt("GetTransportInfo") }.getOrNull()
-                    val position = runCatching { avt("GetPositionInfo") }.getOrNull()
-                    val volume = runCatching { rendererVolume() }.getOrNull()
-                    main.post {
-                        polling = false
-                        applyRemote(transport, position, volume)
+            if (released || polling || net.isShutdown) return // a reply on its way schedules the next
+            polling = true
+            net.execute {
+                val transport = runCatching { avt("GetTransportInfo") }.getOrNull()
+                val position = runCatching { avt("GetPositionInfo") }.getOrNull()
+                val volume = runCatching { rendererVolume() }.getOrNull()
+                main.post {
+                    polling = false
+                    applyRemote(transport, position, volume)
+                    if (!released) {
+                        main.removeCallbacks(this)
+                        main.postDelayed(this, pollDelayMs())
                     }
                 }
             }
-            main.postDelayed(this, 1000)
         }
+    }
+
+    /**
+     * Each poll is three requests that wake the phone's Wi-Fi, so only moments
+     * that need a quick answer get one: right after a command, while loading,
+     * and in the window where a stop means the track ended (next track without
+     * a gap). Elsewhere a stop or a change from another controller is noticed
+     * a few seconds later.
+     */
+    private fun pollDelayMs(): Long {
+        val busy = loading || playbackState == Player.STATE_BUFFERING ||
+            SystemClock.elapsedRealtime() - loadedAt < SETTLE_MS + FAST_POLL_MS
+        val nearEnd = playWhenReady && loadedUrl != null && currentPositionMs() >= endWindowStartMs()
+        return if (busy || nearEnd) FAST_POLL_MS else SLOW_POLL_MS
+    }
+
+    /** After a command: poll soon rather than at the next slow poll. */
+    private fun pollSoon() {
+        if (released) return
+        main.removeCallbacks(poll)
+        main.postDelayed(poll, FAST_POLL_MS)
+    }
+
+    /**
+     * Where a stop counts as the track's end. Renderer positions can't
+     * confirm an end precisely: for VBR MP3s Sonos's clock drifts behind the
+     * audio (Arregla Los Papeles ended at a reported 3:23 of 3:35). So the
+     * last fifth of a track counts as its end.
+     */
+    private fun endWindowStartMs(): Long {
+        val duration = minOf(items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE, rendererDurationMs ?: Long.MAX_VALUE)
+        if (duration == Long.MAX_VALUE) return Long.MAX_VALUE
+        return duration - maxOf(END_SLACK_MS, duration / 5)
     }
 
     init {
@@ -349,15 +385,11 @@ class RendererPlayer(
             "STOPPED", "NO_MEDIA_PRESENT" -> if (!settling && playWhenReady) {
                 // A renderer that stops on its own while still holding our track has
                 // almost always reached the end: a takeover changes the track and a
-                // pause says PAUSED. Its position can't confirm it precisely: for VBR
-                // MP3s Sonos's clock drifts behind the audio (Arregla Los Papeles
-                // ended at a reported 3:23 of 3:35). So the last fifth of a track
-                // counts as its end; earlier, it's still taken as a stop elsewhere.
-                val duration = minOf(items.getOrNull(index)?.mediaMetadata?.durationMs ?: Long.MAX_VALUE, rendererDurationMs ?: Long.MAX_VALUE)
-                val slack = maxOf(END_SLACK_MS, duration / 5)
-                val ended = maxOf(lastPosition, furthestMs) >= duration - slack
+                // pause says PAUSED. Near the end it counts as one (endWindowStartMs);
+                // earlier, it's a stop.
+                val ended = maxOf(lastPosition, furthestMs) >= endWindowStartMs()
                 // One line per decision, so a wrong one can be explained afterwards.
-                Log.i(TAG, "${renderer.name}: $state at last=$lastPosition furthest=$furthestMs duration=$duration " +
+                Log.i(TAG, "${renderer.name}: $state at last=$lastPosition furthest=$furthestMs endsFrom=${endWindowStartMs()} " +
                     "reported=${position?.get("RelTime")} → ${if (ended) "track ended" else "stopped mid-track"}")
                 val item = items.getOrNull(index)
                 if (ended) advance() else if (item != null && resumed !== item) {
@@ -414,7 +446,10 @@ class RendererPlayer(
      * after the command arrived, not after it was queued.
      */
     private fun settleFromNow() {
-        main.post { loadedAt = SystemClock.elapsedRealtime() }
+        main.post {
+            loadedAt = SystemClock.elapsedRealtime()
+            pollSoon()
+        }
     }
 
     private fun updateLocks() {
@@ -492,6 +527,8 @@ class RendererPlayer(
         const val VOLUME_STEP = 2
         const val SETTLE_MS = 4000L // renderers report stale state right after a command
         const val END_SLACK_MS = 5000L
+        const val FAST_POLL_MS = 1000L
+        const val SLOW_POLL_MS = 5000L
         const val WAKE_TIMEOUT_MS = 6 * 60 * 60 * 1000L
         val DONE: ListenableFuture<*> = Futures.immediateVoidFuture()
         val DEVICE_INFO = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE).setMinVolume(0).setMaxVolume(100).build()

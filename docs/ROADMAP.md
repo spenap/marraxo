@@ -196,10 +196,15 @@ Needs A1 and B0.
       app no longer has to judge where a track ends. Today it counts a stop
       in the last fifth of a track as its end, because Sonos's position
       drifts behind the audio of VBR MP3s (3:23 reported of 3:35).
-- [ ] Poll the renderer less when nothing needs it: the app asks the
-      speaker for its state every second, paused or playing. Every few
-      seconds while paused, and GENA events instead of polling (B0),
-      should let Wi-Fi and the CPU sleep. Test first; measure again.
+- [x] Poll the renderer less (2026-10-31): every 5 s mid-track and while
+      paused, every second only after a command and in a track's last
+      fifth, where a stop means "next track". A fifth as many requests
+      mid-track. On Estudio the next track still starts ~1 s after the
+      end, and a pause from another controller shows within 5 s.
+- [ ] GENA events instead of polling (B0), and the Wi-Fi lock: Mako holds
+      a high-performance Wi-Fi lock while playing to a speaker, which
+      stops Wi-Fi power saving; Sonos downloads the whole track up front,
+      so it may only be needed while serving. Measure first (next item).
 - [x] Recover when a speaker stops by itself (2026-10-31: resumes once
       where it was; a second stop on the same track is respected; checked
       on Estudio by sending Stop twice). Overnight on 2026-10-31,

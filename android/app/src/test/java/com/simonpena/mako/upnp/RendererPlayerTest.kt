@@ -69,6 +69,54 @@ class RendererPlayerTest {
         assertTrue("<dc:title>O... Saya</dc:title>" in unescape(fake.metadata))
     }
 
+    /** How often the player asks the renderer for its state over [seconds] of fake time. */
+    private fun pollsOver(fake: FakeRenderer, seconds: Int): Int {
+        val before = fake.actions.count { it == "GetTransportInfo" }
+        repeat(seconds * 4) {
+            idle(250)
+            Thread.sleep(15) // let a poll's reply come back from the net thread
+        }
+        return fake.actions.count { it == "GetTransportInfo" } - before
+    }
+
+    // Every request wakes the phone's Wi-Fi: polling once a second was most of
+    // the Nexus 4's 122 mA overnight. Only a track's end needs a quick answer.
+    @Test fun `mid-track the renderer is asked every few seconds, near the end every second`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "Song", file("a.mp3", 20_000), 200_000)), 0, 30_000)
+        player.prepare()
+        player.play()
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        fake.positionMs = 30_000
+        idle(6_000) // past the settling time after a load
+        val midTrack = pollsOver(fake, 20)
+        assertTrue("mid-track: $midTrack polls in 20 s", midTrack in 3..5)
+
+        fake.positionMs = 170_000 // the last fifth, where the end is watched for
+        eventually("the player sees it") { player.currentPosition >= 170_000 }
+        val nearEnd = pollsOver(fake, 10)
+        assertTrue("near the end: $nearEnd polls in 10 s", nearEnd >= 8)
+    }
+
+    @Test fun `while paused the renderer is asked every few seconds, and soon after a command`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "Song", file("a.mp3", 20_000), 200_000)))
+        player.prepare()
+        player.play()
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        player.pause()
+        eventually("paused") { fake.state == "PAUSED_PLAYBACK" }
+        idle(6_000)
+        val paused = pollsOver(fake, 20)
+        assertTrue("paused: $paused polls in 20 s", paused in 3..5)
+
+        // A command needs its outcome confirmed quickly, whatever the slow poll's timing.
+        player.play()
+        eventually("playing again") { fake.state == "PLAYING" }
+        val afterCommand = pollsOver(fake, 3)
+        assertTrue("right after a command: $afterCommand polls in 3 s", afterCommand >= 2)
+    }
+
     @Test fun `moves to the next track when the renderer finishes one`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         val transitions = mutableListOf<Int>()
