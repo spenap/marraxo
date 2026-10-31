@@ -3,6 +3,7 @@ package com.simonpena.mako
 import android.content.res.Resources
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -50,6 +51,40 @@ class TranslationsTest {
     @Test fun `year labels in Spanish`() {
         assertEquals("Década de 1990", yearLabel(res, 1994, coarse = true))
         assertEquals("Año desconocido", yearLabel(res, 0, coarse = false))
+    }
+
+    /** Every string as this configuration shows it, by name. */
+    private fun shown(): Map<String, String> = strings("values").keys
+        .mapNotNull { name -> res.getIdentifier(name, "string", "com.simonpena.mako").takeIf { it != 0 }?.let { name to res.getString(it) } }
+        .toMap()
+
+    private fun assertNoPhone(word: Regex) {
+        val phone = shown().filterValues { word.containsMatchIn(it) }
+        assertTrue("say tablet on a tablet: $phone", phone.isEmpty())
+    }
+
+    @Config(qualifiers = "sw600dp")
+    @Test fun `on a tablet it says tablet, in English`() {
+        assertNoPhone(Regex("phone", RegexOption.IGNORE_CASE))
+        assertEquals("Your music, on this tablet.", res.getString(R.string.welcome_title))
+        assertEquals("This tablet", res.getString(R.string.this_phone))
+    }
+
+    @Config(qualifiers = "es-sw600dp")
+    @Test fun `on a tablet it says tablet, in Spanish`() {
+        assertNoPhone(Regex("teléfono", RegexOption.IGNORE_CASE))
+        assertEquals("Tu música, en esta tableta.", res.getString(R.string.welcome_title))
+        assertEquals("Ocultos en la biblioteca. Los archivos siguen en la tableta.", res.getString(R.string.hidden_some))
+    }
+
+    @Config(qualifiers = "gl-sw600dp")
+    @Test fun `on a tablet it says tablet, in Galician`() {
+        assertNoPhone(Regex("teléfono", RegexOption.IGNORE_CASE))
+        assertEquals("Copia música no cartafol Music desta tableta, por transferencia de ficheiros USB ou desde un ordenador:", res.getString(R.string.empty_body))
+    }
+
+    @Test fun `on a phone it still says phone`() {
+        assertEquals("This phone", res.getString(R.string.this_phone))
     }
 
     @Test fun `why the radio picked a song, in English`() {

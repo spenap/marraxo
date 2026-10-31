@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">A túa música, nesta tableta.</string>
+    <string name="welcome_body">Mako reproduce a música gardada nesta tableta. Sen contas e sen Internet. Tamén pode reproducila en altofalantes e televisores da túa wifi.</string>
+    <string name="empty_body">Copia música no cartafol Music desta tableta, por transferencia de ficheiros USB ou desde un ordenador:</string>
+    <string name="hidden_some">Agochados na biblioteca. Os ficheiros seguen na tableta.</string>
+    <string name="about_summary">Un reprodutor de música sen conexión. Reproduce o cartafol Music nesta tableta ou en altofalantes e televisores da mesma wifi.</string>
+    <string name="this_phone">Esta tableta</string>
+</resources>
