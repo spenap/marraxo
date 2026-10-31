@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -135,6 +136,7 @@ private sealed interface Screen {
     data object Hidden : Screen
     data object Search : Screen
     data object Licences : Screen
+    data object Queue : Screen
     /** An artist's or a genre's albums: a level below the tab it was opened from. */
     class Shelf(val title: String, val matches: (Album) -> Boolean) : Screen {
         val grid = LazyGridState() // kept while an album is open on top
@@ -224,9 +226,15 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
         }
         Screen.NowPlaying ->
             if (currentAlbum == null || currentTrack == null) stack.removeAt(stack.lastIndex)
-            else NowPlaying(currentAlbum, currentTrack, player) { stack.removeAt(stack.lastIndex) }
+            else NowPlaying(
+                currentAlbum, currentTrack, player,
+                onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
+                onArtist = { stack.add(Screen.Shelf(currentTrack.artist) { it.artist == currentTrack.artist }) },
+                onQueue = { stack.add(Screen.Queue) },
+            ) { stack.removeAt(stack.lastIndex) }
+        Screen.Queue -> QueueScreen(player) { stack.removeAt(stack.lastIndex) }
     }
-    if (stack.last() != Screen.NowPlaying && currentAlbum != null && currentTrack != null) {
+    if (stack.last() != Screen.NowPlaying && stack.last() != Screen.Queue && currentAlbum != null && currentTrack != null) {
         Box(Modifier.fillMaxSize()) {
             MiniPlayer(currentAlbum, currentTrack, player, Modifier.align(Alignment.BottomCenter)) {
                 stack.add(Screen.NowPlaying)
@@ -869,6 +877,36 @@ private fun AlbumScreen(
     }
 }
 
+/** What's playing and what comes next, radio reasons included; tap a song to play it. */
+@Composable
+private fun QueueScreen(player: PlayerHolder, onBack: () -> Unit) {
+    val list = rememberLazyListState(initialFirstVisibleItemIndex = maxOf(0, player.currentIndex - 1))
+    Column(Modifier.fillMaxSize().background(GBg).statusBarsPadding()) {
+        LevelHeader(stringResource(R.string.up_next), songCount(player.queue.size), onBack)
+        LazyColumn(state = list, contentPadding = PaddingValues(bottom = 24.dp), modifier = Modifier.navigationBarsPadding()) {
+            itemsIndexed(player.queue) { i, item ->
+                val m = item.mediaMetadata
+                val on = i == player.currentIndex
+                val played = i < player.currentIndex
+                Row(
+                    Modifier.fillMaxWidth().clickable { player.jumpTo(i) }.padding(horizontal = 20.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AlbumArt(m.extras?.getLong(EXTRA_ALBUM_ID) ?: 0, px = 112, corner = 4.dp, modifier = Modifier.size(44.dp))
+                    Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                        Text(
+                            m.title?.toString().orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            style = body.copy(color = if (on) GHi else if (played) GSoft else Color.White, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal),
+                        )
+                        Text(m.artist?.toString().orEmpty(), style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        m.extras?.getString(EXTRA_REASON)?.let { Text(it, style = TextStyle(fontSize = 12.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Something just done that can be taken back for a few seconds. */
 private class Undo(val message: Int, val undo: () -> Unit)
 
@@ -1082,7 +1120,15 @@ private fun rememberPosition(player: PlayerHolder, key: Any): Long {
 }
 
 @Composable
-internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClose: () -> Unit) {
+internal fun NowPlaying(
+    album: Album,
+    track: Track,
+    player: PlayerHolder,
+    onAlbum: (() -> Unit)? = null,
+    onArtist: (() -> Unit)? = null,
+    onQueue: (() -> Unit)? = null,
+    onClose: () -> Unit,
+) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
     val pos = rememberPosition(player, track.id)
     var outputs by remember { mutableStateOf(false) }
@@ -1099,14 +1145,20 @@ internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClos
                         if (radio != null) stringResource(R.string.radio_now, radio) else stringResource(R.string.playing_from_album),
                         style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft),
                     )
-                    Text(album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = if (onAlbum != null) Modifier.clickable(onClick = onAlbum) else Modifier,
+                    )
                 }
-                Spacer(Modifier.width(44.dp))
+                if (onQueue != null) IconSpot(GlowIcons.Queue, stringResource(R.string.up_next), onClick = onQueue) else Spacer(Modifier.width(44.dp))
             }
             AlbumArt(album.id, px = 560, corner = 10.dp, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.86f).aspectRatio(1f))
             Column {
                 Text(track.title, style = display(26), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(track.artist, style = TextStyle(fontSize = 16.sp, color = GSoft), modifier = Modifier.padding(top = 4.dp))
+                Text(
+                    track.artist, style = TextStyle(fontSize = 16.sp, color = GSoft),
+                    modifier = Modifier.padding(top = 4.dp).then(if (onArtist != null) Modifier.clickable(onClick = onArtist) else Modifier),
+                )
                 player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_REASON)?.let {
                     Text(it, style = TextStyle(fontSize = 13.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
                 }

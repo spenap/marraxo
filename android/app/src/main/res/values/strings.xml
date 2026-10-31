@@ -144,4 +144,6 @@
     <!-- Shown for a few seconds after hiding a song, beside Undo -->
     <string name="song_hidden">Song hidden</string>
     <string name="undo">Undo</string>
+    <!-- The queue, from Now Playing -->
+    <string name="up_next">Up next</string>
 </resources>

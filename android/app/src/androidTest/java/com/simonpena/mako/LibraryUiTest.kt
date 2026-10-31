@@ -54,7 +54,12 @@ class LibraryUiTest {
         }
     }
 
-    @After fun tearDown() = main { player.release() }
+    /** Each test starts with nothing playing: the mini player would otherwise show a song from the one before. */
+    @After fun tearDown() {
+        main { player.play(emptyList(), 0) }
+        compose.waitUntil(5_000) { player.currentTrackId == null }
+        main { player.release() }
+    }
 
     private fun main(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
 
@@ -107,7 +112,6 @@ class LibraryUiTest {
     }
 
     @Test fun aSongStartsARadioAndNowPlayingSaysSo() {
-        // A song no other test looks for: the mini player outlives the test.
         compose.onNodeWithText("Local Ground").performClick()
         compose.onNodeWithText("Dúlamán").performTouchInput { longClick() }
         compose.onNodeWithText("Start radio").performClick()
@@ -136,6 +140,31 @@ class LibraryUiTest {
         compose.onNodeWithText("Uncle Rat").assertDoesNotExist()
         compose.onNodeWithText("Undo").performClick()
         compose.onNodeWithText("Uncle Rat").assertExists()
+    }
+
+    /** Plays A Son de Guerra and opens Now Playing from the mini player. */
+    private fun nowPlayingGuerra() {
+        compose.onNodeWithText("A Son de Guerra").performClick()
+        compose.onNodeWithText("Play").performClick()
+        compose.waitUntil(5_000) { player.currentTrackId == 300L }
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("Apaga y vámonos").performClick() // the mini player
+    }
+
+    @Test fun upNextShowsTheQueueAndJumpsWithinIt() {
+        nowPlayingGuerra()
+        compose.onNodeWithContentDescription("Up next").performClick()
+        compose.onNodeWithText("Bachata en Fukuoka").performClick()
+        compose.waitUntil(5_000) { player.currentTrackId == 301L }
+    }
+
+    @Test fun nowPlayingLeadsToItsAlbumAndArtist() {
+        nowPlayingGuerra()
+        compose.onNodeWithText("Juan Luis Guerra").performClick()
+        compose.onNodeWithText("1 album").assertExists() // the artist's level
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("A Son de Guerra").performClick() // the album, at the top of Now Playing
+        compose.onNodeWithText("Play").assertExists() // the album screen
     }
 
     @Test fun searchIgnoresAccentsAndPlaysTheSong() {

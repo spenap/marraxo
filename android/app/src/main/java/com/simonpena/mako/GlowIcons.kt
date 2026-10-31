@@ -25,6 +25,7 @@ object GlowIcons {
     val Tv = stroked("M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v9.5a1.5 1.5 0 0 1-1.5 1.5H4a1.5 1.5 0 0 1-1.5-1.5V6A1.5 1.5 0 0 1 4 4.5zM8 20.5h8")
     val More = filled("M12 4.4a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2zM12 10.4a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2zM12 16.4a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 1 0 0-3.2z")
     val Search = stroked("M10.5 4a6.5 6.5 0 1 1 0 13a6.5 6.5 0 1 1 0-13zM15.5 15.5L20 20")
+    val Queue = stroked("M4 6h16M4 12h16M4 18h9M17 15v6l4-3z", width = 1.9f)
     val Close = stroked("M6 6l12 12M18 6L6 18")
     val Check = stroked("M5 12.5l4.5 4.5L19 7", width = 2.2f)
 }

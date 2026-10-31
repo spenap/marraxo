@@ -29,6 +29,11 @@ class PlayerHolder(context: Context) {
         private set
     var shuffle by mutableStateOf(false)
         private set
+    /** The queue in play order, and where playback is in it. */
+    var queue by mutableStateOf<List<MediaItem>>(emptyList())
+        private set
+    var currentIndex by mutableIntStateOf(0)
+        private set
     var repeatMode by mutableIntStateOf(Player.REPEAT_MODE_OFF)
         private set
     /** The speaker or TV playing, or null for this phone. */
@@ -61,6 +66,10 @@ class PlayerHolder(context: Context) {
         currentItem = p.currentMediaItem
         shuffle = p.shuffleModeEnabled
         repeatMode = p.repeatMode
+        if (p.mediaItemCount != queue.size || (0 until p.mediaItemCount).any { p.getMediaItemAt(it) != queue[it] }) {
+            queue = List(p.mediaItemCount) { p.getMediaItemAt(it) }
+        }
+        currentIndex = p.currentMediaItemIndex
     }
 
     private fun syncOutput(extras: Bundle) {
@@ -113,6 +122,14 @@ class PlayerHolder(context: Context) {
                 if (playbackState == Player.STATE_ENDED) seekToDefaultPosition()
                 play()
             }
+        }
+    }
+
+    /** Plays the queue's song at [index]. */
+    fun jumpTo(index: Int) {
+        controller?.run {
+            seekToDefaultPosition(index)
+            play()
         }
     }
 
