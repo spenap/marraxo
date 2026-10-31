@@ -105,7 +105,12 @@ Done in a separate repository.
 - [ ] Radio v0: long-press a track → Start radio. Biases on tags and
       history (decade, genre, artist, favourites, not recently played),
       randomness, no artist repeat within 5 tracks, 3 tracks queued ahead.
-      See `discovery.md`.
+      See `discovery.md`. Researched 2026-10-31 (`radio.md`): one rule
+      engine for radios and smart playlists; liner notes (shared people
+      and studios) as a bias no other player has; radios widen themselves
+      instead of running dry in a 2,000-track library; a simulation on the
+      real library as a regression gate. History isn't usable yet: 169 of
+      the Nexus 4's 200 plays are the overnight battery test.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
