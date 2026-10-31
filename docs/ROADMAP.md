@@ -73,6 +73,13 @@ Done in a separate repository.
       single album go in "Other", at the end (inside a family they stay).
       The Nexus 4's 38 tags make 13 rows: Rock, Pop, Indie and Español as
       families, 8 genres, and Other with 13 one-album genres.
+- [x] Genre tiles (2026-10-31): the Genres tab is a grid of tiles, each
+      with one of its covers tilted in the corner on a dark tone of that
+      cover's colour. Another cover each time you open the tab from another
+      tab; nothing moves while you look. Chosen over playable cards on Home
+      and a list with stacked covers (`mockups/genre-cards.html`,
+      `mockups/genre-tiles.html`). Scroll bench, cold: 2.4–2.7% janky
+      frames on the Nexus 4 (album grid: 4.1%).
 - [ ] As the home screen, Now Playing's "Playing on … Change" row sits
       where the hidden navigation bar was, and the accessibility tree
       reports it at [0,0][0,0] (not visible): it can be tapped, but

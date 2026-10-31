@@ -76,3 +76,24 @@ private fun displayWord(word: String, genres: Collection<Genre>): String {
 const val FAMILY_OPENS_ALBUMS_UP_TO = 12
 
 fun opensAlbums(shelf: GenreShelf) = !shelf.isFamily || shelf.albums.size <= FAMILY_OPENS_ALBUMS_UP_TO
+
+/**
+ * The albums a genre's tile tries for its cover on this [visit] to the
+ * tab, in order: the first with artwork is shown. Each visit starts one
+ * album further on, and genres start at different albums, so tiles don't
+ * change in step. The same visit always gives the same order.
+ */
+fun coverCandidates(shelf: GenreShelf, visit: Int): List<Album> {
+    val albums = shelf.albums
+    if (albums.isEmpty()) return albums
+    val start = Math.floorMod(visit + shelf.name.hashCode(), albums.size)
+    return albums.drop(start) + albums.take(start)
+}
+
+/**
+ * The album whose cover a tile shows: the first candidate not known to lack
+ * artwork. Not simply the first already in memory: that is usually last
+ * visit's cover, which would then never change.
+ */
+fun coverToShow(candidates: List<Album>, hasNoArt: (albumId: Long) -> Boolean): Album? =
+    candidates.firstOrNull { !hasNoArt(it.id) }

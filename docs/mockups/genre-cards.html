@@ -1,0 +1,210 @@
+<title>Mako Genre Cards</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: three phone screens side by side (stacking on a phone), each a still of one option, with a short caption above.
+   Single dark theme on purpose: Mako's own Glow look (docs/mockups/prototype.html, cards.html). */
+:root {
+  color-scheme: dark;
+  --bg: #0C1112;
+  --page: #080C0D;
+  --sheet: #161D1E;
+  --hi: #9FD6CF;
+  --ink: #FFFFFF;
+  --soft: rgba(255, 255, 255, .64);
+  --faint: rgba(255, 255, 255, .14);
+  --display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --body: "Figtree", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.intro { max-width: 1180px; margin: 0 auto 26px; display: flex; flex-direction: column; gap: 8px; }
+.intro h1 { font: 800 30px/1.05 var(--display); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; color: var(--soft); max-width: 66ch; }
+.intro p b { color: var(--hi); font-weight: 600; }
+
+.options { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+.option { display: flex; flex-direction: column; gap: 12px; }
+.caption { display: flex; flex-direction: column; gap: 4px; }
+.caption .tag { font: 400 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--hi); }
+.caption h2 { font: 800 19px/1.15 var(--display); margin: 0; text-wrap: balance; }
+.caption p { margin: 0; font-size: 13.5px; color: var(--soft); }
+.caption .verdict { color: var(--ink); }
+
+/* A phone: 360 dp wide like the Nexus 4, cut at a fixed height like a screenshot. */
+.phone {
+  width: 100%; max-width: 360px; aspect-ratio: 9 / 16; background: var(--bg); border-radius: 22px; overflow: hidden;
+  border: 1px solid var(--faint); display: flex; flex-direction: column; position: relative;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+}
+.status { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 14px 0; font: 600 11px/1 var(--body); color: var(--soft); font-variant-numeric: tabular-nums; }
+.screen { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 14px; padding: 10px 14px 0; }
+.title { font: 800 26px/1 var(--display); letter-spacing: -.02em; margin: 0; }
+.tabs { display: flex; gap: 14px; font-weight: 600; font-size: 13px; color: var(--soft); }
+.tabs span { padding-bottom: 5px; }
+.tabs .on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--hi); }
+.shelf-h { display: flex; flex-direction: column; gap: 2px; }
+.shelf-h h3 { font: 800 16px/1.1 var(--display); margin: 0; }
+.shelf-h span { font-size: 11.5px; color: var(--soft); }
+
+/* Cover stand-ins: tinted squares named after a real album of that genre. */
+.art { aspect-ratio: 1; border-radius: 5px; background: linear-gradient(150deg, var(--t), color-mix(in oklab, var(--t) 40%, #070D0E)); display: flex; align-items: flex-end; padding: 4px 5px; font: 600 8px/1.1 var(--body); color: rgba(255,255,255,.85); overflow: hidden; }
+
+/* Option A: Home shelf of genre cards */
+.row { display: grid; grid-auto-flow: column; grid-auto-columns: 128px; gap: 10px; margin-right: -14px; overflow: hidden; }
+.card { display: flex; flex-direction: column; gap: 6px; }
+.cover { aspect-ratio: 1; border-radius: 8px; padding: 9px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;
+  background: linear-gradient(155deg, var(--t), color-mix(in oklab, var(--t) 42%, #070D0E)); }
+.cover .kind { position: absolute; top: 8px; left: 9px; font: 400 9.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+.cover .n { position: absolute; top: 7px; right: 9px; font: 600 11px/1 var(--body); color: rgba(255,255,255,.85); font-variant-numeric: tabular-nums; }
+.cover .big { font: 800 22px/.95 var(--display); letter-spacing: -.02em; }
+.stack { display: flex; }
+.stack .art { width: 30px; border-radius: 4px; box-shadow: 0 0 0 2px rgba(0,0,0,.28); font-size: 0; padding: 0; }
+.stack .art + .art { margin-left: -12px; }
+.card .w { font-size: 11.5px; color: var(--soft); line-height: 1.3; }
+.card .w b { color: var(--ink); font-weight: 600; }
+.mini { margin-top: auto; margin-inline: -6px; margin-bottom: 8px; height: 50px; border-radius: 9px; background: #4A3A22; display: flex; align-items: center; gap: 10px; padding: 0 10px; }
+.mini .art { width: 36px; font-size: 0; padding: 0; }
+.mini div { display: flex; flex-direction: column; font-size: 12px; }
+.mini div span:first-child { font-weight: 600; }
+.mini div span:last-child { color: var(--soft); font-size: 11px; }
+
+/* Option B: today's list, family rows with stacked covers */
+.list { display: flex; flex-direction: column; gap: 12px; }
+.li { display: grid; grid-template-columns: 48px 1fr; gap: 12px; align-items: center; }
+.li .one .art { width: 48px; font-size: 0; padding: 0; }
+.li .fan { position: relative; width: 48px; height: 48px; }
+.li .fan .art { position: absolute; width: 38px; font-size: 0; padding: 0; box-shadow: 0 0 0 2px var(--bg); }
+.li .fan .art:nth-child(1) { left: 0; top: 0; }
+.li .fan .art:nth-child(2) { left: 5px; top: 5px; }
+.li .fan .art:nth-child(3) { left: 10px; top: 10px; }
+.li b { display: block; font-size: 14.5px; font-weight: 600; }
+.li span { font-size: 12.5px; color: var(--soft); }
+.li.family span { color: var(--hi); }
+
+/* Option C: tiles */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { aspect-ratio: 1.45; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
+  background: linear-gradient(155deg, var(--t), color-mix(in oklab, var(--t) 45%, #070D0E)); }
+.tile b { font: 800 18px/1 var(--display); letter-spacing: -.01em; }
+.tile span { font-size: 11px; color: rgba(255,255,255,.78); }
+.tile .art { position: absolute; right: -8px; bottom: -8px; width: 52px; transform: rotate(14deg); font-size: 0; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,.4); }
+
+.foot { max-width: 1180px; margin: 30px auto 0; font-size: 13px; color: var(--soft); max-width: 66ch; margin-inline: auto; }
+@media (min-width: 1000px) { .foot { margin-inline: calc((100% - 1180px) / 2) auto; } }
+</style>
+
+<div class="intro">
+  <h1>Your genres as cards</h1>
+  <p>Three ways to show the genre families from the Nexus 4's library, drawn as still screens. Names and counts are real; covers are tinted stand-ins. <b>A</b> is the one I'd build first.</p>
+</div>
+
+<div class="options">
+
+  <!-- A: cards on Home -->
+  <div class="option">
+    <div class="caption">
+      <span class="tag">A · Home</span>
+      <h2>A shelf of genre cards on Home</h2>
+      <p>Each family or genre is a card you can play: shuffled, later as a radio. The line under it is the card's "why", which every card must have.</p>
+      <p class="verdict">Recommended: it is the cards milestone, and families already made the shelf.</p>
+    </div>
+    <div class="phone">
+      <div class="status"><span>▾ ✱ ▴</span><span>17:04</span></div>
+      <div class="screen">
+        <p class="title">Home</p>
+        <div class="shelf-h"><h3>Jump back in</h3><span>Played this week</span></div>
+        <div class="row">
+          <div class="card"><div class="cover" style="--t:#6B5A2E"><span class="kind">Album</span><span class="big">Fascinado</span></div><div class="w"><b>Sidonie</b> · yesterday</div></div>
+          <div class="card"><div class="cover" style="--t:#4A6B5E"><span class="kind">Album</span><span class="big">The Road North</span></div><div class="w"><b>Alasdair Fraser</b> · Tuesday</div></div>
+          <div class="card"><div class="cover" style="--t:#5E2238"><span class="kind">Album</span><span class="big">Fiebre</span></div></div>
+        </div>
+        <div class="shelf-h"><h3>Your genres</h3><span>From the genre families; tap to play</span></div>
+        <div class="row">
+          <div class="card">
+            <div class="cover" style="--t:#7A2E2E"><span class="kind">Genre</span><span class="n">43</span>
+              <div class="stack"><span class="art" style="--t:#C9473F"></span><span class="art" style="--t:#E0B84A"></span><span class="art" style="--t:#3F5E8C"></span></div>
+              <span class="big">Rock</span></div>
+            <div class="w"><b>43 albums</b> in 10 genres: Classic, Funky, Gothic, Punk…</div>
+          </div>
+          <div class="card">
+            <div class="cover" style="--t:#24525A"><span class="kind">Genre</span><span class="n">33</span>
+              <div class="stack"><span class="art" style="--t:#E8C68C"></span><span class="art" style="--t:#C77A4A"></span><span class="art" style="--t:#5E7A4A"></span></div>
+              <span class="big">Celtic</span></div>
+            <div class="w"><b>33 albums</b>, your largest genre</div>
+          </div>
+          <div class="card">
+            <div class="cover" style="--t:#6B4A7A"><span class="kind">Genre</span><span class="n">11</span>
+              <div class="stack"><span class="art" style="--t:#6B5A2E"></span><span class="art" style="--t:#B88A4A"></span></div>
+              <span class="big">Español</span></div>
+            <div class="w"><b>11 albums</b>: Pop español, Rock Español…</div>
+          </div>
+        </div>
+        <div class="mini"><span class="art" style="--t:#6B5A2E"></span><div><span>Gente de Barrett</span><span>Sidonie</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: list with stacked covers -->
+  <div class="option">
+    <div class="caption">
+      <span class="tag">B · Genres tab</span>
+      <h2>Today's list, families marked by stacked covers</h2>
+      <p>The tab stays a list. A family shows three covers fanned out and its count in the accent colour, so "this opens a group" reads before you tap.</p>
+      <p class="verdict">Small and cheap; worth doing alongside A.</p>
+    </div>
+    <div class="phone">
+      <div class="status"><span>▾ ✱ ▴</span><span>17:04</span></div>
+      <div class="screen">
+        <p class="title">Library</p>
+        <div class="tabs"><span>Albums</span><span>Artists</span><span class="on">Genres</span><span>Years</span></div>
+        <div class="list">
+          <div class="li"><div class="one"><span class="art" style="--t:#24525A"></span></div><div><b>Celtic</b><span>33 albums</span></div></div>
+          <div class="li family"><div class="fan"><span class="art" style="--t:#B88A4A"></span><span class="art" style="--t:#6B5A2E"></span><span class="art" style="--t:#8C3F5E"></span></div><div><b>Español</b><span>11 albums</span></div></div>
+          <div class="li"><div class="one"><span class="art" style="--t:#5E6B3F"></span></div><div><b>Folk</b><span>4 albums</span></div></div>
+          <div class="li family"><div class="fan"><span class="art" style="--t:#D8D0C0"></span><span class="art" style="--t:#B87A3F"></span><span class="art" style="--t:#4A4A4A"></span></div><div><b>Indie</b><span>7 albums</span></div></div>
+          <div class="li family"><div class="fan"><span class="art" style="--t:#6B7A3F"></span><span class="art" style="--t:#C9A06B"></span><span class="art" style="--t:#3F6B8C"></span></div><div><b>Pop</b><span>4 genres</span></div></div>
+          <div class="li family"><div class="fan"><span class="art" style="--t:#C9473F"></span><span class="art" style="--t:#E0B84A"></span><span class="art" style="--t:#3F5E8C"></span></div><div><b>Rock</b><span>10 genres</span></div></div>
+          <div class="li"><div class="one"><span class="art" style="--t:#5A4A3A"></span></div><div><b>Soundtrack</b><span>10 albums</span></div></div>
+          <div class="li family"><div class="fan"><span class="art" style="--t:#4A7AA0"></span><span class="art" style="--t:#E8C68C"></span><span class="art" style="--t:#8C3F3F"></span></div><div><b>Other</b><span>13 genres</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: tiles -->
+  <div class="option">
+    <div class="caption">
+      <span class="tag">C · Genres tab</span>
+      <h2>The tab as a grid of coloured tiles</h2>
+      <p>The streaming-app browse look. It is colourful, but six to eight genres fit on a screen against eight rows, and the colour stands for nothing in your music.</p>
+      <p class="verdict">Not recommended.</p>
+    </div>
+    <div class="phone">
+      <div class="status"><span>▾ ✱ ▴</span><span>17:04</span></div>
+      <div class="screen">
+        <p class="title">Library</p>
+        <div class="tabs"><span>Albums</span><span>Artists</span><span class="on">Genres</span><span>Years</span></div>
+        <div class="tiles">
+          <div class="tile" style="--t:#24525A"><b>Celtic</b><span>33 albums</span><span class="art" style="--t:#E8C68C"></span></div>
+          <div class="tile" style="--t:#6B4A7A"><b>Español</b><span>11 albums</span><span class="art" style="--t:#6B5A2E"></span></div>
+          <div class="tile" style="--t:#5E6B3F"><b>Folk</b><span>4 albums</span><span class="art" style="--t:#B88A4A"></span></div>
+          <div class="tile" style="--t:#6B6458"><b>Indie</b><span>7 albums</span><span class="art" style="--t:#D8D0C0"></span></div>
+          <div class="tile" style="--t:#3F6B8C"><b>Pop</b><span>4 genres</span><span class="art" style="--t:#C9A06B"></span></div>
+          <div class="tile" style="--t:#7A2E2E"><b>Rock</b><span>10 genres</span><span class="art" style="--t:#E0B84A"></span></div>
+          <div class="tile" style="--t:#5A4A3A"><b>Soundtrack</b><span>10 albums</span><span class="art" style="--t:#8C7A5A"></span></div>
+          <div class="tile" style="--t:#3A4A5E"><b>Other</b><span>13 genres</span><span class="art" style="--t:#4A7AA0"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="foot">On Home, a card with fewer than about 8 tracks is not shown (docs/cards.md), so the shelf only offers genres big enough to play for a while. Families and Other are what let most of the 38 tags reach that size.</p>

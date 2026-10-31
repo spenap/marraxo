@@ -2,7 +2,8 @@
 # Cold-start Mako, fling down the album grid, and print frame statistics.
 # Fails (exit 1) above MAX_JANKY percent janky frames (default 5), or if
 # too few frames were drawn to judge (screen off, app not in front).
-# Usage: [MAX_JANKY=5] scripts/scroll-bench.sh [device-serial]
+# Usage: [MAX_JANKY=5] [TAB=Genres] scripts/scroll-bench.sh [device-serial]
+# TAB: fling that library tab instead (its English label), freshly opened.
 # The phone must not have a secure lock screen (PIN/pattern).
 set -eu
 S=${1:-}
@@ -13,6 +14,14 @@ a shell wm dismiss-keyguard
 a shell am force-stop com.simonpena.mako
 a shell am start -W -n com.simonpena.mako/.MainActivity >/dev/null
 sleep 3                                   # library query and first frame
+if [ -n "${TAB:-}" ]; then
+    a shell uiautomator dump /sdcard/bench.xml >/dev/null
+    xy=$(a shell cat /sdcard/bench.xml | grep -oE "text=\"$TAB\"[^>]*bounds=\"[^\"]*\"" | head -1 |
+        grep -oE '\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]' | tr '[],' '   ' | awk '{print int(($1+$3)/2), int(($2+$4)/2)}')
+    [ -n "$xy" ] || { echo "No '$TAB' tab on screen"; exit 1; }
+    a shell input tap $xy
+    sleep 1
+fi
 a shell dumpsys gfxinfo com.simonpena.mako reset >/dev/null
 for _ in 1 2 3 4 5 6 7 8; do
     a shell input swipe 384 1000 384 300 120   # fast fling up = scroll down

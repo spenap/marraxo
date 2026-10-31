@@ -3,6 +3,15 @@
 package com.simonpena.mako
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.ContentScale
+import kotlin.random.Random
 import androidx.compose.foundation.Canvas
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
@@ -286,6 +295,8 @@ private class LibraryState {
     var tab by mutableStateOf(Tab.Albums)
     var filter by mutableStateOf<LibraryFilter?>(null)
     var family by mutableStateOf<String?>(null) // the genre family open on the Genres tab
+    var genreVisit by mutableIntStateOf(Random.nextInt(1000)) // each visit to Genres shows other covers
+    val genreGrid = LazyGridState()
     val grid = LazyGridState()
     val lists = Tab.entries.associateWith { LazyListState() } // each tab keeps its own scroll
 }
@@ -331,7 +342,11 @@ private fun LibraryScreen(
             Tab.entries.forEach { tab ->
                 val on = state.tab == tab
                 Column(
-                    Modifier.clip(RoundedCornerShape(6.dp)).clickable { state.tab = tab; if (tab != Tab.Albums) state.filter = null }
+                    Modifier.clip(RoundedCornerShape(6.dp)).clickable {
+                        if (tab == Tab.Genres && state.tab != Tab.Genres) state.genreVisit++
+                        state.tab = tab
+                        if (tab != Tab.Albums) state.filter = null
+                    }
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
@@ -372,9 +387,10 @@ private fun LibraryScreen(
 }
 
 /**
- * Genres, with those that share a word gathered into a family (Indie:
- * Indie, Indie Pop, Indie Rock). A small family opens straight to its
- * albums, a big one to its genres; each row says which it will be.
+ * Genres as tiles, with those that share a word gathered into a family
+ * (Indie: Indie, Indie Pop, Indie Rock). A small family opens straight to
+ * its albums, a big one to its genres; each tile says which. Each tile
+ * shows a cover from its genre, another one on each visit to the tab.
  * [onAlbums] shows the albums of the genres with these keys (none: no genre).
  */
 @Composable
@@ -386,34 +402,81 @@ private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, on
     val other = stringResource(R.string.other_genres)
     val label = { shelf: GenreShelf -> if (shelf.isOther) other else shelf.name }
     val keys = { shelf: GenreShelf -> shelf.genres.map { it.key }.toSet() }
+    val visit = state.genreVisit
     Column {
         if (family != null) FilterChip(label(family), pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
-        val list = if (family == null) state.lists.getValue(Tab.Genres) else remember(family.name) { LazyListState() }
-        LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
+        val grid = if (family == null) state.genreGrid else remember(family.name) { LazyGridState() }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            state = grid,
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = bottom),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.navigationBarsPadding(),
+        ) {
             if (family == null) {
                 items(shelves, key = { it.name }) { shelf ->
                     val direct = opensAlbums(shelf)
                     val detail = if (direct) albumCount(shelf.albums.size) else pluralStringResource(R.plurals.genre_count, shelf.genres.size, shelf.genres.size)
-                    ListRow(shelf.albums.first().id, round = false, title = label(shelf), detail = detail) {
+                    GenreTile(label(shelf), detail, coverCandidates(shelf, visit)) {
                         if (direct) onAlbums(label(shelf), keys(shelf)) else state.family = shelf.name
                     }
                 }
                 if (untagged.isNotEmpty()) item(key = "none") {
                     val noGenre = stringResource(R.string.no_genre)
-                    ListRow(untagged.first().id, round = false, title = noGenre, detail = albumCount(untagged.size)) { onAlbums(noGenre, emptySet()) }
+                    GenreTile(noGenre, albumCount(untagged.size), coverCandidates(GenreShelf(noGenre, listOf(Genre(noGenre, "", untagged))), visit)) {
+                        onAlbums(noGenre, emptySet())
+                    }
                 }
             } else {
                 item(key = "all") {
-                    ListRow(family.albums.first().id, round = false, title = stringResource(R.string.all_albums), detail = albumCount(family.albums.size)) {
+                    GenreTile(stringResource(R.string.all_albums), albumCount(family.albums.size), coverCandidates(family, visit), accent = true) {
                         onAlbums(label(family), keys(family))
                     }
                 }
                 items(family.genres, key = { it.key }) { genre ->
-                    ListRow(genre.albums.first().id, round = false, title = genre.name, detail = albumCount(genre.albums.size)) {
+                    GenreTile(genre.name, albumCount(genre.albums.size), coverCandidates(GenreShelf(genre.name, listOf(genre)), visit)) {
                         onAlbums(genre.name, setOf(genre.key))
                     }
                 }
             }
+        }
+    }
+}
+
+/** Decode size of a tile's cover: about 100 dp on screen. */
+private const val TILE_COVER_PX = 224
+
+/**
+ * A genre tile: its name, what it opens, and one of its covers tilted into
+ * the corner, on a dark tone of that cover's colour. Tries [candidates] in
+ * order and shows the first with artwork.
+ */
+@Composable
+private fun GenreTile(title: String, detail: String, candidates: List<Album>, accent: Boolean = false, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val initial = remember(candidates) { coverToShow(candidates, ::knownWithoutArt)?.let { cachedArt(it.id, TILE_COVER_PX, tint = true) } }
+    // On a new visit the state keeps the last cover until this one is found, so set it either way.
+    val art by produceState(initial, candidates) {
+        value = initial ?: candidates.take(8).firstNotNullOfOrNull { loadArt(context, it.id, TILE_COVER_PX, tint = true) }
+    }
+    val tint = art?.tint ?: candidates.firstOrNull()?.let { placeholderTint(it.id) } ?: GSheet
+    Box(
+        Modifier.fillMaxWidth().aspectRatio(1.3f).clip(RoundedCornerShape(8.dp))
+            .background(Brush.linearGradient(listOf(tint, lerp(tint, GDeepest, .55f))))
+            .clickable(onClick = onClick),
+    ) {
+        Box(
+            Modifier.align(Alignment.BottomEnd).offset(x = 6.dp, y = 10.dp).fillMaxWidth(.58f).aspectRatio(1f)
+                .rotate(12f).shadow(6.dp, RoundedCornerShape(4.dp)).background(lerp(tint, Color.Black, .3f)),
+        ) {
+            art?.let { Image(it.image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
+                ?: Icon(GlowIcons.Music, null, tint = Color.White.copy(alpha = .35f), modifier = Modifier.align(Alignment.Center).fillMaxWidth(.3f))
+        }
+        val shadow = Shadow(Color.Black.copy(alpha = .5f), blurRadius = 6f) // legible where the cover reaches up
+        Column(Modifier.padding(10.dp)) {
+            Text(title, style = display(17).copy(color = if (accent) GHi else Color.White, shadow = shadow), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = TextStyle(fontSize = 11.sp, color = Color.White.copy(alpha = .78f), shadow = shadow), modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

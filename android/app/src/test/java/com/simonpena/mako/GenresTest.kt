@@ -90,4 +90,32 @@ class GenresTest {
         assertFalse(opensAlbums(shelf("Rock")))
         assertTrue(opensAlbums(shelf("Celtic"))) // a genre always does
     }
+
+    // Tiles: each shows one cover from its genre, a different one on each visit to the tab.
+    private val three = GenreShelf("Celtic", genres(albums(3 to "Celtic")))
+
+    @Test fun `each visit to the tab starts one album further on, through all of them`() {
+        val firsts = (0 until 3).map { coverCandidates(three, it).first().id }
+        assertEquals(3, firsts.toSet().size)
+        assertEquals(coverCandidates(three, 0).first(), coverCandidates(three, 3).first()) // and round again
+    }
+
+    @Test fun `the candidates are every album once, so a tile finds artwork if any album has it`() {
+        assertEquals(three.albums.map { it.id }.sorted(), coverCandidates(three, 7).map { it.id }.sorted())
+    }
+
+    @Test fun `the same visit gives the same cover, so going in and out doesn't reshuffle`() {
+        assertEquals(coverCandidates(shelf("Rock"), 5), coverCandidates(shelf("Rock"), 5))
+    }
+
+    @Test fun `a genre with no albums has no cover to try`() {
+        assertTrue(coverCandidates(GenreShelf("Empty", emptyList()), 1).isEmpty())
+    }
+
+    @Test fun `a tile shows the first candidate not known to lack artwork, even if another is already loaded`() {
+        val (a, b, c) = coverCandidates(three, 0)
+        assertEquals(a, coverToShow(listOf(a, b, c)) { false })
+        assertEquals(b, coverToShow(listOf(a, b, c)) { it == a.id }) // a has no artwork
+        assertEquals(null, coverToShow(listOf(a, b, c)) { true })
+    }
 }

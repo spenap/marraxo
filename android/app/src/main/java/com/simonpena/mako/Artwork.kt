@@ -39,6 +39,9 @@ class Art(val image: ImageBitmap, val tint: Color)
 
 private val cache = LruCache<String, Art>(48)
 
+/** Albums without artwork, so genre tiles looking for a cover don't ask again on every visit. */
+private val noArt: MutableSet<Long> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
 /**
  * At most two artwork decodes at a time. Dispatchers.IO alone allows 64, and
  * on the Nexus 4's four cores they starve the UI thread while scrolling.
@@ -75,8 +78,10 @@ private fun decodeSampled(context: Context, uri: Uri, px: Int): Bitmap? {
     return context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
 }
 
-suspend fun loadArt(context: Context, albumId: Long, px: Int): Art? = withContext(artDispatcher) {
-    val key = "$albumId@$px"
+/** [tint]: pick the Glow colour too; small images skip it unless they're shown on it (genre tiles). */
+suspend fun loadArt(context: Context, albumId: Long, px: Int, tint: Boolean = px >= TINT_MIN_PX): Art? = withContext(artDispatcher) {
+    val key = artKey(albumId, px, tint)
+    if (albumId in noArt) return@withContext null
     cache.get(key) ?: runCatching {
         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             context.contentResolver.loadThumbnail(
@@ -85,15 +90,23 @@ suspend fun loadArt(context: Context, albumId: Long, px: Int): Art? = withContex
             )
         } else {
             decodeSampled(context, albumArtUri(albumId), px)
-        } ?: return@runCatching null
+        } ?: run { noArt += albumId; return@runCatching null }
         val fallback = placeholderTint(albumId).toArgb()
-        val tint = if (px < TINT_MIN_PX) fallback else {
+        val color = if (!tint) fallback else {
             val palette = Palette.from(bitmap).maximumColorCount(16).generate()
             palette.getDarkVibrantColor(palette.getDarkMutedColor(palette.getDominantColor(fallback)))
         }
-        Art(bitmap.asImageBitmap(), Color(tint))
+        Art(bitmap.asImageBitmap(), Color(color))
     }.getOrNull()?.also { cache.put(key, it) }
 }
+
+private fun artKey(albumId: Long, px: Int, tint: Boolean) = "$albumId@$px" + if (tint && px < TINT_MIN_PX) "t" else ""
+
+/** True once loading this album's artwork has found none. */
+fun knownWithoutArt(albumId: Long) = albumId in noArt
+
+/** Artwork already decoded, for a first frame without a flash of the placeholder. */
+fun cachedArt(albumId: Long, px: Int, tint: Boolean): Art? = cache.get(artKey(albumId, px, tint))
 
 /** Cover as JPEG bytes, for renderers that show artwork (the TV). Blocking. */
 fun coverJpeg(context: Context, albumId: Long, px: Int = 500): ByteArray? = runCatching {
@@ -110,7 +123,7 @@ fun coverJpeg(context: Context, albumId: Long, px: Int = 500): ByteArray? = runC
 @Composable
 fun rememberArt(albumId: Long, px: Int): Art? {
     val context = LocalContext.current
-    val art by produceState(cache.get("$albumId@$px"), albumId, px) {
+    val art by produceState(cache.get(artKey(albumId, px, px >= TINT_MIN_PX)), albumId, px) {
         value = loadArt(context, albumId, px)
     }
     return art
