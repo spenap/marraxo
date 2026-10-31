@@ -288,10 +288,17 @@ desconocido", `Compilations` and `Varios Artistas`.
 Done with beets (`tools/beets/`), copying into
 `~/Music-clean`. Automatic pass first; skipped albums are
 reviewed interactively.
-- [ ] Genre synonyms the app can't see: a short mapping, proposed by the
-      tool and approved one by one (Celta → Celtic, Britpop → Pop?), applied
-      to the clean copy with a change manifest. The app's genre families
-      then pick them up.
+- [x] Genre synonyms the app can't see (2026-10-31): 25 albums (406
+      songs) retagged, each approved one by one, by `tools/beets/genres.py`
+      from `genres.tsv` (manifest in `out/genre-changes-*.tsv`). Decided:
+      keep genres the online databases use and don't retag to get a
+      grouping (Britpop stays Britpop); grouping is the app's job. For a
+      borderline genre (fewer than 3 albums, or a synonym), take
+      MusicBrainz's most voted genre when it leads with real votes,
+      otherwise Discogs (curated; its style before its genre). MusicBrainz
+      votes are thin (Californication: 20; Maná: 4), and its list lacks
+      genres the library uses (Soundtrack, Indie, Pop español). The
+      fetched release groups already link to Discogs and Wikidata.
 - [x] Read-only inventory report (`tools/inventory/`).
 - [x] Automatic pass over the whole collection (2026-10-30): 290 albums
   (4,000 tracks) imported, 168 skipped. 135 of the skipped have clean tags
@@ -302,7 +309,10 @@ reviewed interactively.
 - [x] Spot-check pass-2 matches near 88%, and the 2 duplicate releases
   (no wrong matches; duplicate copies removed after fingerprint checks).
 - [ ] Interactive review: 24 of 103 done, plus Totem, Dylan disc 1 and three
-  as-is imports; 79 left in `out/review-remaining.txt` (`./review`).
+  as-is imports, and 9 accepted by triage (`out/triage-79.md`); 70 left
+  in `out/review-remaining-70.txt` (`./review`). Among them are the only
+  electronic albums (Moby's Play, the SFUR house compilation); check
+  their genres against Discogs once imported.
 - [x] Rerun the inventory on `Music-clean` and compare: of the imported
   albums, 1 lacks artwork (was 144 of 472 overall); no tracks lack year or
   track number; no artist spelling variants.
@@ -445,6 +455,14 @@ New ideas wait here until there is evidence (Track U) or a clear need;
 then they move into a track with a "done when".
 
 Parked:
+- Genre families from data instead of shared words. MusicBrainz has
+  "subgenre of" links (britpop → alternative rock, not pop), shown on
+  its genre pages but not returned by its web service (`inc=genre-rels`
+  is ignored); the database dump has them. Discogs has two levels, 15
+  genres over ~500 styles, but no style → genre list; the pairing is
+  only per release. beets' lastgenre plugin ships a tree from
+  Wikipedia (`genres-tree.yaml`). Need: the word families getting a
+  grouping wrong.
 - Full SystemUI theme for the Nexus 4 (overlay APK), only if the A6
   basics aren't enough.
 - Glow boot animation; dock-mode clock.
