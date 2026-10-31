@@ -3,11 +3,14 @@ package com.simonpena.mako
 import android.content.Context
 import android.net.Uri
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -82,6 +85,15 @@ class GenresUiTest {
         compose.onNodeWithText("Other").performClick() // 3 albums: straight to them
         compose.onNodeWithText("Album 18").assertExists()
         compose.onNodeWithText("Album 20").assertExists()
+    }
+
+    @Test fun aGenreOpensAtItsFirstAlbumWhereverTheAlbumsTabWasScrolled() {
+        compose.onNodeWithText("Albums").performClick()
+        compose.onNode(hasScrollToIndexAction()).performScrollToIndex(19) // the last album
+        compose.onNodeWithText("Genres").performClick()
+        compose.onNodeWithText("2 genres").performClick() // Rock: 14 albums, more than a screen
+        compose.onNodeWithText("All albums").performClick()
+        compose.onNodeWithText("Album 1").assertIsDisplayed() // its first, not its last
     }
 
     @Test fun aSmallFamilyOpensStraightToItsAlbums() {
