@@ -35,6 +35,12 @@ IPs come from DHCP and may change; always find devices by discovery.
 - `ZoneGroupTopology#GetZoneGroupState` works (read-only SOAP POST to
   `/ZoneGroupTopology/Control`) and returns groups and coordinators.
 - Playback commands go to the **group coordinator**, not to every speaker.
+- `ConnectionManager#GetProtocolInfo` (Estudio, 2026-11-01; read-only, at
+  `/MediaRenderer/ConnectionManager/Control`) lists these audio sinks:
+  `audio/mpeg` (also `mp3`, `mpeg3`), `audio/mp4`, `audio/x-m4a`,
+  `audio/flac`, `audio/ogg`, `audio/wav`, `audio/aiff`, `audio/wma`, and
+  playlists (`audio/mpegurl`). No Opus or Musepack. Sonos documents
+  `audio/ogg` as Ogg Vorbis.
 
 ## Samsung The Frame TV (2026-10-29)
 

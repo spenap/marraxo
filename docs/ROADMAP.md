@@ -320,6 +320,15 @@ reviewed interactively.
   in `out/review-remaining-70.txt` (`./review`). Among them are the only
   electronic albums (Moby's Play, the SFUR house compilation); check
   their genres against Discogs once imported.
+- [x] Musepack (2026-11-01): No. 2 Patrick Street, the only `.mpc` album,
+  converted from the originals to AAC 256 kbps `.m4a` and re-imported
+  (manifest `out/format-changes-*.tsv`). This also restored track 4,
+  "Tom Joad": its malformed APEv2 tag (an item with an empty key) made
+  beets skip it as unreadable; the audio was fine. It was the only
+  unreadable file in any import log. Format rule for the clean copy: MP3,
+  AAC, Ogg Vorbis or FLAC, the formats both phones, the Sonos speakers
+  and the TV all play (`docs/upnp-renderers.md`); not Opus (neither
+  renderer lists it) nor Musepack. Lossless sources stay FLAC.
 - [x] Rerun the inventory on `Music-clean` and compare: of the imported
   albums, 1 lacks artwork (was 144 of 472 overall); no tracks lack year or
   track number; no artist spelling variants.
@@ -475,7 +484,6 @@ Parked:
 - Glow boot animation; dock-mode clock.
 - Year in review story cards (A4) before a year of history exists.
 - Merging favourites and play history across both phones.
-- Musepack (.mpc) conversion for the 10 tracks Android can't play.
 - Chromecast as an output, from the app (not the system Cast tile). The
   Cast SDK needs Google Play Services (ruled out), but Cast v2 is open
   enough: mDNS discovery (`_googlecast._tcp`, NsdManager), TLS on port
