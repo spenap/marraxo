@@ -61,6 +61,11 @@ Done in a separate repository.
       than three screens long gets one. Letters come from the sort key, so
       "The Corrs" is C and accented names sort and letter with their base
       letter (the sort now folds accents too).
+- [ ] Scrubber polish, after a few days of use: hidden while idle and
+      fading in on scroll; the letter or year in a bubble beside the thumb
+      (as Google Photos does) instead of at the top; a light haptic tick
+      at each letter or decade. Today's always-on grey letters are the
+      2010 `fastScroll` look.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
 - [ ] Radio v0: long-press a track → Start radio. Biases on tags and
@@ -105,6 +110,12 @@ values, so the phone can be put back as it was.
       Android 8–9 shrinks session artwork to 320 dp (640 px here) and
       stretches it full screen. Only as the home screen, only below
       Android 10.
+- [ ] **Navigation bar hidden in Mako** (next): immersive mode, in-app
+      and without root; a swipe up from the bottom edge shows the bar for
+      a few seconds. Home already lands in Mako and Back is Mako's own;
+      Recents can't be intercepted by apps, so it stays one swipe away.
+      Not lock task (kiosk): it would also block the notification shade
+      and the way out to Settings. Frees 48 dp.
 - [ ] **No lock screen:** screen lock set to None, so waking the phone
       lands in the player.
 - [ ] **Waking without the power button** (worn: it works only when
@@ -124,9 +135,8 @@ values, so the phone can be put back as it was.
       without the system panel and show the Glow overlay from the
       prototype; on a speaker they set the speaker's volume, paused or not.
 - [ ] **System look:** dark style plus the closest accent overlay (cyan),
-      a Glow wallpaper, a Glow boot animation (`/system/media`, root), and
-      the navigation bar hidden in Mako (immersive; swipe to reveal). The
-      status bar stays (battery, Wi-Fi, time).
+      a Glow wallpaper and a Glow boot animation (`/system/media`, root).
+      The status bar stays (battery, Wi-Fi, time).
       A full SystemUI theme (overlay APK) only if these aren't enough.
 - [ ] `android/scripts/appliance.sh [--undo]`: applies all of the above
       over ADB and saves the previous values for `--undo`. Done so far:
@@ -346,9 +356,9 @@ Parked:
 - Musepack (.mpc) conversion for the 10 tracks Android can't play.
 - Gesture navigation on the Nexus 4. Android 8.1 has no system gestures
   (they arrived in 9 and 10), so it would be in-app: swipe from the edge
-  to go back, swipe down to close Now Playing, and in home-screen mode
-  hide the navigation bar (immersive). Frees 48 dp of screen. Evidence
-  to look for: how often the back button is used (Track U).
+  to go back and swipe down to close Now Playing, once the navigation
+  bar is hidden (A6). Evidence to look for: how often people reveal the
+  bar just to press Back (Track U).
 
 Not doing (and why):
 - Audiobooks, or splitting the app into reusable modules for them:
