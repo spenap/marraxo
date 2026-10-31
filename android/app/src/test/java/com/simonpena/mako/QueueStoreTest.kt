@@ -1,5 +1,6 @@
 package com.simonpena.mako
 
+import androidx.media3.common.Player
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -34,6 +35,23 @@ class QueueStoreTest {
         assertEquals("Riots", item.mediaMetadata.title)
         assertEquals(121_556L, item.mediaMetadata.durationMs)
         assertEquals(5L, item.mediaMetadata.extras?.getLong(EXTRA_ALBUM_ID)) // for the cover on the TV
+    }
+
+    @Test fun `repeat and shuffle come back too, saved as soon as they change`() {
+        val before = FakePlayer()
+        before.setMediaItems(tracks.map { it.toMediaItem() }, 0, 0)
+        idle()
+        QueueStore(context).follow(before)
+        before.repeatMode = Player.REPEAT_MODE_ALL
+        before.shuffleModeEnabled = true
+        idle() // no explicit save: changing them is enough
+
+        val after = FakePlayer()
+        QueueStore(context).restore(after)
+        idle()
+
+        assertEquals(Player.REPEAT_MODE_ALL, after.repeatMode)
+        assertEquals(true, after.shuffleModeEnabled)
     }
 
     @Test fun `nothing saved leaves the player empty`() {

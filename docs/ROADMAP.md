@@ -33,7 +33,8 @@ Done in a separate repository.
 
 ### A2. Minimal music player (brief Milestone 1)
 - [x] MediaStore library scan, basic metadata, play/pause/next/prev/seek.
-- [x] Playback state survives app restart.
+- [x] Playback state survives app restart (queue, position, repeat and
+      shuffle since 2026-10-31).
 - [x] Library limited to the shared `Music/` folder.
 - [x] "Hide from library" on albums and tracks, stored in the app
       database and reversible. (Long-press; ⋮ → Hidden to show again.) Done when a hidden album stays hidden after

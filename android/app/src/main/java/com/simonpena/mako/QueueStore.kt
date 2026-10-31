@@ -12,8 +12,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Keeps the queue, the current track and its position across restarts of
- * the app or the phone. Saved when playback changes and every 15 s while
+ * Keeps the queue, the current track and its position, and the repeat and
+ * shuffle modes, across restarts of the app or the phone. Saved when playback changes and every 15 s while
  * playing; restored paused, on this phone, never on a speaker.
  */
 class QueueStore(context: Context) : Player.Listener {
@@ -39,6 +39,7 @@ class QueueStore(context: Context) : Player.Listener {
         if (events.containsAny(
                 Player.EVENT_TIMELINE_CHANGED, Player.EVENT_MEDIA_ITEM_TRANSITION,
                 Player.EVENT_IS_PLAYING_CHANGED, Player.EVENT_POSITION_DISCONTINUITY,
+                Player.EVENT_REPEAT_MODE_CHANGED, Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED,
             )
         ) save()
         handler.removeCallbacks(periodic)
@@ -53,6 +54,8 @@ class QueueStore(context: Context) : Player.Listener {
             .putString("items", items.toString())
             .putInt("index", p.currentMediaItemIndex)
             .putLong("position", p.currentPosition)
+            .putInt("repeat", p.repeatMode)
+            .putBoolean("shuffle", p.shuffleModeEnabled)
             .apply()
     }
 
@@ -65,6 +68,8 @@ class QueueStore(context: Context) : Player.Listener {
         if (items.isEmpty()) return
         val index = prefs.getInt("index", 0).coerceIn(0, items.size - 1)
         player.setMediaItems(items, index, prefs.getLong("position", 0))
+        player.repeatMode = prefs.getInt("repeat", Player.REPEAT_MODE_OFF)
+        player.shuffleModeEnabled = prefs.getBoolean("shuffle", false)
         player.prepare()
     }
 
