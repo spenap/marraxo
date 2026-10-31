@@ -1041,7 +1041,7 @@ private fun QueueScreen(player: PlayerHolder, onBack: () -> Unit) {
                             style = body.copy(color = if (on) GHi else if (played) GSoft else Color.White, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal),
                         )
                         Text(m.artist?.toString().orEmpty(), style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        m.extras?.getString(EXTRA_REASON)?.let { Text(it, style = TextStyle(fontSize = 12.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                        m.extras?.getString(EXTRA_REASON)?.takeIf { SHOW_RADIO_REASONS }?.let { Text(it, style = TextStyle(fontSize = 12.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     }
                 }
             }
@@ -1053,6 +1053,13 @@ private fun QueueScreen(player: PlayerHolder, onBack: () -> Unit) {
 private class Undo(val message: Int, val undo: () -> Unit)
 
 private const val UNDO_MS = 5_000L
+
+/**
+ * Why the radio picked each song ("The Town House on both"): for tuning
+ * the radio, not for listening (Amarok didn't show it either). Debug builds
+ * only; the log has it always (RadioQueue).
+ */
+private val SHOW_RADIO_REASONS = BuildConfig.DEBUG
 
 @Composable
 private fun UndoBar(message: String, bottom: Dp, onUndo: () -> Unit) {
@@ -1304,7 +1311,7 @@ internal fun NowPlaying(
                     track.artist, style = TextStyle(fontSize = 16.sp, color = GSoft),
                     modifier = Modifier.padding(top = 4.dp).then(if (onArtist != null) Modifier.clickable(onClick = onArtist) else Modifier),
                 )
-                player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_REASON)?.let {
+                player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_REASON)?.takeIf { SHOW_RADIO_REASONS }?.let {
                     Text(it, style = TextStyle(fontSize = 13.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
                 }
             }

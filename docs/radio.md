@@ -93,7 +93,10 @@ it again at every step, from what's playing.
    together), *Same era*, *Same people* (liner notes; offered only when
    the notes are on the phone) and *Anything goes* (spread, barely
    biased).
-3. **Test plays stay in history as they are.** History isn't a bias in
+3. **Reasons are for development** (2026-10-31, after using it): shown in
+   debug builds only, in Now Playing and Up next; the log keeps them.
+   Amarok didn't show them either.
+4. **Test plays stay in history as they are.** History isn't a bias in
    v0, so they don't matter yet; revisit when "not heard lately" is added.
 
 ## Simulation baseline
