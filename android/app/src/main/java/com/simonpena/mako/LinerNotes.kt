@@ -48,6 +48,29 @@ class LinerNotes private constructor(private val db: SQLiteDatabase) : Closeable
             roles.values.map { (a, set) -> a.copy(roles = set.joinToString(", ")) }.sortedWith(compareBy({ it.year }, { it.title }))
         }
 
+    /**
+     * Each album's people and studios, by the library's album id, for the
+     * radio: those in a role the screen shows, without MusicBrainz's
+     * placeholders ("[traditional]", "[unknown]"), which link unrelated albums.
+     */
+    fun links(library: List<Album>): Map<Long, Set<String>> {
+        val notesAlbum = db.rawQuery("SELECT path, album_id FROM track", null).use { c ->
+            HashMap<String, Long>().apply { while (c.moveToNext()) put(c.getString(0), c.getLong(1)) }
+        }
+        val names = db.rawQuery("SELECT album_id, role, name FROM credit", null).use { c ->
+            HashMap<Long, MutableSet<String>>().apply {
+                while (c.moveToNext()) {
+                    val name = c.getString(2)
+                    if (c.getString(1) in ROLES && !name.startsWith("[")) getOrPut(c.getLong(0)) { HashSet() } += name
+                }
+            }
+        }
+        return library.mapNotNull { album ->
+            val id = album.tracks.firstNotNullOfOrNull { notesAlbum[it.path] } ?: return@mapNotNull null
+            names[id]?.let { album.id to it }
+        }.toMap()
+    }
+
     private fun albumById(id: Long): AlbumNotes? =
         db.rawQuery(
             "SELECT id, artist, title, year, label, catno, country, summary, summary_lang, wikipedia_url FROM album WHERE id = ?",

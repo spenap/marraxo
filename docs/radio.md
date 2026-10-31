@@ -96,6 +96,22 @@ it again at every step, from what's playing.
 3. **Test plays stay in history as they are.** History isn't a bias in
    v0, so they don't matter yet; revisit when "not heard lately" is added.
 
+## Simulation baseline
+
+`RadioSimulationTest` (JVM, skipped without `tools/inventory/out-clean`
+and `tools/linernotes/out`): the clean collection, 290 albums, 4,000
+songs, 233 albums with notes; 20 seeds × 100 songs per mode.
+
+| Mode | Wider | Artist within 5 | Album within 3 | ms/pick (laptop) | Albums per 100 | Shares | Genre | Decade |
+|---|---|---|---|---|---|---|---|---|
+| Similar | 0% | 0 | 0 | 1.2 | 41 | 9% | 75% | 17% |
+| Era | 0% | 0 | 0 | 1.0 | 60 | 0% | 0% | 100% |
+| People | 1.7% | 0 | 0 | 1.3 | 37 | 80% | 16% | 3% |
+| Anything | 11.5% | 0 | 0 | 1.1 | 87 | 1% | 13% | 75% |
+
+Gate: no repeats; Similar and Era widen under 5%; People explains over
+60% of picks by the liner notes.
+
 Sources: [Amarok manual: dynamic playlists](https://docs.kde.org/trunk_kf6/en/amarok/amarok/dynamic-playlists.html);
 [Navidrome smart playlists](https://navidrome.org/docs/usage/features/smart-playlists/);
 [Plex: sonic analysis](https://support.plex.tv/articles/sonic-analysis-music/),

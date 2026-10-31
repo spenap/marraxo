@@ -50,6 +50,7 @@ class LinerNotesTest {
                 "260, NULL, 'mixed at', 'The Town House', ''",
                 "342, NULL, 'producer', 'Hugh Padgham', ''",
                 "342, NULL, 'engineer', 'Hugh Padgham', ''",
+                "314, '$partings', 'composer', '[traditional]', ''",
             ).forEach { db.execSQL("INSERT INTO credit VALUES ($it)") }
         }
     }
@@ -93,6 +94,19 @@ class LinerNotesTest {
             n.albumsWith("The Town House", except = 258),
         )
         assertEquals(listOf("Greatest Hits"), n.albumsWith("Hugh Padgham", except = 258).map { it.title })
+    }
+
+    @Test fun `each album's people and studios, for the radio, without MusicBrainz's placeholders`() {
+        val faceValue = Album(7, "Face Value", "Phil Collins", 1981, listOf(track(1, "In the Air Tonight").copy(path = faceValue)))
+        val partings = Album(8, "So Many Partings", "Silly Wizard", 1979, listOf(track(2, "The Valley").copy(path = partings)))
+        val unknown = Album(9, "Demo", "Nobody", 2000, listOf(track(3, "Song").copy(path = "Nobody/Demo/01 Song.mp3")))
+        assertEquals(
+            mapOf(
+                7L to setOf("Phil Collins", "Daryl Stuermer", "Hugh Padgham", "The Town House"), // not the photographer
+                8L to setOf("R.E.L. Studios"), // not "[traditional]"
+            ),
+            LinerNotes.open(notes())!!.links(listOf(faceValue, partings, unknown)),
+        )
     }
 
     @Test fun `a track the notes don't know has none`() {
