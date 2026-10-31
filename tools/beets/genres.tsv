@@ -1,0 +1,37 @@
+# Genre changes approved one by one (2026-10-31), applied by genres.py.
+# Rule: keep a genre the online databases use; for a borderline one, take
+# MusicBrainz's most voted genre when it leads with real votes, otherwise
+# Discogs (its style before its genre). Unchanged: Britpop (MusicBrainz's
+# own name), and how genres group into families is left to the app.
+albumartist	album	from	to
+# Discogs style Celtic; MusicBrainz celtic
+Milladoiro	Galicia no país das maravillas	Celta	Celtic
+# MusicBrainz top on 7 of 8; Discogs style on all 8
+Red Hot Chili Peppers	Blood Sugar Sex Magik	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	By the Way	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	Californication	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	Freaky Styley	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	Mother’s Milk	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	one hot minute	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	The Red Hot Chili Peppers	Funky Rock	Alternative Rock
+Red Hot Chili Peppers	The Uplift Mofo Party Plan	Funky Rock	Alternative Rock
+# MusicBrainz top (rock 11); Discogs genre Rock; 70'S is a decade
+Supertramp	Breakfast in America	Rock/Classic Rock/70'S	Rock
+# MusicBrainz votes too few (1–4); Discogs genres Rock, Latin; Wikidata rock
+Maná	Amar Es Combatir	Rock en Español	Rock/Latin
+Kiko Veneno	Échate un cantecito	Rock Español	Rock/Latin
+# Discogs genre or style, where it disagreed with the tag
+ABBA	The Definitive Collection	Oldies	Pop
+AC/DC	High Voltage	Classic Rock	Hard Rock
+Within Temptation	Enter	Gothic Rock	Symphonic Metal
+Within Temptation	The Silent Force	Gothic Rock	Symphonic Metal
+Blackmore’s Night	Shadow of the Moon	Medieval	Folk Rock
+Brandi Carlile	The Story	Country	Folk Rock
+Pereza	Los amigos de los animales	Indie Rock	Pop Rock
+Various Artists	The Best Blue Note Album in the World... Ever!	Blues	Jazz
+Coro del Ejército Rojo	The Best of the Red Army Choir: The Definitive Collection	Choirs	Folk/Military
+# Not on Discogs; decided by hand
+Beny Moré	Grandes Exitos	Tropical	Son Cubano
+Gomaespuma	20 años Gomaespuma	Radio	Comedy
+Oasis	MTV Live & Unplugged	Acoustic	Britpop
+An Danzza	An Danzza Demo	Medieval	Celtic

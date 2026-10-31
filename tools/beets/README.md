@@ -17,5 +17,7 @@ tools/beets/beet import /path/to/album              # interactive review
   (library database, import log), which is git-ignored.
 - The automatic pass (`-q`) accepts matches of about 92% or better and
   skips the rest; skipped albums are listed in `out/import.log`.
+- `genres.py` applies the approved genre changes in `genres.tsv` (dry run
+  unless `--apply`), writing a change manifest to `out/` first.
 - `audioread` must not be installed: it needs `audioop`, which Python 3.13
   removed, so fingerprinting fails. Without it, pyacoustid uses `fpcalc`.
