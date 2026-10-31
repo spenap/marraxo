@@ -131,6 +131,24 @@ class LinerNotesTest {
         assertEquals(null, linked.getValue("Hugh Padgham")[0].path) // no tracks of it in the notes: not openable
     }
 
+    @Test fun `players are led by the artist, a string section folds away, linked players stay in view`() {
+        val played = listOf(
+            Person("Clive Anstee", "cello"), Person("Irvine Arditti", "violin"), Person("Bruce Dukov", "violin"),
+            Person("Roger Best", "viola"), Person("Chris Lawrence", "double bass"),
+            Person("Phil Collins", "drums, vocals"), Person("Daryl Stuermer", "guitar"),
+        )
+        val p = arrangePlayers(played, artist = "Phil Collins", keep = setOf("Bruce Dukov"))
+        assertEquals(listOf("Phil Collins", "Daryl Stuermer", "Bruce Dukov"), p.lead.map { it.name })
+        assertEquals(listOf("Clive Anstee", "Irvine Arditti", "Roger Best", "Chris Lawrence"), p.strings.map { it.name })
+    }
+
+    @Test fun `a small string section isn't worth folding`() {
+        val played = listOf(Person("Sharokav", "violin"), Person("Phil Collins", "drums"))
+        val p = arrangePlayers(played, artist = "Phil Collins", keep = emptySet())
+        assertEquals(listOf("Phil Collins", "Sharokav"), p.lead.map { it.name })
+        assertEquals(emptyList<Person>(), p.strings)
+    }
+
     @Test fun `a track the notes don't know has none`() {
         assertNull(LinerNotes.open(notes())!!.track("Someone/Unknown/01 Song.mp3"))
     }

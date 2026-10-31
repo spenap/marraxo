@@ -151,4 +151,8 @@
     <string name="album_options">Opciones del álbum</string>
     <string name="album_hidden">Álbum oculto</string>
     <string name="now_playing">Sonando ahora</string>
+    <plurals name="string_players">
+        <item quantity="one">%d músico de cuerda</item>
+        <item quantity="other">%d músicos de cuerda</item>
+    </plurals>
 </resources>

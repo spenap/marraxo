@@ -988,9 +988,17 @@ private fun NotesHeading(text: String) {
  * everyone else is plain text. The name is the link: no colour code, no
  * second list repeating them.
  */
-private fun LazyListScope.notesBody(sections: List<Pair<Section, List<Person>>>, linked: Map<String, List<NotesAlbum>>, onPerson: (String) -> Unit) {
-    sections.forEach { (section, people) ->
+private fun LazyListScope.notesBody(
+    sections: List<Pair<Section, List<Person>>>,
+    linked: Map<String, List<NotesAlbum>>,
+    artist: String,
+    onPerson: (String) -> Unit,
+) {
+    sections.forEach { (section, all) ->
         item(key = section.name) {
+            val players = if (section == Section.Played) arrangePlayers(all, artist, keep = linked.keys) else Players(all, emptyList())
+            var strings by rememberSaveable(section) { mutableStateOf(false) }
+            val people = if (strings) players.lead + players.strings else players.lead
             Column {
                 NotesHeading(stringResource(section.label))
                 people.forEach { p ->
@@ -1013,6 +1021,13 @@ private fun LazyListScope.notesBody(sections: List<Pair<Section, List<Person>>>,
                         }
                     }
                 }
+                if (players.strings.isNotEmpty() && !strings) {
+                    Text(
+                        pluralStringResource(R.plurals.string_players, players.strings.size, players.strings.size),
+                        style = body.copy(color = GSoft),
+                        modifier = Modifier.fillMaxWidth().clickable { strings = true }.padding(horizontal = 20.dp, vertical = 10.dp),
+                    )
+                }
             }
         }
     }
@@ -1031,7 +1046,7 @@ private fun SongNotesScreen(notes: LinerNotes, path: String, onPerson: (String) 
     Column(Modifier.fillMaxSize().background(GBg).statusBarsPadding()) {
         val (t, linked) = data ?: return@Column LevelHeader("", "", onBack)
         LevelHeader(t.title, listOfNotNull(t.album.artist, t.album.title, t.album.year.takeIf { it > 0 }?.toString()).joinToString(" · "), onBack)
-        LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) { notesBody(t.sections, linked, onPerson) }
+        LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) { notesBody(t.sections, linked, t.album.artist, onPerson) }
     }
 }
 
@@ -1056,7 +1071,7 @@ private fun AlbumNotesScreen(notes: LinerNotes, path: String, onPerson: (String)
                     }
                 }
             }
-            notesBody(sections, linked, onPerson)
+            notesBody(sections, linked, a.artist, onPerson)
         }
     }
 }

@@ -169,4 +169,9 @@
     <string name="album_hidden">Album hidden</string>
     <!-- Read by TalkBack for the icon beside the song that is playing -->
     <string name="now_playing">Now playing</string>
+    <!-- Liner notes: a folded string section; tap to list them -->
+    <plurals name="string_players">
+        <item quantity="one">%d string player</item>
+        <item quantity="other">%d string players</item>
+    </plurals>
 </resources>

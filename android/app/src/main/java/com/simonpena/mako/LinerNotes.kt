@@ -151,6 +151,27 @@ data class Person(val name: String, val roles: String)
 
 enum class Section { Written, Played, Produced, Recorded }
 
+/** "Played by", arranged for reading: [lead] shown, [strings] folded behind one row. */
+data class Players(val lead: List<Person>, val strings: List<Person>)
+
+/**
+ * The album's artist first, then the band, then string players, each in
+ * credit order; a string section (four or more players of only violin,
+ * viola, cello or double bass) folds away, except those in [keep] (on
+ * other albums of yours).
+ */
+fun arrangePlayers(people: List<Person>, artist: String, keep: Set<String>): Players {
+    val isStrings = { p: Person -> p.roles.split(", ").all { it in STRINGS } }
+    // The artist, the band, then string players: sortedBy is stable, so credit order holds within each.
+    val ordered = people.sortedBy { if (it.name == artist) 0 else if (!isStrings(it)) 1 else 2 }
+    val section = ordered.filter { isStrings(it) && it.name !in keep }
+    if (section.size < STRING_SECTION) return Players(ordered, emptyList())
+    return Players(ordered - section.toSet(), section)
+}
+
+private val STRINGS = setOf("violin", "viola", "cello", "double bass", "contrabass", "strings")
+private const val STRING_SECTION = 4
+
 private data class Credit(val role: String, val name: String, val detail: String)
 
 /** Each MusicBrainz role: its section, and how it reads next to a name. Unlisted roles aren't shown. */

@@ -57,6 +57,10 @@ class LinerNotesUiTest {
             db.execSQL("INSERT INTO track VALUES ('$sussudio', 260, 'Sussudio', 'r3')")
             listOf(
                 "258, '$faceValue', 'instrument', 'Daryl Stuermer', 'guitar'",
+                "258, '$faceValue', 'instrument', 'Violinist One', 'violin'",
+                "258, '$faceValue', 'instrument', 'Violinist Two', 'violin'",
+                "258, '$faceValue', 'instrument', 'Cellist One', 'cello'",
+                "258, '$faceValue', 'instrument', 'Violist One', 'viola'",
                 "258, '$faceValue', 'producer', 'Hugh Padgham', ''",
                 "258, NULL, 'recorded at', 'The Town House', ''",
                 "260, NULL, 'recorded at', 'The Town House', ''",
@@ -95,6 +99,16 @@ class LinerNotesUiTest {
         compose.onNodeWithText("But Seriously").assertHasNoClickAction()
         compose.onNodeWithText("No Jacket Required").performClick() // the place's albums, by year
         compose.onNodeWithText("Sussudio").assertExists() // the album in the library
+    }
+
+    @Test fun aStringSectionFoldsAwayAndOpensInPlace() {
+        compose.onNodeWithText("Face Value").performClick()
+        compose.onAllNodesWithContentDescription("Song options")[0].performClick()
+        compose.onNodeWithText("Song notes").performClick()
+        waitFor("Played by")
+        compose.onNodeWithText("Cellist One").assertDoesNotExist()
+        compose.onNodeWithText("4 string players").performClick()
+        compose.onNodeWithText("Cellist One").assertExists()
     }
 
     @Test fun anAlbumsNotesTellItsStory() {
