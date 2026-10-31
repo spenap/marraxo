@@ -58,5 +58,17 @@ current Android.
   the fake renderer), then the code. `./gradlew testDebugUnitTest` must
   pass before committing. A device check confirms; it doesn't replace a
   test. Levels and plans: ROADMAP.md, Track T.
+- No regressions get in (WebKit's rule). Before every commit:
+  1. `./gradlew testDebugUnitTest` passes.
+  2. A change to the UI: `./gradlew connectedDebugAndroidTest` passes on
+     the Nexus 4.
+  3. A change to what's on screen or how it scrolls: `scroll-bench.sh`
+     (with `TAB=` for the tab it touches) on the Nexus 4, release build,
+     stays under the limit or is no worse than the version before. Measure
+     that version too when it fails; never assume it was fine.
+  4. A change to playback on speakers or the TV: checked on real hardware
+     (`tools/upnp/probe.py`, or by hand, silently, volume restored).
+  A known failure that predates the change goes in ROADMAP.md with its
+  numbers; it isn't a reason to let a new one in.
 - Verify protocol and compatibility assumptions against real hardware
   (both phones, the Sonos speakers, the TV) and record findings in `docs/`.

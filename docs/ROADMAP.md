@@ -369,6 +369,8 @@ others run on demand.
       files in MediaStore).
 - [x] **T5. Performance gate**: `scroll-bench.sh` fails above 5% janky
       frames (`MAX_JANKY`) or under 100 frames drawn. Real phone only.
+      `TAB=Artists|Genres|Years` flings another tab. Part of the
+      no-regressions checklist in CLAUDE.md (2026-10-31).
 - [x] **T6. Hardware smoke tests**: `tools/upnp/probe.py` checks each step
       and ends with PASS/FAIL, against the real speakers and TV, run by
       hand. Passed 2026-10-30 on Estudio and on the TV (with `--next`).
