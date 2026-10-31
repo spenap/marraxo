@@ -102,17 +102,21 @@ Done in a separate repository.
       2010 `fastScroll` look.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
-- [ ] Radio v0: long-press a track → Start radio. Biases on tags and
-      history (decade, genre, artist, favourites, not recently played),
-      randomness, no artist repeat within 5 tracks, 3 tracks queued ahead.
-      See `discovery.md`. Researched 2026-10-31 (`radio.md`): one rule
-      engine for radios and smart playlists; liner notes (shared people
-      and studios) as a bias no other player has; radios widen themselves
-      instead of running dry in a 2,000-track library; a simulation on the
-      real library as a regression gate. History isn't usable yet: 169 of
-      the Nexus 4's 200 plays are the overnight battery test. Decided: a radio
-      replaces the queue; named modes (Similar, Same era, Same people,
-      Anything goes); history isn't a bias in v0.
+- [x] Radio v0 (2026-10-31): long-press a song → Start radio → Similar,
+      Same era, Same people (only with the liner notes on the phone) or
+      Anything goes. Replaces the queue; the seed plays at once, then the
+      service keeps 3 songs ahead (`RadioQueue`), on the phone or a
+      speaker; Now Playing shows "Radio · Same people" and why each song
+      came ("The Town House on both"). Engine: `Radio.kt`, research and
+      simulation baseline: `radio.md`. Nexus 4: ~60 ms a pick (off the
+      main thread), ~4 s to read the library and notes before the first
+      top-up. Checked on Estudio silently.
+- [ ] Radio, next: seeds from an album, artist, genre tile, and a person
+      or studio on the liner-notes screen; ready sooner than ~4 s (a skip
+      in the first seconds finds an empty queue); come back after a
+      restart (today the queue does, the radio doesn't); "not heard
+      lately" once history is real listening; a listener's verdict from
+      the beta.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.

@@ -7,6 +7,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -21,6 +23,11 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.simonpena.mako.upnp.MediaServer
 import com.simonpena.mako.upnp.Renderer
 import com.simonpena.mako.upnp.RendererPlayer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Owns the player. Runs independently of the UI, so closing screens, locking
@@ -35,6 +42,8 @@ class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
     private var recorder: PlayRecorder? = null
     private lateinit var queue: QueueStore
+    private lateinit var radio: RadioQueue
+    private val scope = MainScope()
     private lateinit var phone: ExoPlayer
     private var server: MediaServer? = null
 
@@ -53,6 +62,7 @@ class PlaybackService : MediaSessionService() {
             .build()
         recorder = PlayRecorder(PlayHistory(this), phone).also(phone::addListener)
         queue = QueueStore(this).also { it.restore(phone); it.follow(phone) }
+        radio = RadioQueue(scope) { reasonText(resources, it) }.also { it.follow(phone) }
         // Tapping the notification (or the lock-screen controls) opens the app.
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
@@ -67,6 +77,7 @@ class PlaybackService : MediaSessionService() {
                 ): MediaSession.ConnectionResult {
                     val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                         .add(SessionCommand(SET_OUTPUT, Bundle.EMPTY))
+                        .add(SessionCommand(START_RADIO, Bundle.EMPTY))
                         .build()
                     return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                         .setAvailableSessionCommands(commands)
@@ -79,10 +90,11 @@ class PlaybackService : MediaSessionService() {
                     customCommand: SessionCommand,
                     args: Bundle,
                 ): ListenableFuture<SessionResult> {
-                    if (customCommand.customAction != SET_OUTPUT) {
-                        return Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
+                    when (customCommand.customAction) {
+                        SET_OUTPUT -> setOutput(if (args.isEmpty) null else Renderer.fromBundle(args))
+                        START_RADIO -> startRadio(args.getLong(EXTRA_SEED), RadioMode.valueOf(args.getString(EXTRA_MODE) ?: return notSupported()))
+                        else -> return notSupported()
                     }
-                    setOutput(if (args.isEmpty) null else Renderer.fromBundle(args))
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
 
@@ -101,6 +113,31 @@ class PlaybackService : MediaSessionService() {
             })
             .build()
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
+    }
+
+    private fun notSupported() = Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
+
+    /**
+     * Continues the radio the UI started with [seedId] already playing:
+     * reads the library and liner notes away from the main thread, then
+     * keeps three songs ahead. If the library can't be read (no permission),
+     * the seed plays on its own.
+     */
+    private fun startRadio(seedId: Long, mode: RadioMode) {
+        val hidden = Hidden(this)
+        val start = SystemClock.elapsedRealtime()
+        scope.launch {
+            val library = runCatching { hidden.filter(loadLibrary(this@PlaybackService)) }
+                .onFailure { Log.w(TAG, "radio: can't read the library", it) }
+                .getOrNull() ?: return@launch
+            val links = withContext(Dispatchers.IO) {
+                LinerNotes.open(LinerNotes.file(this@PlaybackService))?.use { it.links(library) }.orEmpty()
+            }
+            val seed = library.firstNotNullOfOrNull { a -> a.tracks.find { it.id == seedId } } ?: return@launch
+            val built = Radio(library, mode, seed, links)
+            Log.i(TAG, "radio: $mode from ${seed.title}, ${links.size} albums with notes, ready in ${SystemClock.elapsedRealtime() - start} ms")
+            radio.start(built, seed)
+        }
     }
 
     /** Puts Now Playing over the lock screen while the screen is off, so it's there on wake. */
@@ -126,6 +163,7 @@ class PlaybackService : MediaSessionService() {
         }
         recorder?.attach(new, renderer?.name ?: "phone")
         queue.follow(new)
+        radio.follow(new)
         handOver(old, new)
         session.player = new
         if (old is RendererPlayer) old.release()
@@ -141,6 +179,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         unregisterReceiver(screenOff)
+        scope.cancel()
         queue.stop()
         recorder?.close()
         recorder = null
@@ -158,6 +197,10 @@ class PlaybackService : MediaSessionService() {
     companion object {
         const val SET_OUTPUT = "com.simonpena.mako.SET_OUTPUT"
         const val EXTRA_OUTPUT = "output"
+        private const val TAG = "PlaybackService"
+        const val START_RADIO = "com.simonpena.mako.START_RADIO"
+        const val EXTRA_SEED = "seed"
+        const val EXTRA_MODE = "mode"
     }
 }
 

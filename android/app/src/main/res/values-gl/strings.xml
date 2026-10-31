@@ -117,4 +117,13 @@
     <string name="outputs_looking">Buscando altofalantes e televisores…</string>
     <string name="outputs_none">Non hai altofalantes nin televisores nesta wifi</string>
     <string name="outputs_found">Atopados nesta wifi</string>
+    <string name="start_radio">Poñer unha radio</string>
+    <string name="radio_similar">Parecida</string>
+    <string name="radio_era">Mesma época</string>
+    <string name="radio_people">Mesma xente</string>
+    <string name="radio_anything">De todo un pouco</string>
+    <string name="radio_now">Radio · %s</string>
+    <string name="radio_shares">%s nos dous</string>
+    <string name="radio_artist">Máis de %s</string>
+    <string name="radio_wider">Máis alá</string>
 </resources>

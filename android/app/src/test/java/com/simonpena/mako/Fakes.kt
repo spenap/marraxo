@@ -67,6 +67,11 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
         return done
     }
 
+    override fun handleAddMediaItems(index: Int, mediaItems: MutableList<MediaItem>): ListenableFuture<*> {
+        items = items.take(index) + mediaItems + items.drop(index)
+        return done
+    }
+
     override fun handlePrepare(): ListenableFuture<*> { prepared = true; return done }
     override fun handleStop(): ListenableFuture<*> { prepared = false; return done }
     override fun handleRelease(): ListenableFuture<*> = done

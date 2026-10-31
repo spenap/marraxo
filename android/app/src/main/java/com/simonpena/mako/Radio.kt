@@ -1,5 +1,6 @@
 package com.simonpena.mako
 
+import android.content.res.Resources
 import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -8,11 +9,11 @@ import kotlin.random.Random
  * How a radio chooses (docs/radio.md): what counts as close, and how far
  * below the closest a song may score and still be picked ([band]).
  */
-enum class RadioMode(val genre: Double, val decade: Double, val people: Double, val artist: Double, val band: Double) {
-    Similar(genre = 3.0, decade = 2.0, people = 3.0, artist = 0.5, band = 0.6),
-    Era(genre = 1.0, decade = 4.0, people = 0.5, artist = 0.3, band = 0.75),
-    People(genre = 1.0, decade = 0.5, people = 5.0, artist = 1.5, band = 0.5),
-    Anything(genre = 0.3, decade = 0.3, people = 0.3, artist = 0.0, band = 0.0),
+enum class RadioMode(val label: Int, val genre: Double, val decade: Double, val people: Double, val artist: Double, val band: Double) {
+    Similar(R.string.radio_similar, genre = 3.0, decade = 2.0, people = 3.0, artist = 0.5, band = 0.6),
+    Era(R.string.radio_era, genre = 1.0, decade = 4.0, people = 0.5, artist = 0.3, band = 0.75),
+    People(R.string.radio_people, genre = 1.0, decade = 0.5, people = 5.0, artist = 1.5, band = 0.5),
+    Anything(R.string.radio_anything, genre = 0.3, decade = 0.3, people = 0.3, artist = 0.0, band = 0.0),
 }
 
 /** Why a song was picked, for Now Playing. */
@@ -27,6 +28,15 @@ sealed interface Reason {
 }
 
 data class Pick(val track: Track, val reason: Reason)
+
+/** A [Reason] as Now Playing shows it: "Hugh Padgham on both", "1980s". */
+fun reasonText(res: Resources, reason: Reason): String = when (reason) {
+    is Reason.Shares -> res.getString(R.string.radio_shares, reason.name)
+    is Reason.Genre -> reason.name
+    is Reason.Decade -> yearLabel(res, reason.decade, coarse = true)
+    is Reason.Artist -> res.getString(R.string.radio_artist, reason.name)
+    Reason.Wider -> res.getString(R.string.radio_wider)
+}
 
 /**
  * A radio from [seed]: each song is scored against the seed, and at half

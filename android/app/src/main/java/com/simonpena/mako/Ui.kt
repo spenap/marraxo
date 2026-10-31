@@ -179,6 +179,8 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val libraryState = remember { LibraryState() }
     val context = LocalContext.current
     val look = remember { Look(context) }
+    // "Same people" needs the liner notes on the phone.
+    val radioModes = remember { RadioMode.entries.filter { it != RadioMode.People || LinerNotes.file(context).exists() } }
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
@@ -201,6 +203,8 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onBack = { stack.removeAt(stack.lastIndex) },
                 onPlay = { player.play(album.tracks, it) },
                 onHide = hidden::hide,
+                radioModes = radioModes,
+                onRadio = { track, mode -> player.startRadio(track, mode, context.getString(mode.label)) },
             )
         }
         Screen.NowPlaying ->
@@ -790,6 +794,8 @@ private fun AlbumScreen(
     onBack: () -> Unit,
     onPlay: (Int) -> Unit,
     onHide: (Track) -> Unit,
+    radioModes: List<RadioMode>,
+    onRadio: (Track, RadioMode) -> Unit,
 ) {
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
@@ -824,14 +830,20 @@ private fun AlbumScreen(
             val color = if (on) GHi else Color.White
             val soft = if (on) GHi else GSoft
             var options by remember { mutableStateOf(false) }
+            var radio by remember { mutableStateOf(false) }
             Row(
-                Modifier.fillMaxWidth().combinedClickable(onLongClick = { options = true }) { onPlay(i) }
+                Modifier.fillMaxWidth().combinedClickable(onLongClick = { options = true; radio = false }) { onPlay(i) }
                     .padding(horizontal = 20.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.hide_song), style = body) }, onClick = { options = false; onHide(track) })
+                    if (!radio) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.start_radio), style = body) }, onClick = { radio = true })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.hide_song), style = body) }, onClick = { options = false; onHide(track) })
+                    } else radioModes.forEach { mode ->
+                        DropdownMenuItem(text = { Text(stringResource(mode.label), style = body) }, onClick = { options = false; onRadio(track, mode) })
+                    }
                 }
                 Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft), modifier = Modifier.width(28.dp))
                 Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -995,7 +1007,11 @@ internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClos
             Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconSpot(GlowIcons.Down, stringResource(R.string.close), onClick = onClose)
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.playing_from_album), style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft))
+                    val radio = player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
+                    Text(
+                        if (radio != null) stringResource(R.string.radio_now, radio) else stringResource(R.string.playing_from_album),
+                        style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft),
+                    )
                     Text(album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Spacer(Modifier.width(44.dp))
@@ -1004,6 +1020,9 @@ internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClos
             Column {
                 Text(track.title, style = display(26), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(track.artist, style = TextStyle(fontSize = 16.sp, color = GSoft), modifier = Modifier.padding(top = 4.dp))
+                player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_REASON)?.let {
+                    Text(it, style = TextStyle(fontSize = 13.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                }
             }
             Column {
                 SeekBar(pos, track.durationMs) { player.seekTo(it) }

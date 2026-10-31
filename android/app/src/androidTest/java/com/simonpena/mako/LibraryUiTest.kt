@@ -102,6 +102,18 @@ class LibraryUiTest {
         compose.onNodeWithText("Daily Growing").assertExists()
     }
 
+    @Test fun aSongStartsARadioAndNowPlayingSaysSo() {
+        // A song no other test looks for: the mini player outlives the test.
+        compose.onNodeWithText("Local Ground").performClick()
+        compose.onNodeWithText("Dúlamán").performTouchInput { longClick() }
+        compose.onNodeWithText("Start radio").performClick()
+        compose.onNodeWithText("Same era").performClick()
+        compose.waitUntil(5_000) { player.currentTrackId == 200L }
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("Dúlamán").performClick() // the mini player
+        compose.onNodeWithText("Radio · Same era").assertExists()
+    }
+
     @Test fun searchIgnoresAccentsAndPlaysTheSong() {
         compose.onNodeWithContentDescription("Search").performClick()
         compose.onNode(hasSetTextAction()).performTextInput("vamonos")

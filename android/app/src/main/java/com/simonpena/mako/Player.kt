@@ -81,6 +81,24 @@ class PlayerHolder(context: Context) {
         }
     }
 
+    /** Plays [seed] now and a radio from it after: the queue becomes the radio. */
+    fun startRadio(seed: Track, mode: RadioMode, label: String) {
+        controller?.run {
+            shuffleModeEnabled = false
+            repeatMode = Player.REPEAT_MODE_OFF
+            setMediaItems(listOf(seed.toMediaItem(radio = label)), 0, 0L)
+            prepare()
+            play()
+            sendCustomCommand(
+                SessionCommand(PlaybackService.START_RADIO, Bundle.EMPTY),
+                Bundle().apply {
+                    putLong(PlaybackService.EXTRA_SEED, seed.id)
+                    putString(PlaybackService.EXTRA_MODE, mode.name)
+                },
+            )
+        }
+    }
+
     fun togglePlay() {
         controller?.run {
             if (isPlaying) pause() else {
@@ -117,8 +135,12 @@ class PlayerHolder(context: Context) {
 }
 
 const val EXTRA_ALBUM_ID = "albumId"
+/** The radio a song belongs to, by its mode's name ("Same era"); absent outside a radio. */
+const val EXTRA_RADIO = "radio"
+/** Why the radio picked a song ("Hugh Padgham on both"). */
+const val EXTRA_REASON = "reason"
 
-internal fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
+internal fun Track.toMediaItem(radio: String? = null, reason: String? = null): MediaItem = MediaItem.Builder()
     .setMediaId(id.toString())
     .setUri(uri)
     .setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(uri).build())
@@ -128,7 +150,11 @@ internal fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
             .setArtist(artist)
             .setAlbumTitle(album)
             .setDurationMs(durationMs)
-            .setExtras(Bundle().apply { putLong(EXTRA_ALBUM_ID, albumId) })
+            .setExtras(Bundle().apply {
+                putLong(EXTRA_ALBUM_ID, albumId)
+                radio?.let { putString(EXTRA_RADIO, it) }
+                reason?.let { putString(EXTRA_REASON, it) }
+            })
             .setArtworkUri(legacyArtworkUri(albumId))
             .build()
     )

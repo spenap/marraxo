@@ -52,6 +52,22 @@ class TranslationsTest {
         assertEquals("Año desconocido", yearLabel(res, 0, coarse = false))
     }
 
+    @Test fun `why the radio picked a song, in English`() {
+        assertEquals("Hugh Padgham on both", reasonText(res, Reason.Shares("Hugh Padgham")))
+        assertEquals("Celtic", reasonText(res, Reason.Genre("Celtic")))
+        assertEquals("1980s", reasonText(res, Reason.Decade(1980)))
+        assertEquals("More Altan", reasonText(res, Reason.Artist("Altan")))
+        assertEquals("Further afield", reasonText(res, Reason.Wider))
+        assertEquals("Radio · Same era", res.getString(R.string.radio_now, res.getString(RadioMode.Era.label)))
+    }
+
+    @Config(qualifiers = "gl")
+    @Test fun `why the radio picked a song, in Galician`() {
+        assertEquals("Hugh Padgham nos dous", reasonText(res, Reason.Shares("Hugh Padgham")))
+        assertEquals("Década de 1980", reasonText(res, Reason.Decade(1980)))
+        assertEquals("Mesma xente", res.getString(RadioMode.People.label))
+    }
+
     @Test fun `the rescan summary in English`() {
         assertEquals("Library is up to date", rescanSummary(res, ScanResult(0, 0)))
         assertEquals("Library updated: 3 files added, 1 file removed", rescanSummary(res, ScanResult(3, 1)))
