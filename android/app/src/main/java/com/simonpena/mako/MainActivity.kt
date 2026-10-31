@@ -79,6 +79,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         isHome = isHomeApp(this)
+        hideNavigationBar(this, isHome)
     }
 
     /** As the home screen, pressing Home while Mako is open goes back to the library. */

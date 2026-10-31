@@ -45,6 +45,7 @@ class LockActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         player = PlayerHolder(this)
+        hideNavigationBar(this, isHome = true) // only ever shown as the home screen
         lifecycleScope.launch {
             snapshotFlow { player.output }.collect {
                 volumeControlStream = if (it == null) AudioManager.STREAM_MUSIC else AudioManager.USE_DEFAULT_STREAM_TYPE

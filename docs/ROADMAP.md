@@ -110,7 +110,7 @@ values, so the phone can be put back as it was.
       Android 8–9 shrinks session artwork to 320 dp (640 px here) and
       stretches it full screen. Only as the home screen, only below
       Android 10.
-- [ ] **Navigation bar hidden in Mako** (next): immersive mode, in-app
+- [x] **Navigation bar hidden in Mako** (2026-10-31): immersive mode, in-app
       and without root; a swipe up from the bottom edge shows the bar for
       a few seconds. Home already lands in Mako and Back is Mako's own;
       Recents can't be intercepted by apps, so it stays one swipe away.

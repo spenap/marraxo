@@ -1,9 +1,14 @@
 package com.simonpena.mako
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.view.View
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 /**
  * Mako as the phone's home screen (roadmap A6). The manifest's home entry
@@ -28,4 +33,28 @@ fun openOtherLauncher(context: Context) {
         .map { ComponentName(it.activityInfo.packageName, it.activityInfo.name) }
     val target = otherLauncher(candidates, context.packageName) ?: return
     context.startActivity(Intent(homeIntent).setComponent(target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}
+
+/**
+ * As the home screen, Mako hides the navigation bar (roadmap A6): Home
+ * already lands here and Back is Mako's own. A swipe up from the bottom edge
+ * shows it for a moment, which is also the way to Recents. The status bar stays.
+ */
+fun hideNavigationBar(activity: Activity, isHome: Boolean) {
+    val decor = activity.window.decorView
+    val bars = WindowCompat.getInsetsController(activity.window, decor)
+    // Before Android 11, "stable" insets keep reserving a hidden bar's space,
+    // which left the mini player floating 48 dp above the bottom.
+    @Suppress("DEPRECATION")
+    val stable = View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+    if (isHome) {
+        bars.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        bars.hide(WindowInsetsCompat.Type.navigationBars())
+        @Suppress("DEPRECATION")
+        decor.systemUiVisibility = decor.systemUiVisibility and stable.inv()
+    } else {
+        bars.show(WindowInsetsCompat.Type.navigationBars())
+        @Suppress("DEPRECATION")
+        decor.systemUiVisibility = decor.systemUiVisibility or stable
+    }
 }
