@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -65,9 +66,12 @@ private fun albumArtUri(albumId: Long): Uri =
 fun legacyArtworkUri(albumId: Long): Uri? =
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) albumArtUri(albumId) else null
 
-private fun decodeSampled(context: Context, uri: Uri, px: Int): Bitmap? {
+private fun decodeSampled(context: Context, uri: Uri, px: Int): Bitmap? =
+    decodeSampled(px) { context.contentResolver.openInputStream(uri) }
+
+private fun decodeSampled(px: Int, open: () -> java.io.InputStream?): Bitmap? {
     val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    open()?.use { BitmapFactory.decodeStream(it, null, bounds) }
     if (bounds.outWidth <= 0) return null
     var sample = 1
     while (bounds.outWidth / (sample * 2) >= px) sample *= 2
@@ -75,7 +79,43 @@ private fun decodeSampled(context: Context, uri: Uri, px: Int): Bitmap? {
         inSampleSize = sample
         if (px < TINT_MIN_PX) inPreferredConfig = Bitmap.Config.RGB_565 // half the memory, faster upload
     }
-    return context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    return open()?.use { BitmapFactory.decodeStream(it, null, opts) }
+}
+
+/** The first of [sources] that gives art; one that fails or throws counts as none. */
+fun <T> firstArt(vararg sources: () -> T?): T? = sources.firstNotNullOfOrNull { runCatching(it).getOrNull() }
+
+/**
+ * An album's cover: Android's thumbnail, or else the picture embedded in
+ * its first track. Android's can be missing or stale (on the Nexus 4, The
+ * Blue Idol's album art entry pointed to a deleted file).
+ */
+private fun coverBitmap(context: Context, albumId: Long, px: Int): Bitmap? = firstArt(
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            context.contentResolver.loadThumbnail(ContentUris.withAppendedId(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumId), Size(px, px), null)
+        } else {
+            decodeSampled(context, albumArtUri(albumId), px)
+        }
+    },
+    { embeddedCover(context, albumId, px) },
+)
+
+private fun embeddedCover(context: Context, albumId: Long, px: Int): Bitmap? {
+    val track = context.contentResolver.query(
+        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, arrayOf(MediaStore.Audio.Media._ID),
+        "${MediaStore.Audio.Media.ALBUM_ID} = ?", arrayOf(albumId.toString()), null,
+    )?.use { c -> if (c.moveToFirst()) ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, c.getLong(0)) else null }
+        ?: return null
+    val bytes = MediaMetadataRetriever().run {
+        try {
+            setDataSource(context, track)
+            embeddedPicture
+        } finally {
+            release()
+        }
+    } ?: return null
+    return decodeSampled(px) { bytes.inputStream() }
 }
 
 /** [tint]: pick the Glow colour too; small images skip it unless they're shown on it (genre tiles). */
@@ -83,14 +123,7 @@ suspend fun loadArt(context: Context, albumId: Long, px: Int, tint: Boolean = px
     val key = artKey(albumId, px, tint)
     if (albumId in noArt) return@withContext null
     cache.get(key) ?: runCatching {
-        val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            context.contentResolver.loadThumbnail(
-                ContentUris.withAppendedId(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumId),
-                Size(px, px), null,
-            )
-        } else {
-            decodeSampled(context, albumArtUri(albumId), px)
-        } ?: run { noArt += albumId; return@runCatching null }
+        val bitmap = coverBitmap(context, albumId, px) ?: run { noArt += albumId; return@runCatching null }
         val fallback = placeholderTint(albumId).toArgb()
         val color = if (!tint) fallback else {
             val palette = Palette.from(bitmap).maximumColorCount(16).generate()
@@ -110,13 +143,7 @@ fun cachedArt(albumId: Long, px: Int, tint: Boolean): Art? = cache.get(artKey(al
 
 /** Cover as JPEG bytes, for renderers that show artwork (the TV). Blocking. */
 fun coverJpeg(context: Context, albumId: Long, px: Int = 500): ByteArray? = runCatching {
-    val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        context.contentResolver.loadThumbnail(
-            ContentUris.withAppendedId(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, albumId), Size(px, px), null,
-        )
-    } else {
-        decodeSampled(context, albumArtUri(albumId), px)
-    } ?: return@runCatching null
+    val bitmap = coverBitmap(context, albumId, px) ?: return@runCatching null
     java.io.ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
 }.getOrNull()
 
