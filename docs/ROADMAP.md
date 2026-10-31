@@ -110,7 +110,9 @@ Done in a separate repository.
       and studios) as a bias no other player has; radios widen themselves
       instead of running dry in a 2,000-track library; a simulation on the
       real library as a regression gate. History isn't usable yet: 169 of
-      the Nexus 4's 200 plays are the overnight battery test.
+      the Nexus 4's 200 plays are the overnight battery test. Decided: a radio
+      replaces the queue; named modes (Similar, Same era, Same people,
+      Anything goes); history isn't a bias in v0.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.

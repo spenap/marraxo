@@ -1,6 +1,6 @@
 # Radios and smart playlists: research
 
-Status: research, 2026-10-31. Builds on `discovery.md` (Radio) and
+Status: researched and decided, 2026-10-31. Builds on `discovery.md` (Radio) and
 `cards.md` (cards are rules). Nothing implemented yet.
 
 ## What other players do
@@ -63,7 +63,7 @@ it again at every step, from what's playing.
   the TV and the speakers just work.
 - Every pick carries its reason ("Phil Cunningham plays on both",
   "Celtic, 1980s"), shown in Now Playing.
-- One knob, as Plexamp's reach: **Close / Wide**.
+- Named modes, as Plexamp's Guest DJ (see Decisions).
 
 **Smart playlists v0 (the card shelves in `cards.md`)**
 - Your genres (families), Decades, Players in your collection (liner
@@ -85,14 +85,16 @@ it again at every step, from what's playing.
 - Exclude automated test plays: the overnight runs on Estudio
   (2026-10-30/31), and mark future test sessions so they're skipped.
 
-## Questions to settle
+## Decisions (2026-10-31)
 
-1. Does a radio replace the queue (Spotify) or play after it (Plexamp's
-   Guest DJ mixing in)? Proposal: replace, with the album you were on
-   kept in history.
-2. Is "Close / Wide" the right single knob, or named modes like Plexamp's
-   (same era / same people / anything goes)?
-3. Clear the test plays from history now, or mark them and keep them?
+1. **A radio replaces the queue,** as Spotify's does: the seed plays,
+   then picks follow, three ahead.
+2. **Named modes,** not one knob: *Similar* (genre, era and people
+   together), *Same era*, *Same people* (liner notes; offered only when
+   the notes are on the phone) and *Anything goes* (spread, barely
+   biased).
+3. **Test plays stay in history as they are.** History isn't a bias in
+   v0, so they don't matter yet; revisit when "not heard lately" is added.
 
 Sources: [Amarok manual: dynamic playlists](https://docs.kde.org/trunk_kf6/en/amarok/amarok/dynamic-playlists.html);
 [Navidrome smart playlists](https://navidrome.org/docs/usage/features/smart-playlists/);
