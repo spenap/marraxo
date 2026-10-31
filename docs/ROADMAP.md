@@ -64,6 +64,11 @@ Done in a separate repository.
       than three screens long gets one. Letters come from the sort key, so
       "The Corrs" is C and accented names sort and letter with their base
       letter (the sort now folds accents too).
+- [ ] As the home screen, Now Playing's "Playing on … Change" row sits
+      where the hidden navigation bar was, and the accessibility tree
+      reports it at [0,0][0,0] (not visible): it can be tapped, but
+      TalkBack and on-device UI tests can't find it. Check the window's
+      visible frame in immersive mode, test first.
 - [ ] Scrubber polish, after a few days of use: hidden while idle and
       fading in on scroll; the letter or year in a bubble beside the thumb
       (as Google Photos does) instead of at the top; a light haptic tick
@@ -195,7 +200,9 @@ Needs A1 and B0.
       speaker for its state every second, paused or playing. Every few
       seconds while paused, and GENA events instead of polling (B0),
       should let Wi-Fi and the CPU sleep. Test first; measure again.
-- [ ] Recover when a speaker stops by itself. Overnight on 2026-10-31,
+- [x] Recover when a speaker stops by itself (2026-10-31: resumes once
+      where it was; a second stop on the same track is respected; checked
+      on Estudio by sending Stop twice). Overnight on 2026-10-31,
       after 50 clean track changes in 3 h, Estudio stopped 10 s into a
       track (00:49:49) with Mako's URL still loaded, status OK and Wi-Fi
       up; Mako took it as "stopped elsewhere" and paused. When a renderer

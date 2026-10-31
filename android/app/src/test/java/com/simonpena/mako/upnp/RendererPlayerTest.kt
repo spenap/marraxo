@@ -251,7 +251,9 @@ class RendererPlayerTest {
         eventually("moves on") { player.currentMediaItemIndex == 1 && titleOnSpeaker(fake) == "Next" }
     }
 
-    @Test fun `a stop well before the end is still someone stopping it`() {
+    @Test fun `a speaker that stops by itself mid-track is resumed once, where it was`() {
+        // Seen on Estudio overnight: after 3 h and 50 clean track changes it stopped 10 s
+        // into a track, still holding Mako's URL with status OK, and Mako paused.
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         player.setMediaItems(album(2))
         player.prepare()
@@ -262,7 +264,26 @@ class RendererPlayerTest {
         eventually("mid-track") { player.currentPosition >= 120_000 }
         fake.positionMs = 0
         fake.state = "STOPPED"
+        eventually("plays again from 2:00") { fake.plays == 2 && fake.state == "PLAYING" && fake.positionMs >= 119_000 }
+        assertTrue(player.playWhenReady)
+        assertEquals(0, player.currentMediaItemIndex)
+    }
+
+    @Test fun `a second stop on the same track is someone stopping it`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(album(2))
+        player.prepare()
+        player.play()
+        eventually("playing") { fake.state == "PLAYING" && player.isPlaying }
+        idle(5_000)
+        fake.positionMs = 120_000
+        eventually("mid-track") { player.currentPosition >= 120_000 }
+        fake.state = "STOPPED"
+        eventually("resumed") { fake.plays == 2 && fake.state == "PLAYING" }
+        idle(5_000) // past the settling window
+        fake.state = "STOPPED"
         eventually("pauses here") { !player.playWhenReady }
+        assertEquals(2, fake.plays)
         assertEquals(0, player.currentMediaItemIndex)
     }
 

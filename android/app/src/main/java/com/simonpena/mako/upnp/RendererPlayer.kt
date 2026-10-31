@@ -56,6 +56,8 @@ class RendererPlayer(
     // The furthest point reached in this track: Sonos briefly reports 0:00 as a
     // track ends, so the last position alone can't tell an end from a stop.
     private var furthestMs = 0L
+    /** The track already resumed after the speaker stopped it by itself; a second stop is respected. */
+    private var resumed: MediaItem? = null
     private var rendererDurationMs: Long? = null // the length the renderer measured, if it says
     private var volume = 0
     private var muted = false
@@ -356,8 +358,17 @@ class RendererPlayer(
                 val ended = maxOf(lastPosition, furthestMs) >= duration - slack
                 // One line per decision, so a wrong one can be explained afterwards.
                 Log.i(TAG, "${renderer.name}: $state at last=$lastPosition furthest=$furthestMs duration=$duration " +
-                    "reported=${position?.get("RelTime")} → ${if (ended) "track ended" else "stopped elsewhere"}")
-                if (ended) advance() else {
+                    "reported=${position?.get("RelTime")} → ${if (ended) "track ended" else "stopped mid-track"}")
+                val item = items.getOrNull(index)
+                if (ended) advance() else if (item != null && resumed !== item) {
+                    // Mid-track, still holding our track: most likely the speaker
+                    // giving up (Estudio did, 10 s into a track, after 3 h). Resume
+                    // once where it was; a second stop on this track is a person.
+                    resumed = item
+                    Log.i(TAG, "${renderer.name}: resuming once at ${maxOf(lastPosition, furthestMs)}")
+                    setPosition(maxOf(lastPosition, furthestMs))
+                    load()
+                } else {
                     // Stopped elsewhere, mid-track.
                     playWhenReady = false
                     loadedUrl = null
