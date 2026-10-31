@@ -40,7 +40,7 @@ class GenresTest {
     }
 
     @Test fun `genres that share a word become a family, and a genre can be in two`() {
-        assertEquals(listOf("Español", "Indie", "Pop", "Rock"), shelves.filter { it.isFamily }.map { it.name })
+        assertEquals(listOf("Español", "Indie", "Pop", "Rock"), shelves.filter { it.isFamily && !it.isOther }.map { it.name })
         assertEquals(listOf("Indie", "Indie Pop", "Indie Rock"), shelf("Indie").genres.map { it.name })
         assertTrue("Indie Pop" in shelf("Pop").genres.map { it.name })
         assertEquals(43, shelf("Rock").albums.size) // each album once, though some are in two of its genres
@@ -48,14 +48,14 @@ class GenresTest {
     }
 
     @Test fun `the top level has the families and every genre outside them`() {
-        assertEquals(25, shelves.size) // 38 tags before
+        assertEquals(13, shelves.size) // 38 tags before
         assertTrue(shelves.none { it.name == "Pop" && !it.isFamily }) // Pop is inside its family
         assertFalse(shelf("Celtic").isFamily) // Celta is another word: the reviewed tag mapping's job (Track C)
         assertEquals(34, shelf("Celtic").albums.size) // with Celtic/Rock
     }
 
     @Test fun `short and generic words make no family`() {
-        val names = genreShelves(genres(albums(1 to "Children's Music", 1 to "Film Music", 1 to "Rock en Español", 1 to "Pop en Inglés")))
+        val names = genreShelves(genres(albums(2 to "Children's Music", 2 to "Film Music", 2 to "Rock en Español", 2 to "Pop en Inglés")))
         assertTrue(names.none { it.isFamily })
     }
 
@@ -63,6 +63,26 @@ class GenresTest {
         val heavy = genreShelves(genres(albums(1 to "Heavy Metal", 1 to "Heavy Metal Live")))
         assertEquals(listOf("Heavy Metal"), heavy.map { it.name })
         assertEquals(2, heavy.single().genres.size)
+    }
+
+    @Test fun `genres with a single album are gathered into Other, at the end`() {
+        val other = shelves.last()
+        assertTrue(other.isOther)
+        assertEquals("", other.name) // the screen names it, in the phone's language
+        assertEquals(
+            listOf("70'S", "Acoustic", "Alternative", "Britpop", "Celta", "Children's Music", "Choirs", "Flamenco",
+                "New Age", "Oldies", "Radio", "Rap", "Reggae"),
+            other.genres.map { it.name },
+        )
+        assertTrue(shelves.filter { !it.isFamily }.all { it.albums.size > 1 })
+        assertFalse(opensAlbums(other)) // 13 albums: it opens to its genres
+        assertTrue("Indie Rock" in shelf("Rock").genres.map { it.name }) // inside a family, a one-album genre stays
+    }
+
+    @Test fun `a lone single-album genre stays where it is`() {
+        val few = genreShelves(genres(albums(3 to "Folk", 1 to "Flamenco")))
+        assertEquals(listOf("Flamenco", "Folk"), few.map { it.name })
+        assertTrue(few.none { it.isOther })
     }
 
     @Test fun `a small family opens straight to its albums, a big one to its genres`() {

@@ -28,6 +28,8 @@
     <string name="tab_years">Years</string>
     <string name="songs">Songs</string>
     <string name="no_genre">No genre</string>
+    <!-- The genres with a single album, gathered in one row -->
+    <string name="other_genres">Other</string>
     <string name="all_albums">All albums</string>
     <plurals name="genre_count">
         <item quantity="one">%d genre</item>

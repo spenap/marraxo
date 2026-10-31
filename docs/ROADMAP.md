@@ -69,8 +69,10 @@ Done in a separate repository.
       "Pop espańol"), "Rock/Classic Rock" counts for both, and genres that
       share a word form a family (Indie: Indie, Indie Pop, Indie Rock; a
       genre can be in two). A family of up to 12 albums opens straight to
-      them, a bigger one to its genres; each row says which. The Nexus 4's
-      38 tags make 25 rows, with Rock, Pop, Indie and Español as families.
+      them, a bigger one to its genres; each row says which. Genres with a
+      single album go in "Other", at the end (inside a family they stay).
+      The Nexus 4's 38 tags make 13 rows: Rock, Pop, Indie and Español as
+      families, 8 genres, and Other with 13 one-album genres.
 - [ ] As the home screen, Now Playing's "Playing on … Change" row sits
       where the hidden navigation bar was, and the accessibility tree
       reports it at [0,0][0,0] (not visible): it can be tapped, but

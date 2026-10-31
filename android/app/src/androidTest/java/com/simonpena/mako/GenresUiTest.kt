@@ -32,7 +32,8 @@ class GenresUiTest {
 
     // Rock: 14 albums in two genres (opens to the genres). Indie: 3 albums (opens to them).
     private val library = (1L..12L).map { album(it, "Rock") } + album(13, "Punk Rock") + album(14, "Punk-Rock") +
-        album(15, "Indie") + album(16, "Indie Pop") + album(17, "Indie Pop") + album(18, "Folk")
+        album(15, "Indie") + album(16, "Indie Pop") + album(17, "Indie Pop") +
+        album(18, "Folk") + album(19, "Flamenco") + album(20, "Rap") // one album each: Other
 
     @Before fun setUp() {
         context.getSharedPreferences("hidden", Context.MODE_PRIVATE).edit().clear().commit()
@@ -57,7 +58,14 @@ class GenresUiTest {
         compose.onNodeWithText("Genres").performClick()
         compose.onNodeWithText("All albums").assertExists() // still in Rock
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
-        compose.onNodeWithText("Folk").assertExists() // the top level again
+        compose.onNodeWithText("Other").assertExists() // the top level again
+    }
+
+    @Test fun genresWithOneAlbumAreGatheredInOther() {
+        compose.onNodeWithText("Folk").assertDoesNotExist()
+        compose.onNodeWithText("Other").performClick() // 3 albums: straight to them
+        compose.onNodeWithText("Album 18").assertExists()
+        compose.onNodeWithText("Album 20").assertExists()
     }
 
     @Test fun aSmallFamilyOpensStraightToItsAlbums() {

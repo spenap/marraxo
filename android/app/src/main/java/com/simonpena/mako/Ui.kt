@@ -383,17 +383,19 @@ private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, on
     val untagged = remember(library) { library.filter { genreTags(it.genre).isEmpty() } }
     val family = shelves.firstOrNull { it.isFamily && it.name == state.family }
     BackHandler(enabled = family != null) { state.family = null }
+    val other = stringResource(R.string.other_genres)
+    val label = { shelf: GenreShelf -> if (shelf.isOther) other else shelf.name }
     val keys = { shelf: GenreShelf -> shelf.genres.map { it.key }.toSet() }
     Column {
-        if (family != null) FilterChip(family.name, pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
+        if (family != null) FilterChip(label(family), pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
         val list = if (family == null) state.lists.getValue(Tab.Genres) else remember(family.name) { LazyListState() }
         LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
             if (family == null) {
                 items(shelves, key = { it.name }) { shelf ->
                     val direct = opensAlbums(shelf)
                     val detail = if (direct) albumCount(shelf.albums.size) else pluralStringResource(R.plurals.genre_count, shelf.genres.size, shelf.genres.size)
-                    ListRow(shelf.albums.first().id, round = false, title = shelf.name, detail = detail) {
-                        if (direct) onAlbums(shelf.name, keys(shelf)) else state.family = shelf.name
+                    ListRow(shelf.albums.first().id, round = false, title = label(shelf), detail = detail) {
+                        if (direct) onAlbums(label(shelf), keys(shelf)) else state.family = shelf.name
                     }
                 }
                 if (untagged.isNotEmpty()) item(key = "none") {
@@ -403,7 +405,7 @@ private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, on
             } else {
                 item(key = "all") {
                     ListRow(family.albums.first().id, round = false, title = stringResource(R.string.all_albums), detail = albumCount(family.albums.size)) {
-                        onAlbums(family.name, keys(family))
+                        onAlbums(label(family), keys(family))
                     }
                 }
                 items(family.genres, key = { it.key }) { genre ->

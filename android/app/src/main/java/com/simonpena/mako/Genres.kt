@@ -10,9 +10,10 @@ data class Genre(val name: String, val key: String, val albums: List<Album>)
 /**
  * A row on the Genres tab: one genre, or a family of genres that share a
  * word (Indie: Indie, Indie Pop, Indie Rock). A genre can be in two
- * families (Indie Pop is also Pop).
+ * families (Indie Pop is also Pop). [isOther]: the genres with a single
+ * album, gathered at the end; its name is empty, for the screen to give.
  */
-data class GenreShelf(val name: String, val genres: List<Genre>) {
+data class GenreShelf(val name: String, val genres: List<Genre>, val isOther: Boolean = false) {
     val isFamily get() = genres.size > 1
     /** Each album once, in library order, though it may be in several of the genres. */
     val albums: List<Album> by lazy { genres.flatMap { it.albums }.distinctBy { it.id }.sortedBy { order(it) } }
@@ -58,8 +59,11 @@ fun genreShelves(genres: List<Genre>): List<GenreShelf> {
             GenreShelf(ordered.joinToString(" ") { displayWord(it, members) }, members.sortedBy { fold(it.name) })
         }
     val inFamilies = families.flatMap { it.genres }.toSet()
-    val singles = genres.filter { it !in inFamilies }.map { GenreShelf(it.name, listOf(it)) }
-    return (families + singles).sortedBy { fold(it.name) }
+    // A genre with one album is a row to scroll past: those go in Other, unless it's the only one.
+    val (rare, singles) = genres.filter { it !in inFamilies }.partition { it.albums.size == 1 }
+    val other = if (rare.size > 1) listOf(GenreShelf("", rare, isOther = true)) else emptyList()
+    val alone = if (other.isEmpty()) singles + rare else singles
+    return (families + alone.map { GenreShelf(it.name, listOf(it)) }).sortedBy { fold(it.name) } + other
 }
 
 /** A family's word as the genres spell it, capitalised if any of them does ("Español", not "español"). */
