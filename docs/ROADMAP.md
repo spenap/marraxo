@@ -111,6 +111,11 @@ Done in a separate repository.
       simulation baseline: `radio.md`. Nexus 4: ~60 ms a pick (off the
       main thread), ~4 s to read the library and notes before the first
       top-up. Checked on Estudio silently.
+- [x] Up next (the queue, with jumps) and Now Playing's album and artist
+      as links; songs have a visible ⋮ opening a sheet (Play next, Start
+      radio, Go to artist, Song notes, Hide with Undo) (2026-10-31).
+- [ ] The album long-press (Hide album) is still the old popup: give
+      albums the same sheet and Undo.
 - [ ] Radio, next: seeds from an album, artist, genre tile, and a person
       or studio on the liner-notes screen; ready sooner than ~4 s (a skip
       in the first seconds finds an empty queue); come back after a
@@ -324,10 +329,15 @@ the desktop.
       other albums a person or place is on. Tracks now carry their path
       inside the Music folder: 2,106 of the Nexus 4's 2,130 files match a
       track in the notes (the rest: the 3 albums MusicBrainz didn't know).
-- [ ] App: a Liner notes screen for track, album and artist. Credits,
-      studios and dates, "first released on", other versions in your
-      library, and connections between your albums through shared
-      musicians. Hidden when there's no data.
+- [x] App: song, album and person/place screens (2026-10-31, `dee0c15`):
+      credits by section, the album's story with its licence, "Also in
+      your library" leading to everyone's albums by year. From the song
+      sheet, Now Playing and the album screen; hidden without data.
+- [ ] Liner notes polish: within "Played by", the main performers first
+      (today the order is MusicBrainz's, so a string section can lead);
+      role words ("guitar", "producer") are English in every language;
+      "first released on" and other versions in your library; a radio
+      from a person or place.
 - [x] Prototype it first: `mockups/liner-notes.html` (2026-10-31), a
       track (In the Air Tonight), an album (So Many Partings) and a studio
       (The Town House, 8 of your albums), from real rows.
