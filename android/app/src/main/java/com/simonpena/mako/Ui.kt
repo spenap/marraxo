@@ -34,7 +34,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.lazy.LazyListScope
@@ -359,11 +358,17 @@ private fun PillButton(label: String, modifier: Modifier = Modifier, onClick: ()
     }
 }
 
-/** The secondary action beside a [PillButton]: same shape, outlined. */
+/**
+ * The secondary action beside a [PillButton]: same shape, outlined. The
+ * outline is two backgrounds, not Modifier.border: border's draw node made
+ * R8 stop devirtualising the draw calls of every node, and the album grid
+ * went from ~3% to ~9% janky frames on the Nexus 4 though it has no border.
+ */
 @Composable
 private fun OutlinedPill(label: String, onClick: () -> Unit) {
     Box(
-        Modifier.height(48.dp).clip(CircleShape).border(1.dp, GSoft, CircleShape).clickable(onClick = onClick).padding(horizontal = 22.dp),
+        Modifier.height(48.dp).clip(CircleShape).background(GSoft).padding(1.dp).clip(CircleShape).background(GBg)
+            .clickable(onClick = onClick).padding(horizontal = 21.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
