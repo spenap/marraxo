@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spanish -->
+<resources>
+    <!-- First run -->
+    <string name="building_library">Preparando tu biblioteca…</string>
+    <string name="welcome_title">Tu música, en este teléfono.</string>
+    <string name="welcome_body">Mako reproduce la música guardada en este teléfono. Sin cuentas y sin Internet. También puede reproducirla en altavoces y televisores de tu wifi.</string>
+    <string name="welcome_find">Buscar mi música</string>
+    <string name="empty_title">No se ha encontrado música</string>
+    <string name="empty_body">Copia música en la carpeta Music de este teléfono, por transferencia de archivos USB o desde un ordenador:</string>
+    <string name="empty_scan_again">Buscar de nuevo</string>
+
+    <!-- Library -->
+    <string name="library">Biblioteca</string>
+    <string name="search">Buscar</string>
+    <string name="more">Más opciones</string>
+    <string name="back">Atrás</string>
+    <string name="clear">Borrar</string>
+    <string name="menu_rescan">Actualizar biblioteca</string>
+    <string name="menu_hidden">Ocultos</string>
+    <string name="menu_about">Acerca de</string>
+    <string name="menu_android_settings">Ajustes de Android</string>
+    <string name="menu_other_apps">Otras aplicaciones</string>
+    <string name="tab_albums">Álbumes</string>
+    <string name="tab_artists">Artistas</string>
+    <string name="tab_genres">Géneros</string>
+    <string name="tab_years">Años</string>
+    <string name="songs">Canciones</string>
+    <string name="no_genre">Sin género</string>
+    <string name="unknown_year">Año desconocido</string>
+    <string name="decade">Década de %d</string>
+    <string name="hide_album">Ocultar álbum</string>
+    <string name="hide_song">Ocultar canción</string>
+    <plurals name="albums">
+        <item quantity="one">%d álbum</item>
+        <item quantity="other">%d álbumes</item>
+    </plurals>
+    <plurals name="song_count">
+        <item quantity="one">%d canción</item>
+        <item quantity="other">%d canciones</item>
+    </plurals>
+    <plurals name="hours">
+        <item quantity="one">%d hora</item>
+        <item quantity="other">%d horas</item>
+    </plurals>
+    <string name="minutes">%d min</string>
+
+    <!-- Rescan -->
+    <string name="rescan_started">Actualizando la carpeta Music…</string>
+    <string name="rescan_progress">Actualizando… %1$d de %2$s</string>
+    <string name="rescan_incomplete">La actualización se detuvo antes de terminar; vuelve a actualizar para completarla</string>
+    <string name="rescan_up_to_date">La biblioteca está al día</string>
+    <string name="rescan_updated">Biblioteca actualizada: %s</string>
+    <plurals name="files">
+        <item quantity="one">%d archivo</item>
+        <item quantity="other">%d archivos</item>
+    </plurals>
+    <plurals name="files_added">
+        <item quantity="one">%d archivo añadido</item>
+        <item quantity="other">%d archivos añadidos</item>
+    </plurals>
+    <plurals name="files_removed">
+        <item quantity="one">%d archivo eliminado</item>
+        <item quantity="other">%d archivos eliminados</item>
+    </plurals>
+
+    <!-- Search -->
+    <string name="search_hint">Álbumes, artistas, canciones</string>
+    <string name="nothing_matches">Nada coincide con «%s».</string>
+
+    <!-- Album -->
+    <string name="play">Reproducir</string>
+
+    <!-- Hidden -->
+    <string name="hidden_none">No hay nada oculto. Mantén pulsado un álbum o una canción para ocultarlo.</string>
+    <string name="hidden_some">Ocultos en la biblioteca. Los archivos siguen en el teléfono.</string>
+    <string name="show">Mostrar</string>
+
+    <!-- About and licences -->
+    <string name="about_version">Versión</string>
+    <string name="about_device">Dispositivo</string>
+    <string name="about_summary">Un reproductor de música sin conexión. Reproduce la carpeta Music en este teléfono o en altavoces y televisores de la misma wifi.</string>
+    <string name="licences_link">Licencias de código abierto</string>
+    <string name="licences">Licencias</string>
+    <plurals name="libraries">
+        <item quantity="one">%d biblioteca de código abierto</item>
+        <item quantity="other">%d bibliotecas de código abierto</item>
+    </plurals>
+    <string name="licences_intro">Mako se basa en %1$s: %2$s. Toca una para leer su licencia.</string>
+    <string name="licences_count">%1$d con la %2$s</string>
+
+    <!-- Now Playing -->
+    <string name="playing_from_album">REPRODUCIENDO DEL ÁLBUM</string>
+    <string name="close">Cerrar</string>
+    <string name="shuffle">Aleatorio</string>
+    <string name="previous">Anterior</string>
+    <string name="next">Siguiente</string>
+    <string name="play_or_pause">Reproducir o pausar</string>
+    <string name="repeat">Repetir</string>
+    <string name="playing_on">Sonando en %s</string>
+    <string name="change">Cambiar</string>
+
+    <!-- Where to play -->
+    <string name="play_on">Reproducir en</string>
+    <string name="this_phone">Este teléfono</string>
+    <string name="this_phone_detail">Auriculares o Bluetooth</string>
+    <string name="speaker">Altavoz</string>
+    <string name="tv">Televisor</string>
+    <string name="outputs_looking">Buscando altavoces y televisores…</string>
+    <string name="outputs_none">No hay altavoces ni televisores en esta wifi</string>
+    <string name="outputs_found">Encontrados en esta wifi</string>
+</resources>

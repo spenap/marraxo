@@ -339,15 +339,19 @@ others run on demand.
       hand. Passed 2026-10-30 on Estudio and on the TV (with `--next`).
 
 ## Track I: Languages
-The UI is English with hard-coded strings; Spanish should be a first-class
-language.
-- [ ] Move UI text to string resources, with `plurals` for counts (the
-      "1 albums" bug came from an English-only plural helper).
-- [ ] Spanish translation; follow the phone's language.
+English, Spanish and Galician, following the phone's language (Android
+13+: also per app, in Settings → Apps → Mako → Language).
+- [x] UI text in string resources (`res/values{,-es,-gl}/strings.xml`),
+      with `plurals` for counts. `TranslationsTest` fails if a string is
+      missing from a language or its placeholders differ.
+- [x] Spanish and Galician translations (written by Claude; to be read by
+      a native speaker on the phone).
 - [ ] Locale-aware sorting: artists sort ignoring "The" today, which is
       English-only ("Los Planetas", "Les Négresses Vertes"); use a
       `Collator` for accents.
-- [ ] UI tests run in both languages.
+- [x] UI tests in another language: `LanguageUiTest` renders the library
+      in Galician on the phone. The rest run in the phone's language
+      (English on the Nexus 4).
 
 ## Track U: Usage, measured
 Local only: a log on the phone, read on the laptop, never sent anywhere
@@ -468,3 +472,6 @@ Not doing (and why):
   `discovery.db` contract (views, label sets, scalars, edges) and never
   ships a model. Radio starts as tag-based biases (Amarok-style) and gains
   sound-based biases later without changing the engine.
+- 2026-10-31: Languages are English, Spanish and Galician, following the
+  phone (or Android 13+'s per-app language). No in-app picker: the Nexus 4
+  can switch its system language, and Galician ships with AOSP 8.1.

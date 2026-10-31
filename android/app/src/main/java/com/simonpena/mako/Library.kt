@@ -2,6 +2,7 @@ package com.simonpena.mako
 
 import android.content.ContentUris
 import android.content.Context
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -163,6 +164,19 @@ private val AUDIO = setOf("mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wa
 
 /** What a rescan changed, for the message shown afterwards; [complete] is false if the scanner stopped answering. */
 data class ScanResult(val added: Int, val removed: Int, val complete: Boolean = true)
+
+/** The status line after a rescan: "Library updated: 3 files added, 1 file removed". */
+fun rescanSummary(res: Resources, result: ScanResult): String = when {
+    !result.complete -> res.getString(R.string.rescan_incomplete)
+    result.added == 0 && result.removed == 0 -> res.getString(R.string.rescan_up_to_date)
+    else -> res.getString(
+        R.string.rescan_updated,
+        listOfNotNull(
+            result.added.takeIf { it > 0 }?.let { res.getQuantityString(R.plurals.files_added, it, it) },
+            result.removed.takeIf { it > 0 }?.let { res.getQuantityString(R.plurals.files_removed, it, it) },
+        ).joinToString(", "),
+    )
+}
 
 /**
  * Progress of a batch of media-scanner callbacks: [finished] when every file

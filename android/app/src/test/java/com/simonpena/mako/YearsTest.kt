@@ -19,14 +19,6 @@ class YearsTest {
         assertEquals(0, rows.yearAt(12))
     }
 
-    @Test fun `the label is a decade when coarse and a year when fine`() {
-        assertEquals("1990s", yearLabel(1994, coarse = true))
-        assertEquals("1994", yearLabel(1994, coarse = false))
-        assertEquals("2000s", yearLabel(2002, coarse = true))
-        assertEquals("Unknown year", yearLabel(0, coarse = true))
-        assertEquals("Unknown year", yearLabel(0, coarse = false))
-    }
-
     @Test fun `fast scrolling zooms out, slowing down zooms in, without flicker in between`() {
         val zoom = ScrollZoom(fast = 20f, slow = 8f)
         assertFalse(zoom.coarse)

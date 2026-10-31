@@ -1,5 +1,6 @@
 package com.simonpena.mako
 
+import android.content.res.Resources
 import kotlin.math.abs
 
 /**
@@ -41,9 +42,9 @@ class YearRows(groups: List<Pair<Int, Int>>) {
 }
 
 /** "1990s" while moving fast, "1994" when slow. */
-fun yearLabel(year: Int, coarse: Boolean): String = when {
-    year <= 0 -> "Unknown year"
-    coarse -> "${year / 10 * 10}s"
+fun yearLabel(res: Resources, year: Int, coarse: Boolean): String = when {
+    year <= 0 -> res.getString(R.string.unknown_year)
+    coarse -> res.getString(R.string.decade, year / 10 * 10)
     else -> "$year"
 }
 

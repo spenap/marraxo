@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English, the default. Translations: values-es (Spanish), values-gl (Galician);
+     TranslationsTest checks they have every string with the same placeholders. -->
+<resources>
+    <!-- First run -->
+    <string name="building_library">Building your library…</string>
+    <string name="welcome_title">Your music, on this phone.</string>
+    <string name="welcome_body">Mako plays the music stored on this phone. No account and no Internet. It can also play to speakers and TVs on your Wi-Fi.</string>
+    <string name="welcome_find">Find my music</string>
+    <string name="empty_title">No music found</string>
+    <string name="empty_body">Copy music into the Music folder on this phone, over USB file transfer or from a computer:</string>
+    <string name="empty_scan_again">Scan again</string>
+
+    <!-- Library -->
+    <string name="library">Library</string>
+    <string name="search">Search</string>
+    <string name="more">More</string>
+    <string name="back">Back</string>
+    <string name="clear">Clear</string>
+    <string name="menu_rescan">Rescan library</string>
+    <string name="menu_hidden">Hidden</string>
+    <string name="menu_about">About</string>
+    <string name="menu_android_settings">Android settings</string>
+    <string name="menu_other_apps">Other apps</string>
+    <string name="tab_albums">Albums</string>
+    <string name="tab_artists">Artists</string>
+    <string name="tab_genres">Genres</string>
+    <string name="tab_years">Years</string>
+    <string name="songs">Songs</string>
+    <string name="no_genre">No genre</string>
+    <string name="unknown_year">Unknown year</string>
+    <!-- While scrolling the Years tab fast: the decade, e.g. 1990 -->
+    <string name="decade">%ds</string>
+    <string name="hide_album">Hide album</string>
+    <string name="hide_song">Hide song</string>
+    <plurals name="albums">
+        <item quantity="one">%d album</item>
+        <item quantity="other">%d albums</item>
+    </plurals>
+    <plurals name="song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <string name="minutes">%d min</string>
+
+    <!-- Rescan, in the status line under the title -->
+    <string name="rescan_started">Rescanning the Music folder…</string>
+    <!-- 120 of 2,660 files -->
+    <string name="rescan_progress">Rescanning… %1$d of %2$s</string>
+    <string name="rescan_incomplete">Rescan stopped early; rescan again to finish</string>
+    <string name="rescan_up_to_date">Library is up to date</string>
+    <!-- Followed by what changed: 3 files added, 1 file removed -->
+    <string name="rescan_updated">Library updated: %s</string>
+    <plurals name="files">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <plurals name="files_added">
+        <item quantity="one">%d file added</item>
+        <item quantity="other">%d files added</item>
+    </plurals>
+    <plurals name="files_removed">
+        <item quantity="one">%d file removed</item>
+        <item quantity="other">%d files removed</item>
+    </plurals>
+
+    <!-- Search -->
+    <string name="search_hint">Albums, artists, songs</string>
+    <string name="nothing_matches">Nothing matches “%s”.</string>
+
+    <!-- Album -->
+    <string name="play">Play</string>
+
+    <!-- Hidden -->
+    <string name="hidden_none">Nothing is hidden. Long-press an album or a song to hide it.</string>
+    <string name="hidden_some">Hidden from the library. The files stay on the phone.</string>
+    <string name="show">Show</string>
+
+    <!-- About and licences -->
+    <string name="about_version">Version</string>
+    <string name="about_device">Device</string>
+    <string name="about_summary">An offline music player. Plays from the Music folder, on this phone or on speakers and TVs on the same Wi-Fi.</string>
+    <string name="licences_link">Open-source licences</string>
+    <string name="licences">Licences</string>
+    <plurals name="libraries">
+        <item quantity="one">%d open-source library</item>
+        <item quantity="other">%d open-source libraries</item>
+    </plurals>
+    <!-- Mako is built on 40 open-source libraries: 35 under the Apache License 2.0, 5 under the MIT License. -->
+    <string name="licences_intro">Mako is built on %1$s: %2$s. Tap one to read its licence.</string>
+    <string name="licences_count">%1$d under the %2$s</string>
+
+    <!-- Now Playing -->
+    <string name="playing_from_album">PLAYING FROM ALBUM</string>
+    <string name="close">Close</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
+    <string name="play_or_pause">Play or pause</string>
+    <string name="repeat">Repeat</string>
+    <!-- Followed by the output's name, in bold: Playing on Estudio -->
+    <string name="playing_on">Playing on %s</string>
+    <string name="change">Change</string>
+
+    <!-- Where to play -->
+    <string name="play_on">Play on</string>
+    <string name="this_phone">This phone</string>
+    <string name="this_phone_detail">Headphones or Bluetooth</string>
+    <string name="speaker">Speaker</string>
+    <string name="tv">TV</string>
+    <string name="outputs_looking">Looking for speakers and TVs…</string>
+    <string name="outputs_none">No speakers or TVs found on this Wi-Fi</string>
+    <string name="outputs_found">Found on this Wi-Fi</string>
+</resources>

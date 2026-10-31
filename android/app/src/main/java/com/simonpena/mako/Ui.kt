@@ -79,6 +79,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -146,7 +148,7 @@ fun MakoApp(
     Box(Modifier.fillMaxSize().background(GBg)) {
         when {
             !hasPermission -> Welcome(onGrant)
-            library == null -> Message("Building your library…")
+            library == null -> Message(stringResource(R.string.building_library))
             library.isEmpty() -> Empty(onRescan)
             else -> Main(library, player, hidden, status, onRescan, HomeActions(isHome, homePresses, onAndroidSettings, onOtherApps))
         }
@@ -224,13 +226,12 @@ private fun Welcome(onGrant: () -> Unit) {
             .padding(28.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.Bottom),
     ) {
-        Text("Your music, on this phone.", style = display(34))
+        Text(stringResource(R.string.welcome_title), style = display(34))
         Text(
-            "Mako plays the music stored on this phone. No account and no Internet. " +
-                "It can also play to speakers and TVs on your Wi-Fi.",
+            stringResource(R.string.welcome_body),
             style = body.copy(color = GSoft, lineHeight = 22.sp),
         )
-        PillButton("Find my music", Modifier.fillMaxWidth(), onGrant)
+        PillButton(stringResource(R.string.welcome_find), Modifier.fillMaxWidth(), onGrant)
     }
 }
 
@@ -241,9 +242,9 @@ private fun Empty(onRescan: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
         Icon(GlowIcons.Music, null, tint = GHi, modifier = Modifier.size(56.dp))
-        Text("No music found", style = display(28))
+        Text(stringResource(R.string.empty_title), style = display(28))
         Text(
-            "Copy music into the Music folder on this phone, over USB file transfer or from a computer:",
+            stringResource(R.string.empty_body),
             style = body.copy(color = GSoft, lineHeight = 22.sp),
         )
         Text(
@@ -252,7 +253,7 @@ private fun Empty(onRescan: () -> Unit) {
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
                 .background(Color.White.copy(alpha = .07f)).padding(12.dp),
         )
-        PillButton("Scan again", onClick = onRescan)
+        PillButton(stringResource(R.string.empty_scan_again), onClick = onRescan)
     }
 }
 
@@ -275,7 +276,7 @@ private fun PillButton(label: String, modifier: Modifier = Modifier, onClick: ()
 
 // ---------------------------------------------------------------- library
 
-private enum class Tab(val label: String) { Albums("Albums"), Artists("Artists"), Genres("Genres"), Years("Years") }
+private enum class Tab(val label: Int) { Albums(R.string.tab_albums), Artists(R.string.tab_artists), Genres(R.string.tab_genres), Years(R.string.tab_years) }
 
 /** Narrows the album grid to one artist or genre; shown as a removable chip. */
 private data class LibraryFilter(val label: String, val matches: (Album) -> Boolean)
@@ -306,17 +307,17 @@ private fun LibraryScreen(
     val bottom = if (hasMini) 96.dp else 24.dp
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Library", style = display(28), modifier = Modifier.weight(1f))
-            IconSpot(GlowIcons.Search, "Search", onClick = onSearch)
+            Text(stringResource(R.string.library), style = display(28), modifier = Modifier.weight(1f))
+            IconSpot(GlowIcons.Search, stringResource(R.string.search), onClick = onSearch)
             Box {
-                IconSpot(GlowIcons.More, "More") { menu = true }
+                IconSpot(GlowIcons.More, stringResource(R.string.more)) { menu = true }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = GSheet) {
-                    DropdownMenuItem(text = { Text("Rescan library", style = body) }, onClick = { menu = false; onRescan() })
-                    DropdownMenuItem(text = { Text("Hidden", style = body) }, onClick = { menu = false; onHidden() })
-                    DropdownMenuItem(text = { Text("About", style = body) }, onClick = { menu = false; onAbout() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.menu_rescan), style = body) }, onClick = { menu = false; onRescan() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.menu_hidden), style = body) }, onClick = { menu = false; onHidden() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.menu_about), style = body) }, onClick = { menu = false; onAbout() })
                     if (home.isHome) {
-                        DropdownMenuItem(text = { Text("Android settings", style = body) }, onClick = { menu = false; home.onAndroidSettings() })
-                        DropdownMenuItem(text = { Text("Other apps", style = body) }, onClick = { menu = false; home.onOtherApps() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.menu_android_settings), style = body) }, onClick = { menu = false; home.onAndroidSettings() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.menu_other_apps), style = body) }, onClick = { menu = false; home.onOtherApps() })
                     }
                 }
             }
@@ -333,7 +334,7 @@ private fun LibraryScreen(
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(tab.label, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (on) Color.White else GSoft))
+                    Text(stringResource(tab.label), style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (on) Color.White else GSoft))
                     Box(Modifier.padding(top = 4.dp).size(18.dp, 2.dp).background(if (on) GHi else Color.Transparent))
                 }
             }
@@ -351,9 +352,9 @@ private fun LibraryScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(filter.label, style = TextStyle(fontSize = 13.sp, color = Color.White))
-                            Icon(GlowIcons.Close, "Clear", tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
+                            Icon(GlowIcons.Close, stringResource(R.string.clear), tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
                         }
-                        Text(count(albums.size, "album"), style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
+                        Text(albumCount(albums.size), style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
                     }
                 }
                 AlbumGrid(albums, state.grid, bottom, onHide, onAlbum)
@@ -366,7 +367,7 @@ private fun LibraryScreen(
                     LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = end)) {
                         items(artists, key = { it.first }) { (artist, albums) ->
                             val songs = albums.sumOf { it.tracks.size }
-                            ListRow(albums.first().id, round = true, title = artist, detail = "${count(albums.size, "album")} · ${count(songs, "song")}") {
+                            ListRow(albums.first().id, round = true, title = artist, detail = "${albumCount(albums.size)} · ${songCount(songs)}") {
                                 pick(LibraryFilter(artist) { it.artist == artist })
                             }
                         }
@@ -375,12 +376,14 @@ private fun LibraryScreen(
             }
             Tab.Genres -> {
                 val genres = remember(library) {
-                    library.groupBy { it.genre.ifEmpty { "No genre" } }.toList().sortedBy { (g, _) -> if (g == "No genre") "\uffff" else g.lowercase() }
+                    library.groupBy { it.genre }.toList().sortedBy { (g, _) -> if (g.isEmpty()) "\uffff" else g.lowercase() } // none last
                 }
+                val noGenre = stringResource(R.string.no_genre)
                 LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
                     items(genres, key = { it.first }) { (genre, albums) ->
-                        ListRow(albums.first().id, round = false, title = genre, detail = count(albums.size, "album")) {
-                            pick(LibraryFilter(genre) { it.genre.ifEmpty { "No genre" } == genre })
+                        val label = genre.ifEmpty { noGenre }
+                        ListRow(albums.first().id, round = false, title = label, detail = albumCount(albums.size)) {
+                            pick(LibraryFilter(label) { it.genre == genre })
                         }
                     }
                 }
@@ -427,14 +430,15 @@ private fun YearsList(library: List<Album>, list: LazyListState, bottom: Dp, onA
             if (!dragging) showLabel = false
         }
     }
-    val label by remember(rows) { derivedStateOf { yearLabel(rows.yearAt(list.firstVisibleItemIndex), coarse) } }
+    val res = LocalContext.current.resources
+    val label by remember(rows) { derivedStateOf { yearLabel(res, rows.yearAt(list.firstVisibleItemIndex), coarse) } }
 
     Box(Modifier.fillMaxSize()) {
         LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = 28.dp)) {
             years.forEach { (year, albums) ->
                 item(key = "y$year") {
                     Text(
-                        if (year > 0) "$year" else "Unknown year", style = display(20),
+                        if (year > 0) "$year" else stringResource(R.string.unknown_year), style = display(20),
                         modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 4.dp),
                     )
                 }
@@ -549,7 +553,11 @@ private fun Scrubber(
     }
 }
 
-private fun count(n: Int, noun: String) = if (n == 1) "1 $noun" else "$n ${noun}s"
+@Composable
+private fun albumCount(n: Int) = pluralStringResource(R.plurals.albums, n, n)
+
+@Composable
+private fun songCount(n: Int) = pluralStringResource(R.plurals.song_count, n, n)
 
 @Composable
 private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onHide: (Album) -> Unit, onAlbum: (Long) -> Unit) {
@@ -575,7 +583,7 @@ private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onH
                     )
                     Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
                     DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                        DropdownMenuItem(text = { Text("Hide album", style = body) }, onClick = { options = false; onHide(album) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.hide_album), style = body) }, onClick = { options = false; onHide(album) })
                     }
                 }
             }
@@ -609,27 +617,27 @@ private fun SearchScreen(library: List<Album>, onBack: () -> Unit, onAlbum: (Lon
     val q = query.trim()
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp).height(56.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+            IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
             Box(Modifier.weight(1f).padding(start = 4.dp)) {
-                if (query.isEmpty()) Text("Albums, artists, songs", style = body.copy(color = GSoft))
+                if (query.isEmpty()) Text(stringResource(R.string.search_hint), style = body.copy(color = GSoft))
                 BasicTextField(
                     query, { query = it }, singleLine = true,
                     textStyle = body, cursorBrush = SolidColor(GHi),
                     modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 )
             }
-            if (query.isNotEmpty()) IconSpot(GlowIcons.Close, "Clear") { query = "" }
+            if (query.isNotEmpty()) IconSpot(GlowIcons.Close, stringResource(R.string.clear)) { query = "" }
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
         LazyColumn(contentPadding = PaddingValues(bottom = 96.dp), modifier = Modifier.navigationBarsPadding().imePadding()) {
-            if (albums.isNotEmpty()) item { HiddenHeading("Albums") }
+            if (albums.isNotEmpty()) item { HiddenHeading(stringResource(R.string.tab_albums)) }
             items(albums, key = { "a${it.id}" }) { a -> ListRow(a.id, round = false, title = a.title, detail = a.artist) { onAlbum(a.id) } }
-            if (songs.isNotEmpty()) item { HiddenHeading("Songs") }
+            if (songs.isNotEmpty()) item { HiddenHeading(stringResource(R.string.songs)) }
             items(songs, key = { (a, i) -> "s${a.tracks[i].id}" }) { (a, i) ->
                 ListRow(a.id, round = false, title = a.tracks[i].title, detail = "${a.tracks[i].artist} · ${a.title}") { onPlay(a, i) }
             }
             if (q.isNotEmpty() && albums.isEmpty() && songs.isEmpty()) item {
-                Text("Nothing matches “$query”.", style = body.copy(color = GSoft), modifier = Modifier.padding(20.dp))
+                Text(stringResource(R.string.nothing_matches, query), style = body.copy(color = GSoft), modifier = Modifier.padding(20.dp))
             }
         }
     }
@@ -653,7 +661,7 @@ private fun AlbumScreen(
     ) {
         item {
             Box(Modifier.statusBarsPadding().padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
-                IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+                IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
             }
         }
         item {
@@ -666,10 +674,10 @@ private fun AlbumScreen(
                 Spacer(Modifier.height(4.dp))
                 Text(album.title, style = display(26), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(album.artist, style = TextStyle(fontSize = 14.sp, color = GSoft))
-                val year = if (album.year > 0) "${album.year} · " else ""
-                Text("$year${album.tracks.size} songs · $minutes min", style = TextStyle(fontSize = 12.sp, color = GSoft))
+                val details = listOfNotNull(album.year.takeIf { it > 0 }?.toString(), songCount(album.tracks.size), stringResource(R.string.minutes, minutes))
+                Text(details.joinToString(" · "), style = TextStyle(fontSize = 12.sp, color = GSoft))
                 Spacer(Modifier.height(4.dp))
-                PillButton("Play") { onPlay(0) }
+                PillButton(stringResource(R.string.play)) { onPlay(0) }
             }
         }
         itemsIndexed(album.tracks, key = { _, t -> t.id }) { i, track ->
@@ -684,7 +692,7 @@ private fun AlbumScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                    DropdownMenuItem(text = { Text("Hide song", style = body) }, onClick = { options = false; onHide(track) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.hide_song), style = body) }, onClick = { options = false; onHide(track) })
                 }
                 Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft), modifier = Modifier.width(28.dp))
                 Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -702,18 +710,17 @@ private fun HiddenScreen(hidden: Hidden, onBack: () -> Unit) {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 96.dp)) {
         item {
             Box(Modifier.padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
-                IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+                IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
             }
-            Text("Hidden", style = display(28), modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
+            Text(stringResource(R.string.menu_hidden), style = display(28), modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
             Text(
-                if (albums.isEmpty() && tracks.isEmpty()) "Nothing is hidden. Long-press an album or a song to hide it."
-                else "Hidden from the library. The files stay on the phone.",
+                stringResource(if (albums.isEmpty() && tracks.isEmpty()) R.string.hidden_none else R.string.hidden_some),
                 style = TextStyle(fontSize = 13.sp, color = GSoft), modifier = Modifier.padding(horizontal = 20.dp),
             )
         }
-        if (albums.isNotEmpty()) item { HiddenHeading("Albums") }
+        if (albums.isNotEmpty()) item { HiddenHeading(stringResource(R.string.tab_albums)) }
         items(albums.size) { HiddenRow(albums[it]) { hidden.showAlbum(albums[it]) } }
-        if (tracks.isNotEmpty()) item { HiddenHeading("Songs") }
+        if (tracks.isNotEmpty()) item { HiddenHeading(stringResource(R.string.songs)) }
         items(tracks.size) { HiddenRow(tracks[it]) { hidden.showTrack(tracks[it]) } }
     }
 }
@@ -732,7 +739,7 @@ private fun HiddenRow(key: String, onShow: () -> Unit) {
             Text(detail, style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Text(
-            "Show", style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = GHi),
+            stringResource(R.string.show), style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = GHi),
             modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onShow).padding(horizontal = 12.dp, vertical = 8.dp),
         )
     }
@@ -741,23 +748,23 @@ private fun HiddenRow(key: String, onShow: () -> Unit) {
 @Composable
 private fun AboutScreen(library: List<Album>, onLicences: () -> Unit, onBack: () -> Unit) {
     val tracks = library.sumOf { it.tracks.size }
-    val hours = library.sumOf { a -> a.tracks.sumOf { it.durationMs } } / 3_600_000
+    val hours = (library.sumOf { a -> a.tracks.sumOf { it.durationMs } } / 3_600_000).toInt()
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         Box(Modifier.padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
-            IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+            IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
         }
         Column(Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Text("Mako", style = display(34))
-            AboutLine("Version", "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}), ${BuildConfig.COMMIT_DATE}")
-            AboutLine("Device", "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+            AboutLine(stringResource(R.string.about_version), "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}), ${BuildConfig.COMMIT_DATE}")
+            AboutLine(stringResource(R.string.about_device), "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
             AboutLine("Android", "${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})")
-            AboutLine("Library", "${library.size} albums · $tracks songs · $hours hours")
+            AboutLine(stringResource(R.string.library), "${albumCount(library.size)} · ${songCount(tracks)} · ${pluralStringResource(R.plurals.hours, hours, hours)}")
             Text(
-                "An offline music player. Plays from the Music folder, on this phone or on speakers and TVs on the same Wi-Fi.",
+                stringResource(R.string.about_summary),
                 style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
             )
             Text(
-                "Open-source licences",
+                stringResource(R.string.licences_link),
                 style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = GHi),
                 modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onLicences).padding(vertical = 8.dp),
             )
@@ -779,12 +786,15 @@ private fun LicencesScreen(onBack: () -> Unit) {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(bottom = 96.dp)) {
         item {
             Box(Modifier.padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
-                IconSpot(GlowIcons.Back, "Back", onClick = onBack)
+                IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
             }
-            Text("Licences", style = display(28), modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
+            Text(stringResource(R.string.licences), style = display(28), modifier = Modifier.padding(start = 20.dp, bottom = 6.dp))
             Text(
-                "Mako is built on ${libraries.size} open-source libraries: " +
-                    counts.joinToString { (name, n) -> "$n under the $name" } + ". Tap one to read its licence.",
+                stringResource(
+                    R.string.licences_intro,
+                    pluralStringResource(R.plurals.libraries, libraries.size, libraries.size),
+                    counts.joinToString { (name, n) -> context.getString(R.string.licences_count, n, name) },
+                ),
                 style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
             )
@@ -844,9 +854,9 @@ internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClos
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconSpot(GlowIcons.Down, "Close", onClick = onClose)
+                IconSpot(GlowIcons.Down, stringResource(R.string.close), onClick = onClose)
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("PLAYING FROM ALBUM", style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft))
+                    Text(stringResource(R.string.playing_from_album), style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft))
                     Text(album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Spacer(Modifier.width(44.dp))
@@ -864,17 +874,17 @@ internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClos
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconSpot(GlowIcons.Shuffle, "Shuffle", tint = if (player.shuffle) GHi else GSoft) { player.toggleShuffle() }
-                IconSpot(GlowIcons.Previous, "Previous", iconSize = 32.dp) { player.previous() }
+                IconSpot(GlowIcons.Shuffle, stringResource(R.string.shuffle), tint = if (player.shuffle) GHi else GSoft) { player.toggleShuffle() }
+                IconSpot(GlowIcons.Previous, stringResource(R.string.previous), iconSize = 32.dp) { player.previous() }
                 Box(
                     Modifier.size(66.dp).clip(CircleShape).background(Color.White).clickable { player.togglePlay() },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, "Play or pause", tint = Color(0xFF0E2226), modifier = Modifier.size(32.dp))
+                    Icon(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, stringResource(R.string.play_or_pause), tint = Color(0xFF0E2226), modifier = Modifier.size(32.dp))
                 }
-                IconSpot(GlowIcons.Next, "Next", iconSize = 32.dp) { player.next() }
+                IconSpot(GlowIcons.Next, stringResource(R.string.next), iconSize = 32.dp) { player.next() }
                 Box {
-                    IconSpot(GlowIcons.Repeat, "Repeat", tint = if (player.repeatMode == 0) GSoft else GHi) { player.cycleRepeat() }
+                    IconSpot(GlowIcons.Repeat, stringResource(R.string.repeat), tint = if (player.repeatMode == 0) GSoft else GHi) { player.cycleRepeat() }
                     if (player.repeatMode == 1) {
                         Text("1", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = GHi), modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp))
                     }
@@ -895,22 +905,24 @@ private fun outputIcon(output: Renderer?) = when {
 
 @Composable
 private fun OutputRow(output: Renderer?, onClick: () -> Unit) {
+    // "Playing on %s", with the output's name in bold wherever the language puts it.
+    val (before, after) = stringResource(R.string.playing_on).split("%s", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+    val name = output?.name ?: stringResource(R.string.this_phone)
     Column(Modifier.clickable(onClick = onClick)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
         Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(outputIcon(output), null, tint = GHi, modifier = Modifier.size(18.dp))
             Text(
                 buildAnnotatedString {
-                    append("Playing on ")
-                    withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.SemiBold)) {
-                        append(output?.name ?: "This phone")
-                    }
+                    append(before)
+                    withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.SemiBold)) { append(name) }
+                    append(after)
                 },
                 style = TextStyle(fontSize = 13.sp, color = GSoft),
                 modifier = Modifier.padding(start = 8.dp).weight(1f),
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
-            Text("Change", style = TextStyle(fontSize = 12.sp, color = GSoft))
+            Text(stringResource(R.string.change), style = TextStyle(fontSize = 12.sp, color = GSoft))
         }
     }
 }
@@ -940,13 +952,15 @@ private fun OutputSheet(player: PlayerHolder, onClose: () -> Unit) {
                 .padding(top = 10.dp, bottom = 14.dp),
         ) {
             Box(Modifier.align(Alignment.CenterHorizontally).size(36.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(GFaint))
-            Text("Play on", style = display(20), modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 10.dp))
-            OutputOption(GlowIcons.Phone, "This phone", "Headphones or Bluetooth", current == null) {
+            Text(stringResource(R.string.play_on), style = display(20), modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 10.dp))
+            OutputOption(GlowIcons.Phone, stringResource(R.string.this_phone), stringResource(R.string.this_phone_detail), current == null) {
                 player.playOn(null)
                 onClose()
             }
+            val speaker = stringResource(R.string.speaker)
+            val tv = stringResource(R.string.tv)
             renderers.forEach { r ->
-                OutputOption(outputIcon(r), r.name, r.model.ifEmpty { if (r.isSpeaker) "Speaker" else "TV" }, current == r) {
+                OutputOption(outputIcon(r), r.name, r.model.ifEmpty { if (r.isSpeaker) speaker else tv }, current == r) {
                     player.playOn(r)
                     onClose()
                 }
@@ -955,11 +969,13 @@ private fun OutputSheet(player: PlayerHolder, onClose: () -> Unit) {
             Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(6.dp).clip(CircleShape).background(GHi))
                 Text(
-                    when {
-                        found == null -> "Looking for speakers and TVs…"
-                        found!!.isEmpty() -> "No speakers or TVs found on this Wi-Fi"
-                        else -> "Found on this Wi-Fi"
-                    },
+                    stringResource(
+                        when {
+                            found == null -> R.string.outputs_looking
+                            found!!.isEmpty() -> R.string.outputs_none
+                            else -> R.string.outputs_found
+                        },
+                    ),
                     style = TextStyle(fontSize = 12.sp, color = GSoft),
                     modifier = Modifier.padding(start = 8.dp),
                 )
@@ -1028,7 +1044,7 @@ private fun MiniPlayer(album: Album, track: Track, player: PlayerHolder, modifie
                 Text(track.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
                 Text(track.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
             }
-            IconSpot(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, "Play or pause") { player.togglePlay() }
+            IconSpot(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, stringResource(R.string.play_or_pause)) { player.togglePlay() }
         }
         Box(Modifier.align(Alignment.BottomStart).fillMaxWidth(fraction).height(2.dp).background(Color.White))
     }

@@ -99,25 +99,16 @@ class MainActivity : ComponentActivity() {
 
     private fun rescan() {
         lifecycleScope.launch {
-            status = "Rescanning the Music folder…"
+            status = getString(R.string.rescan_started)
             val result = rescanMusicFolder(this@MainActivity) { scanned, total ->
-                status = "Rescanning… $scanned of ${files(total)}"
+                status = getString(R.string.rescan_progress, scanned, resources.getQuantityString(R.plurals.files, total, total))
             }
             library = loadLibrary(this@MainActivity)
-            status = when {
-                !result.complete -> "Rescan stopped early; rescan again to finish"
-                result.added == 0 && result.removed == 0 -> "Library is up to date"
-                else -> listOfNotNull(
-                    result.added.takeIf { it > 0 }?.let { "${files(it)} added" },
-                    result.removed.takeIf { it > 0 }?.let { "${files(it)} removed" },
-                ).joinToString(", ", prefix = "Library updated: ")
-            }
+            status = rescanSummary(resources, result)
             delay(4000)
             status = null
         }
     }
-
-    private fun files(n: Int) = if (n == 1) "1 file" else "$n files"
 
     override fun onDestroy() {
         player.release()
