@@ -7,4 +7,5 @@
     <string name="hidden_some">Hidden from the library. The files stay on the tablet.</string>
     <string name="about_summary">An offline music player. Plays from the Music folder, on this tablet or on speakers and TVs on the same Wi-Fi.</string>
     <string name="this_phone">This tablet</string>
+    <string name="notes_not_here">Not on this tablet</string>
 </resources>

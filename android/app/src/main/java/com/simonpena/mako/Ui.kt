@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.lazy.LazyListScope
@@ -200,7 +201,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
         value = withContext(Dispatchers.IO) { LinerNotes.open(LinerNotes.file(context)) }
         awaitDispose { value?.close() }
     }
-    val openAlbumAt = { path: String -> visible.firstOrNull { a -> a.tracks.any { it.path == path } }?.let { stack.add(Screen.AlbumDetail(it.id)) } }
+
     var undo by remember { mutableStateOf<Undo?>(null) }
 
     when (val screen = stack.last()) {
@@ -242,7 +243,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
                 onArtist = { stack.add(Screen.Shelf(currentTrack.artist) { it.artist == currentTrack.artist }) },
                 onQueue = { stack.add(Screen.Queue) },
-                onNotes = if (remember(currentTrack.path, notes) { notes?.album(currentTrack.path) != null }) ({ stack.add(Screen.SongNotes(currentTrack.path)) }) else null,
+                onOptions = { songSheet = currentTrack to currentAlbum },
             ) { stack.removeAt(stack.lastIndex) }
         Screen.Queue -> QueueScreen(player) { stack.removeAt(stack.lastIndex) }
         is Screen.SongNotes -> notes?.let { n ->
@@ -252,7 +253,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             AlbumNotesScreen(n, screen.path, onPerson = { stack.add(Screen.NotesPerson(it)) }) { stack.removeAt(stack.lastIndex) }
         }
         is Screen.NotesPerson -> notes?.let { n ->
-            NotesPersonScreen(n, screen.name, inLibrary = { path -> visible.any { a -> a.tracks.any { it.path == path } } }, onAlbum = { openAlbumAt(it) }) {
+            NotesPersonScreen(n, screen.name, libraryAlbum = { path -> visible.firstOrNull { a -> a.tracks.any { it.path == path } } }, onAlbum = { stack.add(Screen.AlbumDetail(it)) }) {
                 stack.removeAt(stack.lastIndex)
             }
         }
@@ -355,6 +356,17 @@ private fun PillButton(label: String, modifier: Modifier = Modifier, onClick: ()
         contentAlignment = Alignment.Center,
     ) {
         Text(label, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0B1A1A)))
+    }
+}
+
+/** The secondary action beside a [PillButton]: same shape, outlined. */
+@Composable
+private fun OutlinedPill(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier.height(48.dp).clip(CircleShape).border(1.dp, GSoft, CircleShape).clickable(onClick = onClick).padding(horizontal = 22.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
     }
 }
 
@@ -880,9 +892,9 @@ private fun AlbumScreen(
                 val details = listOfNotNull(album.year.takeIf { it > 0 }?.toString(), songCount(album.tracks.size), stringResource(R.string.minutes, minutes))
                 Text(details.joinToString(" · "), style = TextStyle(fontSize = 12.sp, color = GSoft))
                 Spacer(Modifier.height(4.dp))
-                PillButton(stringResource(R.string.play)) { onPlay(0) }
-                if (onNotes != null) {
-                    TextButton(onClick = onNotes) { Text(stringResource(R.string.liner_notes), style = body.copy(color = GHi)) }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    PillButton(stringResource(R.string.play)) { onPlay(0) }
+                    if (onNotes != null) OutlinedPill(stringResource(R.string.liner_notes), onClick = onNotes)
                 }
             }
         }
@@ -922,8 +934,10 @@ private fun NotesHeading(text: String) {
 }
 
 /**
- * Who made it, section by section, then "Also in your library": the people
- * and places here who are on other albums you have, most albums first.
+ * Who made it, section by section. Someone also on other albums of yours
+ * is a button (with how many, and a chevron) leading to those albums;
+ * everyone else is plain text. The name is the link: no colour code, no
+ * second list repeating them.
  */
 private fun LazyListScope.notesBody(sections: List<Pair<Section, List<Person>>>, linked: Map<String, List<NotesAlbum>>, onPerson: (String) -> Unit) {
     sections.forEach { (section, people) ->
@@ -931,25 +945,25 @@ private fun LazyListScope.notesBody(sections: List<Pair<Section, List<Person>>>,
             Column {
                 NotesHeading(stringResource(section.label))
                 people.forEach { p ->
-                    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 5.dp)) {
-                        Text(p.name, style = body.copy(color = if (p.name in linked) GHi else Color.White))
-                        if (p.roles.isNotEmpty()) Text(p.roles, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                    val others = linked[p.name]?.size ?: 0
+                    Row(
+                        Modifier.fillMaxWidth().then(if (others > 0) Modifier.clickable { onPerson(p.name) } else Modifier)
+                            .padding(horizontal = 20.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(p.name, style = body)
+                            if (p.roles.isNotEmpty()) Text(p.roles, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                        }
+                        if (others > 0) {
+                            Text(
+                                pluralStringResource(R.plurals.more_albums, others, others), style = TextStyle(fontSize = 12.sp, color = GSoft),
+                                modifier = Modifier.padding(start = 12.dp),
+                            )
+                            Text("›", style = TextStyle(fontSize = 20.sp, color = GSoft), modifier = Modifier.padding(start = 6.dp))
+                        }
                     }
                 }
-            }
-        }
-    }
-    if (linked.isNotEmpty()) {
-        item(key = "also") { NotesHeading(stringResource(R.string.notes_also)) }
-        items(linked.entries.sortedByDescending { it.value.size }, key = { "also:" + it.key }) { (name, albums) ->
-            val artists = albums.map { it.artist }.distinct()
-            val more = pluralStringResource(R.plurals.more_albums, albums.size, albums.size)
-            Row(Modifier.fillMaxWidth().clickable { onPerson(name) }.padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(name, style = body)
-                    Text("$more · ${artists.take(2).joinToString(", ")}${if (artists.size > 2) "…" else ""}", style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Text("›", style = TextStyle(fontSize = 20.sp, color = GSoft))
             }
         }
     }
@@ -998,26 +1012,44 @@ private fun AlbumNotesScreen(notes: LinerNotes, path: String, onPerson: (String)
     }
 }
 
-/** A person's or place's albums in the notes, by year, with what they did; those on this phone open. */
+/**
+ * A person's or place's albums in the notes, by year, with what they did.
+ * Those on this phone, with their cover, open; the rest are listed apart.
+ */
 @Composable
-private fun NotesPersonScreen(notes: LinerNotes, name: String, inLibrary: (String) -> Boolean, onAlbum: (String) -> Unit, onBack: () -> Unit) {
+private fun NotesPersonScreen(notes: LinerNotes, name: String, libraryAlbum: (String) -> Album?, onAlbum: (Long) -> Unit, onBack: () -> Unit) {
     val albums = rememberNotes(name) { notes.albumsWith(name, except = -1) }.orEmpty()
+    val (here, elsewhere) = albums.map { it to it.path?.let(libraryAlbum) }.partition { it.second != null }
     Column(Modifier.fillMaxSize().background(GBg).statusBarsPadding()) {
         LevelHeader(name, pluralStringResource(R.plurals.person_albums, albums.size, albums.size), onBack)
         LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) {
-            items(albums, key = { it.artist + "/" + it.title + "/" + it.year }) { a ->
-                val here = a.path?.let(inLibrary) == true
-                Column(
-                    Modifier.fillMaxWidth().then(if (here) Modifier.clickable { onAlbum(a.path!!) } else Modifier)
-                        .padding(horizontal = 20.dp, vertical = 10.dp),
+            items(here, key = { "here:" + it.second!!.id }) { (a, album) ->
+                Row(
+                    Modifier.fillMaxWidth().clickable { onAlbum(album!!.id) }.padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(a.title, style = body.copy(color = if (here) Color.White else GSoft))
-                    Text(listOfNotNull(a.artist, a.year.takeIf { it > 0 }?.toString(), a.roles).joinToString(" · "), style = TextStyle(fontSize = 12.sp, color = GSoft))
+                    AlbumArt(album!!.id, px = 112, corner = 4.dp, modifier = Modifier.size(44.dp))
+                    Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                        Text(a.title, style = body, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(notesAlbumDetail(a), style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Text("›", style = TextStyle(fontSize = 20.sp, color = GSoft), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+            if (elsewhere.isNotEmpty()) {
+                item(key = "elsewhere") { NotesHeading(stringResource(R.string.notes_not_here)) }
+                items(elsewhere, key = { (a, _) -> "elsewhere:" + a.artist + "/" + a.title + "/" + a.year }) { (a, _) ->
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
+                        Text(a.title, style = body)
+                        Text(notesAlbumDetail(a), style = TextStyle(fontSize = 12.sp, color = GSoft))
+                    }
                 }
             }
         }
     }
 }
+
+private fun notesAlbumDetail(a: NotesAlbum) = listOfNotNull(a.artist, a.year.takeIf { it > 0 }?.toString(), a.roles).joinToString(" · ")
 
 /** What's playing and what comes next, radio reasons included; tap a song to play it. */
 @Composable
@@ -1278,7 +1310,7 @@ internal fun NowPlaying(
     onAlbum: (() -> Unit)? = null,
     onArtist: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null,
-    onNotes: (() -> Unit)? = null,
+    onOptions: (() -> Unit)? = null,
     onClose: () -> Unit,
 ) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
@@ -1302,7 +1334,7 @@ internal fun NowPlaying(
                         modifier = if (onAlbum != null) Modifier.clickable(onClick = onAlbum) else Modifier,
                     )
                 }
-                if (onQueue != null) IconSpot(GlowIcons.Queue, stringResource(R.string.up_next), onClick = onQueue) else Spacer(Modifier.width(44.dp))
+                if (onOptions != null) IconSpot(GlowIcons.More, stringResource(R.string.song_options), onClick = onOptions) else Spacer(Modifier.width(44.dp))
             }
             AlbumArt(album.id, px = 560, corner = 10.dp, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.86f).aspectRatio(1f))
             Column {
@@ -1339,12 +1371,9 @@ internal fun NowPlaying(
                     }
                 }
             }
-            OutputRow(player.output) { outputs = true }
-            if (onNotes != null) {
-                Text(
-                    stringResource(R.string.liner_notes), style = TextStyle(fontSize = 13.sp, color = GHi),
-                    modifier = Modifier.clickable(onClick = onNotes).padding(vertical = 8.dp),
-                )
+            Row(verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.weight(1f)) { OutputRow(player.output) { outputs = true } }
+                if (onQueue != null) IconSpot(GlowIcons.Queue, stringResource(R.string.up_next), onClick = onQueue)
             }
         }
         if (outputs) OutputSheet(player) { outputs = false }

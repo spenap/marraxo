@@ -158,6 +158,13 @@ class LibraryUiTest {
         compose.waitUntil(5_000) { player.currentTrackId == 301L }
     }
 
+    @Test fun nowPlayingHasTheSongMenuToo() {
+        nowPlayingGuerra()
+        compose.onNodeWithContentDescription("Song options").performClick()
+        compose.onNodeWithText("Go to artist").performClick()
+        compose.onNodeWithText("1 album").assertExists()
+    }
+
     @Test fun nowPlayingLeadsToItsAlbumAndArtist() {
         nowPlayingGuerra()
         compose.onNodeWithText("Juan Luis Guerra").performClick()

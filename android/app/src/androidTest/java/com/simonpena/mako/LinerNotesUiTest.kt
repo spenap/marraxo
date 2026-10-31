@@ -3,7 +3,9 @@ package com.simonpena.mako
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -50,6 +52,7 @@ class LinerNotesUiTest {
             db.execSQL("INSERT INTO meta VALUES ('schema', '1')")
             db.execSQL("INSERT INTO album VALUES (258, 'x', 'Phil Collins', 'Face Value', 1981, 'Atlantic', NULL, 'XE', 'Face Value is the debut solo album by Phil Collins.', 'en', NULL)")
             db.execSQL("INSERT INTO album VALUES (260, 'z', 'Phil Collins', 'No Jacket Required', 1985, NULL, NULL, NULL, NULL, NULL, NULL)")
+            db.execSQL("INSERT INTO album VALUES (261, 'w', 'Phil Collins', 'But Seriously', 1989, NULL, NULL, NULL, NULL, NULL, NULL)") // not on the phone
             db.execSQL("INSERT INTO track VALUES ('$faceValue', 258, 'In the Air Tonight', 'r1')")
             db.execSQL("INSERT INTO track VALUES ('$sussudio', 260, 'Sussudio', 'r3')")
             listOf(
@@ -57,6 +60,7 @@ class LinerNotesUiTest {
                 "258, '$faceValue', 'producer', 'Hugh Padgham', ''",
                 "258, NULL, 'recorded at', 'The Town House', ''",
                 "260, NULL, 'recorded at', 'The Town House', ''",
+                "261, NULL, 'recorded at', 'The Town House', ''",
             ).forEach { db.execSQL("INSERT INTO credit VALUES ($it)") }
         }
         main { player = PlayerHolder(context) }
@@ -72,15 +76,23 @@ class LinerNotesUiTest {
 
     private fun main(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
 
+    /** The notes load off the main thread, which the test framework doesn't wait for. */
+    private fun waitFor(text: String) = compose.waitUntil(5_000) {
+        compose.onAllNodesWithText(text, ignoreCase = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
     @Test fun aSongsNotesShowWhoMadeItAndLeadToTheirOtherAlbums() {
         compose.onNodeWithText("Face Value").performClick()
         compose.onAllNodesWithContentDescription("Song options")[0].performClick()
         compose.onNodeWithText("Song notes").performClick()
-        compose.onNodeWithText("Played by", ignoreCase = true).assertExists()
+        waitFor("Played by")
         compose.onNodeWithText("Daryl Stuermer").assertExists()
         compose.onNodeWithText("guitar").assertExists()
-        compose.onNodeWithText("Also in your library", ignoreCase = true).performScrollTo()
-        compose.onNodeWithText("1 more album · Phil Collins").performClick() // The Town House
+        compose.onNodeWithText("Daryl Stuermer").assertHasNoClickAction() // on no other album of yours
+        compose.onNodeWithText("Also in your library", ignoreCase = true).assertDoesNotExist() // the names are the links
+        compose.onNodeWithText("The Town House").performScrollTo().performClick()
+        waitFor("Not on this phone")
+        compose.onNodeWithText("But Seriously").assertHasNoClickAction()
         compose.onNodeWithText("No Jacket Required").performClick() // the place's albums, by year
         compose.onNodeWithText("Sussudio").assertExists() // the album in the library
     }
@@ -88,7 +100,7 @@ class LinerNotesUiTest {
     @Test fun anAlbumsNotesTellItsStory() {
         compose.onNodeWithText("Face Value").performClick()
         compose.onNodeWithText("Liner notes").performClick()
-        compose.onNodeWithText("Face Value is the debut solo album by Phil Collins.").assertExists()
+        waitFor("Face Value is the debut solo album by Phil Collins.")
         compose.onNodeWithText("Wikipedia · CC BY-SA 4.0").assertExists()
         compose.onNodeWithText("Recorded at", ignoreCase = true).assertExists()
     }

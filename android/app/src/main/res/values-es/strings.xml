@@ -80,7 +80,7 @@
     <string name="play">Reproducir</string>
 
     <!-- Hidden -->
-    <string name="hidden_none">No hay nada oculto. Mantén pulsado un álbum o una canción para ocultarlo.</string>
+    <string name="hidden_none">No hay nada oculto. Oculta una canción desde su menú ⋮, o un álbum manteniéndolo pulsado.</string>
     <string name="hidden_some">Ocultos en la biblioteca. Los archivos siguen en el teléfono.</string>
     <string name="show">Mostrar</string>
 
@@ -138,7 +138,6 @@
     <string name="notes_played">Tocada por</string>
     <string name="notes_produced">Producción y sonido</string>
     <string name="notes_recorded">Grabada en</string>
-    <string name="notes_also">También en tu biblioteca</string>
     <string name="notes_wikipedia">Wikipedia · CC BY-SA 4.0</string>
     <plurals name="more_albums">
         <item quantity="one">%d álbum más</item>
@@ -148,4 +147,5 @@
         <item quantity="one">En %d álbum</item>
         <item quantity="other">En %d álbumes</item>
     </plurals>
+    <string name="notes_not_here">No están en este teléfono</string>
 </resources>

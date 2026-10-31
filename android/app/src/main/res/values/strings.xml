@@ -85,7 +85,7 @@
     <string name="play">Play</string>
 
     <!-- Hidden -->
-    <string name="hidden_none">Nothing is hidden. Long-press an album or a song to hide it.</string>
+    <string name="hidden_none">Nothing is hidden. Hide a song from its ⋮ menu, or an album with a long press.</string>
     <string name="hidden_some">Hidden from the library. The files stay on the phone.</string>
     <string name="show">Show</string>
 
@@ -153,7 +153,6 @@
     <string name="notes_played">Played by</string>
     <string name="notes_produced">Produced and engineered by</string>
     <string name="notes_recorded">Recorded at</string>
-    <string name="notes_also">Also in your library</string>
     <string name="notes_wikipedia">Wikipedia · CC BY-SA 4.0</string>
     <plurals name="more_albums">
         <item quantity="one">%d more album</item>
@@ -164,4 +163,6 @@
         <item quantity="one">On %d album</item>
         <item quantity="other">On %d albums</item>
     </plurals>
+    <!-- On a person's or studio's page: their albums that aren't copied to this phone -->
+    <string name="notes_not_here">Not on this phone</string>
 </resources>

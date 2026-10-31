@@ -6,4 +6,5 @@
     <string name="hidden_some">Agochados na biblioteca. Os ficheiros seguen na tableta.</string>
     <string name="about_summary">Un reprodutor de música sen conexión. Reproduce o cartafol Music nesta tableta ou en altofalantes e televisores da mesma wifi.</string>
     <string name="this_phone">Esta tableta</string>
+    <string name="notes_not_here">Non están nesta tableta</string>
 </resources>

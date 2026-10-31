@@ -80,7 +80,7 @@
     <string name="play">Reproducir</string>
 
     <!-- Hidden -->
-    <string name="hidden_none">Non hai nada agochado. Mantén premido un álbum ou unha canción para agochalo.</string>
+    <string name="hidden_none">Non hai nada agochado. Agocha unha canción desde o seu menú ⋮, ou un álbum mantendo premido.</string>
     <string name="hidden_some">Agochados na biblioteca. Os ficheiros seguen no teléfono.</string>
     <string name="show">Amosar</string>
 
@@ -138,7 +138,6 @@
     <string name="notes_played">Tocada por</string>
     <string name="notes_produced">Produción e son</string>
     <string name="notes_recorded">Gravada en</string>
-    <string name="notes_also">Tamén na túa biblioteca</string>
     <string name="notes_wikipedia">Wikipedia · CC BY-SA 4.0</string>
     <plurals name="more_albums">
         <item quantity="one">%d álbum máis</item>
@@ -148,4 +147,5 @@
         <item quantity="one">En %d álbum</item>
         <item quantity="other">En %d álbums</item>
     </plurals>
+    <string name="notes_not_here">Non están neste teléfono</string>
 </resources>
