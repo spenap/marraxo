@@ -307,6 +307,12 @@ the desktop.
       `Android/data/com.simonpena.mako/files/`, when it changed: readable
       without a permission, writable by adb on Android 8 to 17). 384
       albums, 381 matched, 234 with a story, 30,162 credits.
+- [x] App: reading the notes (2026-10-31): `LinerNotes.kt` opens the
+      database read-only (refusing schemas it doesn't know), groups
+      credits into written / played / produced / recorded, and finds the
+      other albums a person or place is on. Tracks now carry their path
+      inside the Music folder: 2,106 of the Nexus 4's 2,130 files match a
+      track in the notes (the rest: the 3 albums MusicBrainz didn't know).
 - [ ] App: a Liner notes screen for track, album and artist. Credits,
       studios and dates, "first released on", other versions in your
       library, and connections between your albums through shared

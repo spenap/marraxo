@@ -25,6 +25,8 @@ data class Track(
     val durationMs: Long,
     val number: Int,
     val uri: Uri,
+    /** Inside the Music folder ("Altan/The Blue Idol/01 Daily Growing.mp3"): how the liner notes know it. */
+    val path: String = "",
 )
 
 data class Album(
@@ -72,6 +74,24 @@ private fun musicFolderSelection(): Pair<String, Array<String>> =
         "${MediaStore.Audio.Media.DATA} LIKE ?" to arrayOf("$root/%")
     }
 
+@Suppress("DEPRECATION") // DATA: the file path on API 27–28
+private fun pathColumns(): Array<String> =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) arrayOf(MediaStore.Audio.Media.RELATIVE_PATH, MediaStore.Audio.Media.DISPLAY_NAME)
+    else arrayOf(MediaStore.Audio.Media.DATA)
+
+/** Reads the current row's path inside the Music folder ([musicPath]). */
+@Suppress("DEPRECATION")
+private fun pathReader(c: android.database.Cursor): () -> String =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val rel = c.getColumnIndexOrThrow(MediaStore.Audio.Media.RELATIVE_PATH)
+        val name = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+        ({ musicPath(c.getString(rel).orEmpty(), c.getString(name).orEmpty()) })
+    } else {
+        val data = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+        val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).absolutePath
+        ({ musicPathFromFile(c.getString(data).orEmpty(), root) })
+    }
+
 /** Reads the audio files in the Music folder from Android's MediaStore, grouped into albums. */
 suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers.IO) {
     val m = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
@@ -84,6 +104,7 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
         MediaStore.Audio.Media.DURATION,
         MediaStore.Audio.Media.TRACK,
         MediaStore.Audio.Media.YEAR,
+        *pathColumns(),
     )
     val tracks = mutableListOf<Track>()
     val years = mutableMapOf<Long, Int>()
@@ -98,6 +119,7 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
         val duration = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
         val track = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
         val year = c.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+        val path = pathReader(c)
         while (c.moveToNext()) {
             val trackId = c.getLong(id)
             val aId = c.getLong(albumId)
@@ -110,6 +132,7 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
                 durationMs = c.getLong(duration),
                 number = c.getInt(track) % 1000, // stored as disc * 1000 + track
                 uri = ContentUris.withAppendedId(m, trackId),
+                path = path(),
             )
             if (!c.isNull(year)) years[aId] = c.getInt(year)
         }
