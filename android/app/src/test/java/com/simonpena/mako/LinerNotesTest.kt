@@ -36,6 +36,7 @@ class LinerNotesTest {
             db.execSQL("INSERT INTO album VALUES (342, 'w', 'The Police', 'Greatest Hits', 1986, NULL, NULL, NULL, NULL, NULL, NULL)")
             db.execSQL("INSERT INTO track VALUES ('$faceValue', 258, 'In the Air Tonight', 'r1')")
             db.execSQL("INSERT INTO track VALUES ('$partings', 314, 'The Valley of Strathmore', 'r2')")
+            db.execSQL("INSERT INTO track VALUES ('Phil Collins/No Jacket Required/01 Sussudio.mp3', 260, 'Sussudio', 'r3')")
             listOf(
                 "258, '$faceValue', 'composer', 'Phil Collins', ''",
                 "258, '$faceValue', 'lyricist', 'Phil Collins', ''",
@@ -90,7 +91,7 @@ class LinerNotesTest {
     @Test fun `who links this album to others in the library, by year`() {
         val n = LinerNotes.open(notes())!!
         assertEquals(
-            listOf(NotesAlbum("Phil Collins", "No Jacket Required", 1985, "recorded at, mixed at")),
+            listOf(NotesAlbum("Phil Collins", "No Jacket Required", 1985, "recorded at, mixed at", "Phil Collins/No Jacket Required/01 Sussudio.mp3")),
             n.albumsWith("The Town House", except = 258),
         )
         assertEquals(listOf("Greatest Hits"), n.albumsWith("Hugh Padgham", except = 258).map { it.title })
@@ -107,6 +108,27 @@ class LinerNotesTest {
             ),
             LinerNotes.open(notes())!!.links(listOf(faceValue, partings, unknown)),
         )
+    }
+
+    @Test fun `an album's people from all its credits, each once`() {
+        val n = LinerNotes.open(notes())!!
+        assertEquals(
+            listOf(
+                Section.Written to listOf(Person("Phil Collins", "music, lyrics")),
+                Section.Played to listOf(Person("Daryl Stuermer", "guitar"), Person("Phil Collins", "lead vocals")),
+                Section.Produced to listOf(Person("Hugh Padgham", "producer, engineer")),
+                Section.Recorded to listOf(Person("The Town House", "")),
+            ),
+            n.albumSections(258),
+        )
+    }
+
+    @Test fun `who on a screen is also on other albums, found in one go`() {
+        val n = LinerNotes.open(notes())!!
+        val linked = n.linked(listOf("Phil Collins", "Hugh Padgham", "The Town House", "Daryl Stuermer"), except = 258)
+        assertEquals(setOf("Hugh Padgham", "The Town House"), linked.keys) // Phil Collins is credited only on Face Value here
+        assertEquals(listOf("Greatest Hits"), linked.getValue("Hugh Padgham").map { it.title })
+        assertEquals(null, linked.getValue("Hugh Padgham")[0].path) // no tracks of it in the notes: not openable
     }
 
     @Test fun `a track the notes don't know has none`() {

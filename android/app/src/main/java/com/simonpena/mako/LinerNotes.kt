@@ -34,18 +34,36 @@ class LinerNotes private constructor(private val db: SQLiteDatabase) : Closeable
         }
 
     /** The other albums a person or place appears on, by year, with what they did there. */
-    fun albumsWith(name: String, except: Long): List<NotesAlbum> =
+    fun albumsWith(name: String, except: Long): List<NotesAlbum> = linked(listOf(name), except)[name].orEmpty()
+
+    /**
+     * Of [names], those on albums other than [except], with those albums by
+     * year: "Also in your library". One pass over the credits for a whole screen.
+     */
+    fun linked(names: Collection<String>, except: Long): Map<String, List<NotesAlbum>> {
+        if (names.isEmpty()) return emptyMap()
+        val byName = LinkedHashMap<String, LinkedHashMap<Long, Pair<NotesAlbum, LinkedHashSet<String>>>>()
         db.rawQuery(
-            "SELECT a.id, a.artist, a.title, a.year, c.role FROM credit c JOIN album a ON a.id = c.album_id " +
-                "WHERE c.name = ? AND a.id != ? ORDER BY c.rowid",
-            arrayOf(name, except.toString()),
+            "SELECT c.name, a.id, a.artist, a.title, a.year, c.role, (SELECT MIN(path) FROM track t WHERE t.album_id = a.id) " +
+                "FROM credit c JOIN album a ON a.id = c.album_id " +
+                "WHERE c.name IN (${names.joinToString { "?" }}) AND a.id != ? ORDER BY c.rowid",
+            (names.toList() + except.toString()).toTypedArray(),
         ).use { c ->
-            val roles = LinkedHashMap<Long, Pair<NotesAlbum, LinkedHashSet<String>>>()
             while (c.moveToNext()) {
-                val (_, set) = roles.getOrPut(c.getLong(0)) { NotesAlbum(c.getString(1), c.getString(2), c.getInt(3), "") to LinkedHashSet() }
-                set += c.getString(4)
+                val albums = byName.getOrPut(c.getString(0)) { LinkedHashMap() }
+                val (_, roles) = albums.getOrPut(c.getLong(1)) { NotesAlbum(c.getString(2), c.getString(3), c.getInt(4), "", c.getString(6)) to LinkedHashSet() }
+                roles += c.getString(5)
             }
-            roles.values.map { (a, set) -> a.copy(roles = set.joinToString(", ")) }.sortedWith(compareBy({ it.year }, { it.title }))
+        }
+        return byName.mapValues { (_, albums) ->
+            albums.values.map { (a, roles) -> a.copy(roles = roles.joinToString(", ")) }.sortedWith(compareBy({ it.year }, { it.title }))
+        }
+    }
+
+    /** An album's people and places, from all its credits, as the screen groups them. */
+    fun albumSections(albumId: Long): List<Pair<Section, List<Person>>> =
+        db.rawQuery("SELECT role, name, detail FROM credit WHERE album_id = ? ORDER BY rowid", arrayOf(albumId.toString())).use { c ->
+            sections(buildList { while (c.moveToNext()) add(Credit(c.getString(0), c.getString(1), c.getString(2).orEmpty())) })
         }
 
     /**
@@ -125,8 +143,8 @@ data class AlbumNotes(
 
 data class TrackNotes(val title: String, val album: AlbumNotes, val sections: List<Pair<Section, List<Person>>>)
 
-/** Another album a person or place appears on. */
-data class NotesAlbum(val artist: String, val title: String, val year: Int, val roles: String)
+/** Another album a person or place appears on; [path]: one of its tracks, to find it in the library (null if the notes have none). */
+data class NotesAlbum(val artist: String, val title: String, val year: Int, val roles: String, val path: String? = null)
 
 /** Someone or somewhere in a section, with what they did ("guitar", "producer, engineer"). */
 data class Person(val name: String, val roles: String)
