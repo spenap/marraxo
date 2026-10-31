@@ -354,6 +354,15 @@ Parked:
 - Year in review story cards (A4) before a year of history exists.
 - Merging favourites and play history across both phones.
 - Musepack (.mpc) conversion for the 10 tracks Android can't play.
+- Chromecast as an output, from the app (not the system Cast tile). The
+  Cast SDK needs Google Play Services (ruled out), but Cast v2 is open
+  enough: mDNS discovery (`_googlecast._tcp`, NsdManager), TLS on port
+  8009 with protobuf messages, launch the Default Media Receiver and give
+  it a URL from Mako's media server. A `CastPlayer` beside `RendererPlayer`
+  behind the same session swap. The Chromecast itself needs Internet to
+  load its receiver; the phone doesn't. Need: the user owns one.
+- Mako quick-settings tiles (`TileService`): "Playing on…" to switch
+  output, and a sleep timer.
 - Gesture navigation on the Nexus 4. Android 8.1 has no system gestures
   (they arrived in 9 and 10), so it would be in-app: swipe from the edge
   to go back and swipe down to close Now Playing, once the navigation
