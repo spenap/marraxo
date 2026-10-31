@@ -132,4 +132,20 @@
     <string name="song_hidden">Canción oculta</string>
     <string name="undo">Deshacer</string>
     <string name="up_next">A continuación</string>
+    <string name="liner_notes">Notas del disco</string>
+    <string name="song_notes">Notas de la canción</string>
+    <string name="notes_written">Escrita por</string>
+    <string name="notes_played">Tocada por</string>
+    <string name="notes_produced">Producción y sonido</string>
+    <string name="notes_recorded">Grabada en</string>
+    <string name="notes_also">También en tu biblioteca</string>
+    <string name="notes_wikipedia">Wikipedia · CC BY-SA 4.0</string>
+    <plurals name="more_albums">
+        <item quantity="one">%d álbum más</item>
+        <item quantity="other">%d álbumes más</item>
+    </plurals>
+    <plurals name="person_albums">
+        <item quantity="one">En %d álbum</item>
+        <item quantity="other">En %d álbumes</item>
+    </plurals>
 </resources>

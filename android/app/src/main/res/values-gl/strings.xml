@@ -132,4 +132,20 @@
     <string name="song_hidden">Canción agochada</string>
     <string name="undo">Desfacer</string>
     <string name="up_next">A continuación</string>
+    <string name="liner_notes">Notas do disco</string>
+    <string name="song_notes">Notas da canción</string>
+    <string name="notes_written">Escrita por</string>
+    <string name="notes_played">Tocada por</string>
+    <string name="notes_produced">Produción e son</string>
+    <string name="notes_recorded">Gravada en</string>
+    <string name="notes_also">Tamén na túa biblioteca</string>
+    <string name="notes_wikipedia">Wikipedia · CC BY-SA 4.0</string>
+    <plurals name="more_albums">
+        <item quantity="one">%d álbum máis</item>
+        <item quantity="other">%d álbums máis</item>
+    </plurals>
+    <plurals name="person_albums">
+        <item quantity="one">En %d álbum</item>
+        <item quantity="other">En %d álbums</item>
+    </plurals>
 </resources>

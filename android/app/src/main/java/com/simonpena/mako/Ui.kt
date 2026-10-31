@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -137,6 +138,10 @@ private sealed interface Screen {
     data object Search : Screen
     data object Licences : Screen
     data object Queue : Screen
+    /** Liner notes: a song's, an album's (by one of its tracks' path), and a person's or place's albums. */
+    data class SongNotes(val path: String) : Screen
+    data class AlbumNotes(val path: String) : Screen
+    data class NotesPerson(val name: String) : Screen
     /** An artist's or a genre's albums: a level below the tab it was opened from. */
     class Shelf(val title: String, val matches: (Album) -> Boolean) : Screen {
         val grid = LazyGridState() // kept while an album is open on top
@@ -191,6 +196,11 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     // "Same people" needs the liner notes on the phone.
     val radioModes = remember { RadioMode.entries.filter { it != RadioMode.People || LinerNotes.file(context).exists() } }
     var songSheet by remember { mutableStateOf<Pair<Track, Album>?>(null) }
+    val notes by produceState<LinerNotes?>(null) {
+        value = withContext(Dispatchers.IO) { LinerNotes.open(LinerNotes.file(context)) }
+        awaitDispose { value?.close() }
+    }
+    val openAlbumAt = { path: String -> visible.firstOrNull { a -> a.tracks.any { it.path == path } }?.let { stack.add(Screen.AlbumDetail(it.id)) } }
     var undo by remember { mutableStateOf<Undo?>(null) }
 
     when (val screen = stack.last()) {
@@ -222,6 +232,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onBack = { stack.removeAt(stack.lastIndex) },
                 onPlay = { player.play(album.tracks, it) },
                 onOptions = { songSheet = it to album },
+                onNotes = remember(album.id, notes) { album.tracks.firstOrNull { notes?.album(it.path) != null } }?.let { t -> { stack.add(Screen.AlbumNotes(t.path)) } },
             )
         }
         Screen.NowPlaying ->
@@ -231,8 +242,20 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
                 onArtist = { stack.add(Screen.Shelf(currentTrack.artist) { it.artist == currentTrack.artist }) },
                 onQueue = { stack.add(Screen.Queue) },
+                onNotes = if (remember(currentTrack.path, notes) { notes?.album(currentTrack.path) != null }) ({ stack.add(Screen.SongNotes(currentTrack.path)) }) else null,
             ) { stack.removeAt(stack.lastIndex) }
         Screen.Queue -> QueueScreen(player) { stack.removeAt(stack.lastIndex) }
+        is Screen.SongNotes -> notes?.let { n ->
+            SongNotesScreen(n, screen.path, onPerson = { stack.add(Screen.NotesPerson(it)) }) { stack.removeAt(stack.lastIndex) }
+        }
+        is Screen.AlbumNotes -> notes?.let { n ->
+            AlbumNotesScreen(n, screen.path, onPerson = { stack.add(Screen.NotesPerson(it)) }) { stack.removeAt(stack.lastIndex) }
+        }
+        is Screen.NotesPerson -> notes?.let { n ->
+            NotesPersonScreen(n, screen.name, inLibrary = { path -> visible.any { a -> a.tracks.any { it.path == path } } }, onAlbum = { openAlbumAt(it) }) {
+                stack.removeAt(stack.lastIndex)
+            }
+        }
     }
     if (stack.last() != Screen.NowPlaying && stack.last() != Screen.Queue && currentAlbum != null && currentTrack != null) {
         Box(Modifier.fillMaxSize()) {
@@ -258,6 +281,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             onPlayNext = { player.playNext(track) },
             onRadio = { mode -> player.startRadio(track, mode, context.getString(mode.label)) },
             onArtist = { stack.add(Screen.Shelf(track.artist) { it.artist == track.artist }) },
+            onNotes = if (remember(track.path, notes) { notes?.album(track.path) != null }) ({ stack.add(Screen.SongNotes(track.path)) }) else null,
             onHide = {
                 hidden.hide(track)
                 undo = Undo(R.string.song_hidden) { hidden.showTrack(track.key) }
@@ -829,6 +853,7 @@ private fun AlbumScreen(
     onBack: () -> Unit,
     onPlay: (Int) -> Unit,
     onOptions: (Track) -> Unit,
+    onNotes: (() -> Unit)?,
 ) {
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
@@ -856,6 +881,9 @@ private fun AlbumScreen(
                 Text(details.joinToString(" · "), style = TextStyle(fontSize = 12.sp, color = GSoft))
                 Spacer(Modifier.height(4.dp))
                 PillButton(stringResource(R.string.play)) { onPlay(0) }
+                if (onNotes != null) {
+                    TextButton(onClick = onNotes) { Text(stringResource(R.string.liner_notes), style = body.copy(color = GHi)) }
+                }
             }
         }
         itemsIndexed(album.tracks, key = { _, t -> t.id }) { i, track ->
@@ -872,6 +900,120 @@ private fun AlbumScreen(
                 Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
                 IconSpot(GlowIcons.More, stringResource(R.string.song_options), tint = GSoft) { onOptions(track) }
+            }
+        }
+    }
+}
+
+/** A section's heading on the liner notes screens. */
+private val Section.label get() = when (this) {
+    Section.Written -> R.string.notes_written
+    Section.Played -> R.string.notes_played
+    Section.Produced -> R.string.notes_produced
+    Section.Recorded -> R.string.notes_recorded
+}
+
+@Composable
+private fun NotesHeading(text: String) {
+    Text(
+        text.uppercase(), style = TextStyle(fontSize = 11.sp, letterSpacing = .8.sp, color = GSoft, fontWeight = FontWeight.SemiBold),
+        modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 6.dp),
+    )
+}
+
+/**
+ * Who made it, section by section, then "Also in your library": the people
+ * and places here who are on other albums you have, most albums first.
+ */
+private fun LazyListScope.notesBody(sections: List<Pair<Section, List<Person>>>, linked: Map<String, List<NotesAlbum>>, onPerson: (String) -> Unit) {
+    sections.forEach { (section, people) ->
+        item(key = section.name) {
+            Column {
+                NotesHeading(stringResource(section.label))
+                people.forEach { p ->
+                    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 5.dp)) {
+                        Text(p.name, style = body.copy(color = if (p.name in linked) GHi else Color.White))
+                        if (p.roles.isNotEmpty()) Text(p.roles, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                    }
+                }
+            }
+        }
+    }
+    if (linked.isNotEmpty()) {
+        item(key = "also") { NotesHeading(stringResource(R.string.notes_also)) }
+        items(linked.entries.sortedByDescending { it.value.size }, key = { "also:" + it.key }) { (name, albums) ->
+            val artists = albums.map { it.artist }.distinct()
+            val more = pluralStringResource(R.plurals.more_albums, albums.size, albums.size)
+            Row(Modifier.fillMaxWidth().clickable { onPerson(name) }.padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(name, style = body)
+                    Text("$more · ${artists.take(2).joinToString(", ")}${if (artists.size > 2) "…" else ""}", style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text("›", style = TextStyle(fontSize = 20.sp, color = GSoft))
+            }
+        }
+    }
+}
+
+/** Liner notes queries scan the credits: off the main thread, which the Nexus 4 notices. */
+@Composable
+private fun <T> rememberNotes(vararg keys: Any, query: () -> T): T? =
+    produceState<T?>(null, *keys) { value = withContext(Dispatchers.IO) { query() } }.value
+
+@Composable
+private fun SongNotesScreen(notes: LinerNotes, path: String, onPerson: (String) -> Unit, onBack: () -> Unit) {
+    val data = rememberNotes(path) {
+        notes.track(path)?.let { t -> t to notes.linked(t.sections.flatMap { (_, ps) -> ps.map { it.name } }.distinct(), except = t.album.id) }
+    }
+    Column(Modifier.fillMaxSize().background(GBg).statusBarsPadding()) {
+        val (t, linked) = data ?: return@Column LevelHeader("", "", onBack)
+        LevelHeader(t.title, listOfNotNull(t.album.artist, t.album.title, t.album.year.takeIf { it > 0 }?.toString()).joinToString(" · "), onBack)
+        LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) { notesBody(t.sections, linked, onPerson) }
+    }
+}
+
+@Composable
+private fun AlbumNotesScreen(notes: LinerNotes, path: String, onPerson: (String) -> Unit, onBack: () -> Unit) {
+    val data = rememberNotes(path) {
+        notes.album(path)?.let { a ->
+            val sections = notes.albumSections(a.id)
+            Triple(a, sections, notes.linked(sections.flatMap { (_, ps) -> ps.map { it.name } }.distinct(), except = a.id))
+        }
+    }
+    Column(Modifier.fillMaxSize().background(GBg).statusBarsPadding()) {
+        val (a, sections, linked) = data ?: return@Column LevelHeader("", "", onBack)
+        val detail = listOfNotNull(a.artist, a.year.takeIf { it > 0 }?.toString(), listOfNotNull(a.label, a.catno).joinToString(" ").ifEmpty { null }, a.country)
+        LevelHeader(a.title, detail.joinToString(" · "), onBack)
+        LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) {
+            a.summary?.let { story ->
+                item(key = "story") {
+                    Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                        Text(story, style = body.copy(lineHeight = 21.sp))
+                        Text(stringResource(R.string.notes_wikipedia), style = TextStyle(fontSize = 11.sp, color = GSoft), modifier = Modifier.padding(top = 6.dp))
+                    }
+                }
+            }
+            notesBody(sections, linked, onPerson)
+        }
+    }
+}
+
+/** A person's or place's albums in the notes, by year, with what they did; those on this phone open. */
+@Composable
+private fun NotesPersonScreen(notes: LinerNotes, name: String, inLibrary: (String) -> Boolean, onAlbum: (String) -> Unit, onBack: () -> Unit) {
+    val albums = rememberNotes(name) { notes.albumsWith(name, except = -1) }.orEmpty()
+    Column(Modifier.fillMaxSize().background(GBg).statusBarsPadding()) {
+        LevelHeader(name, pluralStringResource(R.plurals.person_albums, albums.size, albums.size), onBack)
+        LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 24.dp)) {
+            items(albums, key = { it.artist + "/" + it.title + "/" + it.year }) { a ->
+                val here = a.path?.let(inLibrary) == true
+                Column(
+                    Modifier.fillMaxWidth().then(if (here) Modifier.clickable { onAlbum(a.path!!) } else Modifier)
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                ) {
+                    Text(a.title, style = body.copy(color = if (here) Color.White else GSoft))
+                    Text(listOfNotNull(a.artist, a.year.takeIf { it > 0 }?.toString(), a.roles).joinToString(" · "), style = TextStyle(fontSize = 12.sp, color = GSoft))
+                }
             }
         }
     }
@@ -939,6 +1081,7 @@ private fun SongSheet(
     onPlayNext: () -> Unit,
     onRadio: (RadioMode) -> Unit,
     onArtist: () -> Unit,
+    onNotes: (() -> Unit)?,
     onHide: () -> Unit,
 ) {
     var radio by remember(track.id) { mutableStateOf(false) }
@@ -963,6 +1106,7 @@ private fun SongSheet(
             SheetItem(stringResource(R.string.start_radio)) { radio = !radio }
             if (radio) radioModes.forEach { mode -> SheetItem(stringResource(mode.label), indent = true) { onRadio(mode); onDismiss() } }
             SheetItem(stringResource(R.string.go_to_artist)) { onArtist(); onDismiss() }
+            if (onNotes != null) SheetItem(stringResource(R.string.song_notes)) { onNotes(); onDismiss() }
             Box(Modifier.padding(vertical = 4.dp).fillMaxWidth().height(1.dp).background(GFaint))
             SheetItem(stringResource(R.string.hide_song), color = GWarn) { onHide(); onDismiss() }
         }
@@ -1127,6 +1271,7 @@ internal fun NowPlaying(
     onAlbum: (() -> Unit)? = null,
     onArtist: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null,
+    onNotes: (() -> Unit)? = null,
     onClose: () -> Unit,
 ) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
@@ -1188,6 +1333,12 @@ internal fun NowPlaying(
                 }
             }
             OutputRow(player.output) { outputs = true }
+            if (onNotes != null) {
+                Text(
+                    stringResource(R.string.liner_notes), style = TextStyle(fontSize = 13.sp, color = GHi),
+                    modifier = Modifier.clickable(onClick = onNotes).padding(vertical = 8.dp),
+                )
+            }
         }
         if (outputs) OutputSheet(player) { outputs = false }
     }

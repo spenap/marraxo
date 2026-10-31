@@ -146,4 +146,22 @@
     <string name="undo">Undo</string>
     <!-- The queue, from Now Playing -->
     <string name="up_next">Up next</string>
+    <!-- Liner notes: who wrote, played, produced and recorded, from MusicBrainz and Wikipedia -->
+    <string name="liner_notes">Liner notes</string>
+    <string name="song_notes">Song notes</string>
+    <string name="notes_written">Written by</string>
+    <string name="notes_played">Played by</string>
+    <string name="notes_produced">Produced and engineered by</string>
+    <string name="notes_recorded">Recorded at</string>
+    <string name="notes_also">Also in your library</string>
+    <string name="notes_wikipedia">Wikipedia · CC BY-SA 4.0</string>
+    <plurals name="more_albums">
+        <item quantity="one">%d more album</item>
+        <item quantity="other">%d more albums</item>
+    </plurals>
+    <!-- A person or studio: on how many albums in the notes -->
+    <plurals name="person_albums">
+        <item quantity="one">On %d album</item>
+        <item quantity="other">On %d albums</item>
+    </plurals>
 </resources>
