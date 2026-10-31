@@ -7,11 +7,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import kotlin.random.Random
+import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.Canvas
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
@@ -178,10 +177,12 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     // What the library shows; the player above still finds hidden tracks it is playing.
     val visible = remember(library, hidden.albums, hidden.tracks) { hidden.filter(library) }
     val libraryState = remember { LibraryState() }
+    val context = LocalContext.current
+    val look = remember { Look(context) }
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
-            visible, libraryState, hasMini = currentTrack != null, status = status,
+            visible, libraryState, look, hasMini = currentTrack != null, status = status,
             onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
             onSearch = { stack.add(Screen.Search) }, onHide = hidden::hide, home = home,
         ) { stack.add(Screen.AlbumDetail(it)) }
@@ -295,8 +296,9 @@ private class LibraryState {
     var tab by mutableStateOf(Tab.Albums)
     var filter by mutableStateOf<LibraryFilter?>(null)
     var family by mutableStateOf<String?>(null) // the genre family open on the Genres tab
-    var genreVisit by mutableIntStateOf(Random.nextInt(1000)) // each visit to Genres shows other covers
+    var visit by mutableIntStateOf(Random.nextInt(1000)) // each arrival on a tab shows other covers on its tiles
     val genreGrid = LazyGridState()
+    val artistGrid = LazyGridState()
     val grid = LazyGridState()
     val lists = Tab.entries.associateWith { LazyListState() } // each tab keeps its own scroll
 }
@@ -305,6 +307,7 @@ private class LibraryState {
 private fun LibraryScreen(
     library: List<Album>,
     state: LibraryState,
+    look: Look,
     hasMini: Boolean,
     status: String?,
     onRescan: () -> Unit,
@@ -326,6 +329,10 @@ private fun LibraryScreen(
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = GSheet) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.menu_rescan), style = body) }, onClick = { menu = false; onRescan() })
                     DropdownMenuItem(text = { Text(stringResource(R.string.menu_hidden), style = body) }, onClick = { menu = false; onHidden() })
+                    DropdownMenuItem(
+                        text = { Text(stringResource(if (look.tiles) R.string.menu_show_lists else R.string.menu_show_tiles), style = body) },
+                        onClick = { menu = false; look.tiles = !look.tiles },
+                    )
                     DropdownMenuItem(text = { Text(stringResource(R.string.menu_about), style = body) }, onClick = { menu = false; onAbout() })
                     if (home.isHome) {
                         DropdownMenuItem(text = { Text(stringResource(R.string.menu_android_settings), style = body) }, onClick = { menu = false; home.onAndroidSettings() })
@@ -343,7 +350,7 @@ private fun LibraryScreen(
                 val on = state.tab == tab
                 Column(
                     Modifier.clip(RoundedCornerShape(6.dp)).clickable {
-                        if (tab == Tab.Genres && state.tab != Tab.Genres) state.genreVisit++
+                        if (tab != state.tab) state.visit++
                         state.tab = tab
                         if (tab != Tab.Albums) state.filter = null
                     }
@@ -366,20 +373,25 @@ private fun LibraryScreen(
             Tab.Artists -> {
                 val artists = remember(library) { library.groupBy { it.artist }.toList() } // already sorted by artist
                 val scrub = remember(artists) { letterMarks(artists.map { initial(it.first) }) }
+                val entries = artists.map { (artist, albums) ->
+                    CoverEntry(artist, artist, "${albumCount(albums.size)} · ${songCount(albums.sumOf { it.tracks.size })}", coverCandidates(albums, state.visit, artist), round = true) {
+                        pick(LibraryFilter(artist) { it.artist == artist })
+                    }
+                }
                 val list = state.lists.getValue(state.tab)
-                Lettered(scrub, { list.firstVisibleItemIndex }, { list.layoutInfo.visibleItemsInfo.size }, list::scrollToItem, bottom) { end ->
-                    LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = end)) {
-                        items(artists, key = { it.first }) { (artist, albums) ->
-                            val songs = albums.sumOf { it.tracks.size }
-                            ListRow(albums.first().id, round = true, title = artist, detail = "${albumCount(albums.size)} · ${songCount(songs)}") {
-                                pick(LibraryFilter(artist) { it.artist == artist })
-                            }
-                        }
+                val grid = state.artistGrid
+                if (look.tiles) {
+                    Lettered(scrub, { grid.firstVisibleItemIndex }, { grid.layoutInfo.visibleItemsInfo.size }, grid::scrollToItem, bottom) { end ->
+                        Covers(entries, tiles = true, list, grid, bottom, end)
+                    }
+                } else {
+                    Lettered(scrub, { list.firstVisibleItemIndex }, { list.layoutInfo.visibleItemsInfo.size }, list::scrollToItem, bottom) { end ->
+                        Covers(entries, tiles = false, list, grid, bottom, end)
                     }
                 }
             }
             Tab.Genres -> {
-                GenresList(library, state, bottom) { label, keys -> pick(LibraryFilter(label) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } }) }
+                GenresList(library, state, look.tiles, bottom) { label, keys -> pick(LibraryFilter(label) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } }) }
             }
             Tab.Years -> YearsList(library, state.lists.getValue(Tab.Years), bottom, onAlbum)
         }
@@ -387,14 +399,14 @@ private fun LibraryScreen(
 }
 
 /**
- * Genres as tiles, with those that share a word gathered into a family
- * (Indie: Indie, Indie Pop, Indie Rock). A small family opens straight to
- * its albums, a big one to its genres; each tile says which. Each tile
+ * Genres, with those that share a word gathered into a family (Indie:
+ * Indie, Indie Pop, Indie Rock). A small family opens straight to its
+ * albums, a big one to its genres; each entry says which. As tiles, each
  * shows a cover from its genre, another one on each visit to the tab.
  * [onAlbums] shows the albums of the genres with these keys (none: no genre).
  */
 @Composable
-private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, onAlbums: (label: String, keys: Set<String>) -> Unit) {
+private fun GenresList(library: List<Album>, state: LibraryState, tiles: Boolean, bottom: Dp, onAlbums: (label: String, keys: Set<String>) -> Unit) {
     val shelves = remember(library) { genreShelves(genres(library)) }
     val untagged = remember(library) { library.filter { genreTags(it.genre).isEmpty() } }
     val family = shelves.firstOrNull { it.isFamily && it.name == state.family }
@@ -402,43 +414,64 @@ private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, on
     val other = stringResource(R.string.other_genres)
     val label = { shelf: GenreShelf -> if (shelf.isOther) other else shelf.name }
     val keys = { shelf: GenreShelf -> shelf.genres.map { it.key }.toSet() }
-    val visit = state.genreVisit
+    val visit = state.visit
+    val entries = if (family == null) {
+        shelves.map { shelf ->
+            val direct = opensAlbums(shelf)
+            val detail = if (direct) albumCount(shelf.albums.size) else pluralStringResource(R.plurals.genre_count, shelf.genres.size, shelf.genres.size)
+            CoverEntry(shelf.name, label(shelf), detail, coverCandidates(shelf, visit)) {
+                if (direct) onAlbums(label(shelf), keys(shelf)) else state.family = shelf.name
+            }
+        } + if (untagged.isEmpty()) emptyList() else {
+            val noGenre = stringResource(R.string.no_genre)
+            listOf(CoverEntry("\u0000none", noGenre, albumCount(untagged.size), coverCandidates(untagged, visit, noGenre)) { onAlbums(noGenre, emptySet()) })
+        }
+    } else {
+        listOf(CoverEntry("\u0000all", stringResource(R.string.all_albums), albumCount(family.albums.size), coverCandidates(family, visit), accent = true) {
+            onAlbums(label(family), keys(family))
+        }) + family.genres.map { genre ->
+            CoverEntry(genre.key, genre.name, albumCount(genre.albums.size), coverCandidates(genre.albums, visit, genre.name)) {
+                onAlbums(genre.name, setOf(genre.key))
+            }
+        }
+    }
     Column {
         if (family != null) FilterChip(label(family), pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
+        val list = if (family == null) state.lists.getValue(Tab.Genres) else remember(family.name) { LazyListState() }
         val grid = if (family == null) state.genreGrid else remember(family.name) { LazyGridState() }
+        Covers(entries, tiles, list, grid, bottom)
+    }
+}
+
+/** One genre or artist, as a tile or a row. [candidates]: the albums whose covers it may show, in order. */
+private class CoverEntry(
+    val key: String,
+    val title: String,
+    val detail: String,
+    val candidates: List<Album>,
+    val round: Boolean = false,
+    val accent: Boolean = false,
+    val onClick: () -> Unit,
+)
+
+/** [entries] as a grid of tiles or as a list of rows (Look, ⋮ menu). [end] keeps clear of a scrubber. */
+@Composable
+private fun Covers(entries: List<CoverEntry>, tiles: Boolean, list: LazyListState, grid: LazyGridState, bottom: Dp, end: Dp = 0.dp) {
+    if (tiles) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             state = grid,
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = bottom),
+            contentPadding = PaddingValues(start = 16.dp, end = maxOf(16.dp, end), bottom = bottom),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.navigationBarsPadding(),
+            modifier = Modifier.navigationBarsPadding().testTag("tiles"),
         ) {
-            if (family == null) {
-                items(shelves, key = { it.name }) { shelf ->
-                    val direct = opensAlbums(shelf)
-                    val detail = if (direct) albumCount(shelf.albums.size) else pluralStringResource(R.plurals.genre_count, shelf.genres.size, shelf.genres.size)
-                    GenreTile(label(shelf), detail, coverCandidates(shelf, visit)) {
-                        if (direct) onAlbums(label(shelf), keys(shelf)) else state.family = shelf.name
-                    }
-                }
-                if (untagged.isNotEmpty()) item(key = "none") {
-                    val noGenre = stringResource(R.string.no_genre)
-                    GenreTile(noGenre, albumCount(untagged.size), coverCandidates(GenreShelf(noGenre, listOf(Genre(noGenre, "", untagged))), visit)) {
-                        onAlbums(noGenre, emptySet())
-                    }
-                }
-            } else {
-                item(key = "all") {
-                    GenreTile(stringResource(R.string.all_albums), albumCount(family.albums.size), coverCandidates(family, visit), accent = true) {
-                        onAlbums(label(family), keys(family))
-                    }
-                }
-                items(family.genres, key = { it.key }) { genre ->
-                    GenreTile(genre.name, albumCount(genre.albums.size), coverCandidates(GenreShelf(genre.name, listOf(genre)), visit)) {
-                        onAlbums(genre.name, setOf(genre.key))
-                    }
-                }
+            items(entries, key = { it.key }) { CoverTile(it.title, it.detail, it.candidates, it.accent, { grid.isScrollInProgress }, it.onClick) }
+        }
+    } else {
+        LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = end).testTag("rows")) {
+            items(entries, key = { it.key }) {
+                ListRow(it.candidates.first().id, round = it.round, title = it.title, detail = it.detail, onClick = it.onClick)
             }
         }
     }
@@ -448,35 +481,37 @@ private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, on
 private const val TILE_COVER_PX = 224
 
 /**
- * A genre tile: its name, what it opens, and one of its covers tilted into
- * the corner, on a dark tone of that cover's colour. Tries [candidates] in
- * order and shows the first with artwork.
+ * A tile for a genre or an artist: its name, what it opens, and one of its
+ * covers tilted into the corner, on a dark tone of that cover's colour.
+ * Tries [candidates] in order and shows the first with artwork.
  */
 @Composable
-private fun GenreTile(title: String, detail: String, candidates: List<Album>, accent: Boolean = false, onClick: () -> Unit) {
+private fun CoverTile(title: String, detail: String, candidates: List<Album>, accent: Boolean, scrolling: () -> Boolean, onClick: () -> Unit) {
     val context = LocalContext.current
     val initial = remember(candidates) { coverToShow(candidates, ::knownWithoutArt)?.let { cachedArt(it.id, TILE_COVER_PX, tint = true) } }
     // On a new visit the state keeps the last cover until this one is found, so set it either way.
     val art by produceState(initial, candidates) {
+        if (initial == null) snapshotFlow(scrolling).first { !it } // not mid-fling: decoding then made Artists stutter
         value = initial ?: candidates.take(8).firstNotNullOfOrNull { loadArt(context, it.id, TILE_COVER_PX, tint = true) }
     }
     val tint = art?.tint ?: candidates.firstOrNull()?.let { placeholderTint(it.id) } ?: GSheet
+    // Kept cheap to draw: no shadows, which cost the Nexus 4 most of its frames flinging Artists (69% janky).
+    // The cover sits below two lines of name, so the text needs no shadow to stay readable.
     Box(
-        Modifier.fillMaxWidth().aspectRatio(1.3f).clip(RoundedCornerShape(8.dp))
+        Modifier.fillMaxWidth().aspectRatio(1.1f).clip(RoundedCornerShape(8.dp))
             .background(Brush.linearGradient(listOf(tint, lerp(tint, GDeepest, .55f))))
             .clickable(onClick = onClick),
     ) {
         Box(
-            Modifier.align(Alignment.BottomEnd).offset(x = 6.dp, y = 10.dp).fillMaxWidth(.58f).aspectRatio(1f)
-                .rotate(12f).shadow(6.dp, RoundedCornerShape(4.dp)).background(lerp(tint, Color.Black, .3f)),
+            Modifier.align(Alignment.BottomEnd).offset(x = 6.dp, y = 16.dp).fillMaxWidth(.5f).aspectRatio(1f)
+                .rotate(12f).background(lerp(tint, Color.Black, .3f)),
         ) {
             art?.let { Image(it.image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
                 ?: Icon(GlowIcons.Music, null, tint = Color.White.copy(alpha = .35f), modifier = Modifier.align(Alignment.Center).fillMaxWidth(.3f))
         }
-        val shadow = Shadow(Color.Black.copy(alpha = .5f), blurRadius = 6f) // legible where the cover reaches up
         Column(Modifier.padding(10.dp)) {
-            Text(title, style = display(17).copy(color = if (accent) GHi else Color.White, shadow = shadow), maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(detail, style = TextStyle(fontSize = 11.sp, color = Color.White.copy(alpha = .78f), shadow = shadow), modifier = Modifier.padding(top = 2.dp))
+            Text(title, style = display(17).copy(color = if (accent) GHi else Color.White), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = TextStyle(fontSize = 11.sp, color = Color.White.copy(alpha = .78f)), maxLines = 1, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

@@ -19,6 +19,8 @@
     <string name="menu_rescan">Actualizar biblioteca</string>
     <string name="menu_hidden">Ocultos</string>
     <string name="menu_about">Acerca de</string>
+    <string name="menu_show_lists">Ver como listas</string>
+    <string name="menu_show_tiles">Ver como mosaicos</string>
     <string name="menu_android_settings">Ajustes de Android</string>
     <string name="menu_other_apps">Otras aplicaciones</string>
     <string name="tab_albums">Álbumes</string>

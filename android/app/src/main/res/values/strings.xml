@@ -20,6 +20,8 @@
     <string name="menu_rescan">Rescan library</string>
     <string name="menu_hidden">Hidden</string>
     <string name="menu_about">About</string>
+    <string name="menu_show_lists">Show as lists</string>
+    <string name="menu_show_tiles">Show as tiles</string>
     <string name="menu_android_settings">Android settings</string>
     <string name="menu_other_apps">Other apps</string>
     <string name="tab_albums">Albums</string>

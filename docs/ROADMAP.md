@@ -80,6 +80,16 @@ Done in a separate repository.
       and a list with stacked covers (`mockups/genre-cards.html`,
       `mockups/genre-tiles.html`). Scroll bench, cold: 2.4–2.7% janky
       frames on the Nexus 4 (album grid: 4.1%).
+- [x] Tiles or lists, a switch in the ⋮ menu (2026-10-31), for the beta to
+      decide: Genres and Artists as tiles (the default) or as lists.
+      Albums is already a cover grid; Years stays a list, its scrubber
+      reads down a timeline (decade tiles if the beta wants tiles there).
+      Tiles draw no shadows and load covers only once a fling stops: with
+      shadows and loading mid-fling, Artists was 69–81% janky.
+- [ ] Artists stutters a little in both looks: 5.4–6.2% janky as tiles,
+      6.0–6.5% as a list (scroll-bench, `TAB=Artists`, cold), over the 5%
+      limit. Never benchmarked before; find out what the album grid
+      (4.1%) does differently.
 - [ ] As the home screen, Now Playing's "Playing on … Change" row sits
       where the hidden navigation bar was, and the accessibility tree
       reports it at [0,0][0,0] (not visible): it can be tapped, but

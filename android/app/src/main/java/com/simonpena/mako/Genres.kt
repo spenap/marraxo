@@ -83,10 +83,12 @@ fun opensAlbums(shelf: GenreShelf) = !shelf.isFamily || shelf.albums.size <= FAM
  * album further on, and genres start at different albums, so tiles don't
  * change in step. The same visit always gives the same order.
  */
-fun coverCandidates(shelf: GenreShelf, visit: Int): List<Album> {
-    val albums = shelf.albums
+fun coverCandidates(shelf: GenreShelf, visit: Int): List<Album> = coverCandidates(shelf.albums, visit, shelf.name)
+
+/** The same for any group of albums (an artist's); [name] keeps groups from changing in step. */
+fun coverCandidates(albums: List<Album>, visit: Int, name: String): List<Album> {
     if (albums.isEmpty()) return albums
-    val start = Math.floorMod(visit + shelf.name.hashCode(), albums.size)
+    val start = Math.floorMod(visit + name.hashCode(), albums.size)
     return albums.drop(start) + albums.take(start)
 }
 

@@ -4,12 +4,15 @@ import android.content.Context
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -37,6 +40,7 @@ class GenresUiTest {
 
     @Before fun setUp() {
         context.getSharedPreferences("hidden", Context.MODE_PRIVATE).edit().clear().commit()
+        context.getSharedPreferences("look", Context.MODE_PRIVATE).edit().clear().commit() // tiles
         main { player = PlayerHolder(context) }
         compose.setContent {
             MakoApp(hasPermission = true, library = library, player = player, hidden = Hidden(context), status = null, onGrant = {}, onRescan = {})
@@ -59,6 +63,16 @@ class GenresUiTest {
         compose.onNodeWithText("All albums").assertExists() // still in Rock
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.onNodeWithText("Other").assertExists() // the top level again
+    }
+
+    @Test fun theMenuSwitchesBetweenTilesAndListsAndRemembersIt() {
+        compose.onNodeWithTag("tiles").assertExists()
+        compose.onNodeWithContentDescription("More").performClick()
+        compose.onNodeWithText("Show as lists").performClick()
+        compose.onNodeWithTag("rows").assertExists()
+        compose.onNodeWithText("Artists").performClick()
+        compose.onNodeWithTag("rows").assertExists() // Artists follows too
+        assertFalse(Look(context).tiles) // and it's saved
     }
 
     @Test fun genresWithOneAlbumAreGatheredInOther() {
