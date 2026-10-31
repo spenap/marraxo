@@ -15,12 +15,11 @@ Mako's own folder, when they changed.
 
 Shows the plan and changes nothing unless --apply is given.
 
-Usage: sync.py SERIAL [--margin-gb 1.5] [--seed N] [--replace-unmanaged] [--apply]
+Usage: sync.py SERIAL [--margin-gb 1.5] [--rotate [--seed N]] [--replace-unmanaged] [--apply]
 """
 import argparse
 import hashlib
 import os
-import random
 import sqlite3
 import subprocess
 import sys
@@ -56,15 +55,21 @@ class Plan:
     kept: list  # picked, but on the phone as copied by hand: left alone
 
 
-def select(albums, free, margin, already, seed=0, reclaimable=0):
-    """Played albums first (most played first), then a stable shuffle, while they fit.
+def select(albums, free, margin, already, seed=0, reclaimable=0, rotate=False):
+    """Played albums first (most played first), then the ones already on the
+    phone, then the rest in a stable order, while they fit. [rotate]: forget
+    what's on the phone, so a new [seed] brings a different unplayed part.
+
+    Each album's place comes from a hash of its own path, not a shuffle of
+    the whole list: adding albums to the collection must not reorder (and so
+    swap out) the ones already copied.
 
     [already]: synced albums on the phone, whose space is reusable;
     [reclaimable]: bytes that removing music copied by hand would free."""
     budget = free - margin + reclaimable + sum(a.bytes for a in albums if a.path in already)
     played = sorted((a for a in albums if a.plays > 0), key=lambda a: -a.plays)
-    rest = [a for a in albums if a.plays == 0]
-    random.Random(seed).shuffle(rest)
+    kept = set(already) if not rotate else set()
+    rest = sorted((a for a in albums if a.plays == 0), key=lambda a: (a.path not in kept, fill_key(a.path, seed)))
     chosen, used = [], 0
     for a in played + rest:
         # An album already on the phone may use the margin: removing it just to
@@ -74,6 +79,11 @@ def select(albums, free, margin, already, seed=0, reclaimable=0):
             chosen.append(a)
             used += a.bytes
     return chosen
+
+
+def fill_key(path, seed):
+    """An album's place in the fill order: the same whatever else is in the collection."""
+    return hashlib.sha1(f"{seed}:{path}".encode()).hexdigest()
 
 
 def plan(selected, managed, on_phone, replace_unmanaged=False):
@@ -190,7 +200,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("serial")
     p.add_argument("--margin-gb", type=float, default=1.5)
-    p.add_argument("--seed", type=int, default=0, help="change it to rotate the unplayed part")
+    p.add_argument("--seed", type=int, default=0, help="with --rotate, which unplayed part comes")
+    p.add_argument("--rotate", action="store_true", help="replace unplayed albums on the phone with others")
     p.add_argument("--replace-unmanaged", action="store_true", help="also remove music not copied by this script")
     p.add_argument("--apply", action="store_true")
     a = p.parse_args()
@@ -200,7 +211,7 @@ def main():
     unmanaged = [x for x in on_phone if x not in managed]
     reclaimable = phone_bytes(a.serial, unmanaged) if a.replace_unmanaged else 0
     chosen = select(albums, phone_free(a.serial), int(a.margin_gb * GB), [x for x in on_phone if x in managed],
-                    a.seed, reclaimable)
+                    a.seed, reclaimable, a.rotate)
     todo = plan([c.path for c in chosen], managed, on_phone, a.replace_unmanaged)
     size = {x.path: x.bytes for x in albums}
     print(f"{len(chosen)} of {len(albums)} albums fit ({sum(c.bytes for c in chosen) / GB:.1f} GB).")

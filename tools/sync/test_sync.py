@@ -128,3 +128,28 @@ def test_older_android_is_left_to_makos_rescan(monkeypatch):
     monkeypatch.setattr(sync, "adb", phone)
     assert sync.index_music("serial") is False
     assert not any("scan_volume" in c for c in phone.commands)
+
+
+def test_new_albums_in_the_collection_dont_reshuffle_what_is_on_the_phone():
+    # After the cleaning added two albums, every unplayed album changed place and a sync
+    # planned to copy 79 and remove 70 (2026-11-01). What's there stays; new ones fill the room.
+    albums = [album(f"A/{i}", 1) for i in range(20)]
+    first = sync.select(albums, free=8 * GB, margin=0, already=[])
+    on_phone = [a.path for a in first]
+    grown = albums + [album("New/1", 1), album("New/2", 1)]
+    again = sync.select(grown, free=1 * GB, margin=0, already=on_phone)
+    assert set(on_phone) <= {a.path for a in again}
+
+
+def test_an_albums_place_in_the_fill_order_doesnt_depend_on_the_others():
+    albums = [album(f"A/{i}", 1) for i in range(20)]
+    order = [a.path for a in sync.select(albums, free=20 * GB, margin=0, already=[])]
+    fewer = [a.path for a in sync.select(albums[5:], free=20 * GB, margin=0, already=[])]
+    assert [p for p in order if p in fewer] == fewer
+
+
+def test_rotating_is_asked_for():
+    albums = [album(f"A/{i}", 1) for i in range(20)]
+    first = [a.path for a in sync.select(albums, free=5 * GB, margin=0, already=[])]
+    rotated = [a.path for a in sync.select(albums, free=0, margin=0, already=first, seed=1, rotate=True)]
+    assert set(rotated) != set(first)
