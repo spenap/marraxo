@@ -114,8 +114,15 @@ Done in a separate repository.
 - [x] Up next (the queue, with jumps) and Now Playing's album and artist
       as links; songs have a visible ⋮ opening a sheet (Play next, Start
       radio, Go to artist, Song notes, Hide with Undo) (2026-10-31).
-- [ ] The album long-press (Hide album) is still the old popup: give
-      albums the same sheet and Undo.
+- [x] Design audit (2026-10-31, artifact "Mako design audit": 20 screens
+      on the Nexus 4). Done: links that look like links (liner notes
+      names as buttons, Now Playing ⋮, Liner notes as a button, albums
+      not on the phone under their own heading); albums get the sheet and
+      Undo; shuffle, repeat and the playing song not told by colour
+      alone; Play and Shuffle (artist-spreading) for artists, genres and
+      albums. Left: the blank status line under "Library" (later).
+      Lesson: Modifier.border on one screen took the Albums grid from ~3%
+      to ~9% janky (R8); gate every UI commit on the bench's exit status.
 - [ ] Radio, next: seeds from an album, artist, genre tile, and a person
       or studio on the liner-notes screen; ready sooner than ~4 s (a skip
       in the first seconds finds an empty queue); come back after a
@@ -343,9 +350,9 @@ the desktop.
       credits by section, the album's story with its licence, "Also in
       your library" leading to everyone's albums by year. From the song
       sheet, Now Playing and the album screen; hidden without data.
-- [ ] Liner notes polish: within "Played by", the main performers first
-      (today the order is MusicBrainz's, so a string section can lead);
-      role words ("guitar", "producer") are English in every language;
+- [x] "Played by": the artist, then the band; a string section folds into
+      one row (linked players stay in view) (2026-11-01).
+- [ ] Liner notes polish: role words ("guitar", "producer") are English in every language;
       "first released on" and other versions in your library; a radio
       from a person or place.
 - [x] Prototype it first: `mockups/liner-notes.html` (2026-10-31), a
