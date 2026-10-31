@@ -146,8 +146,12 @@ private sealed interface Screen {
     data class SongNotes(val path: String) : Screen
     data class AlbumNotes(val path: String) : Screen
     data class NotesPerson(val name: String) : Screen
-    /** An artist's or a genre's albums: a level below the tab it was opened from. */
-    class Shelf(val title: String, val matches: (Album) -> Boolean) : Screen {
+    /**
+     * An artist's or a genre's albums: a level below the tab it was opened
+     * from. [spreadBy]: what its shuffle keeps apart (the album on an
+     * artist, the artist on a genre).
+     */
+    class Shelf(val title: String, val spreadBy: (Track) -> Any? = { it.artist }, val matches: (Album) -> Boolean) : Screen {
         val grid = LazyGridState() // kept while an album is open on top
     }
 }
@@ -213,12 +217,17 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             visible, libraryState, look, hasMini = currentTrack != null, status = status,
             onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
             onSearch = { stack.add(Screen.Search) }, onAlbumOptions = { albumSheet = it }, home = home,
-            onShelf = { title, matches -> stack.add(Screen.Shelf(title, matches)) },
+            onShelf = { title, spreadBy, matches -> stack.add(Screen.Shelf(title, spreadBy, matches)) },
         ) { stack.add(Screen.AlbumDetail(it)) }
         is Screen.Shelf -> {
             val albums = visible.filter(screen.matches)
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
                 LevelHeader(screen.title, albumCount(albums.size)) { stack.removeAt(stack.lastIndex) }
+                val tracks = albums.flatMap { it.tracks }
+                Row(Modifier.padding(start = 16.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    PillButton(stringResource(R.string.play)) { player.play(tracks, 0) }
+                    ShuffleButton { player.play(spreadShuffle(tracks, key = screen.spreadBy), 0) }
+                }
                 AlbumGrid(albums, screen.grid, if (currentTrack != null) 96.dp else 24.dp, { albumSheet = it }) { stack.add(Screen.AlbumDetail(it)) }
             }
         }
@@ -238,6 +247,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onPlay = { player.play(album.tracks, it) },
                 onOptions = { songSheet = it to album },
                 onAlbumOptions = { albumSheet = album },
+                onShuffle = { player.play(spreadShuffle(album.tracks) { it.artist }, 0) },
                 onNotes = remember(album.id, notes) { album.tracks.firstOrNull { notes?.album(it.path) != null } }?.let { t -> { stack.add(Screen.AlbumNotes(t.path)) } },
             )
         }
@@ -246,7 +256,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             else NowPlaying(
                 currentAlbum, currentTrack, player,
                 onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
-                onArtist = { stack.add(Screen.Shelf(currentTrack.artist) { it.artist == currentTrack.artist }) },
+                onArtist = { stack.add(Screen.Shelf(currentTrack.artist, { it.albumId }) { it.artist == currentTrack.artist }) },
                 onQueue = { stack.add(Screen.Queue) },
                 onOptions = { songSheet = currentTrack to currentAlbum },
             ) { stack.removeAt(stack.lastIndex) }
@@ -286,7 +296,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             onDismiss = { albumSheet = null },
             onPlay = { player.play(album.tracks, 0) },
             onPlayNext = { player.playNext(album.tracks) },
-            onArtist = { stack.add(Screen.Shelf(album.artist) { it.artist == album.artist }) },
+            onArtist = { stack.add(Screen.Shelf(album.artist, { it.albumId }) { it.artist == album.artist }) },
             onNotes = remember(album.id, notes) { album.tracks.firstOrNull { notes?.album(it.path) != null } }?.let { t -> { stack.add(Screen.AlbumNotes(t.path)) } },
             onHide = {
                 hidden.hide(album)
@@ -300,7 +310,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             onDismiss = { songSheet = null },
             onPlayNext = { player.playNext(track) },
             onRadio = { mode -> player.startRadio(track, mode, context.getString(mode.label)) },
-            onArtist = { stack.add(Screen.Shelf(track.artist) { it.artist == track.artist }) },
+            onArtist = { stack.add(Screen.Shelf(track.artist, { it.albumId }) { it.artist == track.artist }) },
             onNotes = if (remember(track.path, notes) { notes?.album(track.path) != null }) ({ stack.add(Screen.SongNotes(track.path)) }) else null,
             onHide = {
                 hidden.hide(track)
@@ -395,6 +405,17 @@ private fun OutlinedPill(label: String, onClick: () -> Unit) {
     }
 }
 
+/** Shuffle beside a [PillButton]: a round outlined button with the shuffle icon. */
+@Composable
+private fun ShuffleButton(onClick: () -> Unit) {
+    Box(
+        Modifier.size(48.dp).clip(CircleShape).background(GSoft).padding(1.dp).clip(CircleShape).background(GBg).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(GlowIcons.Shuffle, stringResource(R.string.shuffle), tint = Color.White, modifier = Modifier.size(22.dp))
+    }
+}
+
 // ---------------------------------------------------------------- library
 
 private enum class Tab(val label: Int) { Albums(R.string.tab_albums), Artists(R.string.tab_artists), Genres(R.string.tab_genres), Years(R.string.tab_years) }
@@ -424,7 +445,7 @@ private fun LibraryScreen(
     onSearch: () -> Unit,
     onAlbumOptions: (Album) -> Unit,
     home: HomeActions,
-    onShelf: (title: String, matches: (Album) -> Boolean) -> Unit,
+    onShelf: (title: String, spreadBy: (Track) -> Any?, matches: (Album) -> Boolean) -> Unit,
     onAlbum: (Long) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -477,7 +498,7 @@ private fun LibraryScreen(
                 val scrub = remember(artists) { letterMarks(artists.map { initial(it.first) }) }
                 val entries = artists.map { (artist, albums) ->
                     CoverEntry(artist, artist, "${albumCount(albums.size)} · ${songCount(albums.sumOf { it.tracks.size })}", coverCandidates(albums, state.visit, artist), round = true) {
-                        onShelf(artist) { it.artist == artist }
+                        onShelf(artist, { it.albumId }) { it.artist == artist }
                     }
                 }
                 val list = state.lists.getValue(state.tab)
@@ -493,7 +514,7 @@ private fun LibraryScreen(
                 }
             }
             Tab.Genres -> {
-                GenresList(library, state, look.tiles, bottom) { label, keys -> onShelf(label) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } } }
+                GenresList(library, state, look.tiles, bottom) { label, keys -> onShelf(label, { it.artist }) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } } }
             }
             Tab.Years -> YearsList(library, state.lists.getValue(Tab.Years), bottom, onAlbum)
         }
@@ -887,6 +908,7 @@ private fun AlbumScreen(
     onPlay: (Int) -> Unit,
     onOptions: (Track) -> Unit,
     onAlbumOptions: () -> Unit,
+    onShuffle: () -> Unit,
     onNotes: (() -> Unit)?,
 ) {
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
@@ -918,6 +940,7 @@ private fun AlbumScreen(
                 Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     PillButton(stringResource(R.string.play)) { onPlay(0) }
+                    ShuffleButton(onShuffle)
                     if (onNotes != null) OutlinedPill(stringResource(R.string.liner_notes), onClick = onNotes)
                 }
             }

@@ -193,6 +193,20 @@ class LibraryUiTest {
         compose.onNodeWithContentDescription("Now playing").assertExists()
     }
 
+    @Test fun anArtistCanBePlayedOrShuffledWhole() {
+        compose.onNodeWithText("Artists").performClick()
+        compose.onNodeWithText("Altan").performClick()
+        compose.onNodeWithContentDescription("Shuffle").performClick()
+        compose.waitUntil(5_000) { player.currentTrackId in setOf(100L, 101L, 200L) } // Altan's three songs
+        compose.waitUntil(5_000) { player.queue.size == 3 }
+    }
+
+    @Test fun anAlbumCanBeShuffled() {
+        compose.onNodeWithText("The Blue Idol").performClick()
+        compose.onNodeWithContentDescription("Shuffle").performClick()
+        compose.waitUntil(5_000) { player.queue.size == 2 && player.currentTrackId in setOf(100L, 101L) }
+    }
+
     @Test fun nowPlayingHasTheSongMenuToo() {
         nowPlayingGuerra()
         compose.onNodeWithContentDescription("Song options").performClick()
