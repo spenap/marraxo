@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.TextButton
@@ -196,6 +197,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     // "Same people" needs the liner notes on the phone.
     val radioModes = remember { RadioMode.entries.filter { it != RadioMode.People || LinerNotes.file(context).exists() } }
     var songSheet by remember { mutableStateOf<Pair<Track, Album>?>(null) }
+    var albumSheet by remember { mutableStateOf<Album?>(null) }
     val notes by produceState<LinerNotes?>(null) {
         value = withContext(Dispatchers.IO) { LinerNotes.open(LinerNotes.file(context)) }
         awaitDispose { value?.close() }
@@ -207,14 +209,14 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
         Screen.Library -> LibraryScreen(
             visible, libraryState, look, hasMini = currentTrack != null, status = status,
             onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
-            onSearch = { stack.add(Screen.Search) }, onHide = hidden::hide, home = home,
+            onSearch = { stack.add(Screen.Search) }, onAlbumOptions = { albumSheet = it }, home = home,
             onShelf = { title, matches -> stack.add(Screen.Shelf(title, matches)) },
         ) { stack.add(Screen.AlbumDetail(it)) }
         is Screen.Shelf -> {
             val albums = visible.filter(screen.matches)
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
                 LevelHeader(screen.title, albumCount(albums.size)) { stack.removeAt(stack.lastIndex) }
-                AlbumGrid(albums, screen.grid, if (currentTrack != null) 96.dp else 24.dp, hidden::hide) { stack.add(Screen.AlbumDetail(it)) }
+                AlbumGrid(albums, screen.grid, if (currentTrack != null) 96.dp else 24.dp, { albumSheet = it }) { stack.add(Screen.AlbumDetail(it)) }
             }
         }
         Screen.Search -> SearchScreen(
@@ -232,6 +234,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onBack = { stack.removeAt(stack.lastIndex) },
                 onPlay = { player.play(album.tracks, it) },
                 onOptions = { songSheet = it to album },
+                onAlbumOptions = { albumSheet = album },
                 onNotes = remember(album.id, notes) { album.tracks.firstOrNull { notes?.album(it.path) != null } }?.let { t -> { stack.add(Screen.AlbumNotes(t.path)) } },
             )
         }
@@ -273,6 +276,20 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             u.undo()
             undo = null
         }
+    }
+    albumSheet?.let { album ->
+        AlbumSheet(
+            album,
+            onDismiss = { albumSheet = null },
+            onPlay = { player.play(album.tracks, 0) },
+            onPlayNext = { player.playNext(album.tracks) },
+            onArtist = { stack.add(Screen.Shelf(album.artist) { it.artist == album.artist }) },
+            onNotes = remember(album.id, notes) { album.tracks.firstOrNull { notes?.album(it.path) != null } }?.let { t -> { stack.add(Screen.AlbumNotes(t.path)) } },
+            onHide = {
+                hidden.hide(album)
+                undo = Undo(R.string.album_hidden) { hidden.showAlbum(album.key) }
+            },
+        )
     }
     songSheet?.let { (track, album) ->
         SongSheet(
@@ -402,7 +419,7 @@ private fun LibraryScreen(
     onAbout: () -> Unit,
     onHidden: () -> Unit,
     onSearch: () -> Unit,
-    onHide: (Album) -> Unit,
+    onAlbumOptions: (Album) -> Unit,
     home: HomeActions,
     onShelf: (title: String, matches: (Album) -> Boolean) -> Unit,
     onAlbum: (Long) -> Unit,
@@ -451,7 +468,7 @@ private fun LibraryScreen(
             }
         }
         when (state.tab) {
-            Tab.Albums -> AlbumGrid(library, state.grid, bottom, onHide, onAlbum)
+            Tab.Albums -> AlbumGrid(library, state.grid, bottom, onAlbumOptions, onAlbum)
             Tab.Artists -> {
                 val artists = remember(library) { library.groupBy { it.artist }.toList() } // already sorted by artist
                 val scrub = remember(artists) { letterMarks(artists.map { initial(it.first) }) }
@@ -779,7 +796,7 @@ private fun albumCount(n: Int) = pluralStringResource(R.plurals.albums, n, n)
 private fun songCount(n: Int) = pluralStringResource(R.plurals.song_count, n, n)
 
 @Composable
-private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onHide: (Album) -> Unit, onAlbum: (Long) -> Unit) {
+private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onOptions: (Album) -> Unit, onAlbum: (Long) -> Unit) {
     // Albums are sorted by artist, so the letters are the artists' (as on the Artists tab).
     val scrub = remember(albums) { letterMarks(albums.map { initial(it.artist) }) }
     Lettered(scrub, { state.firstVisibleItemIndex }, { state.layoutInfo.visibleItemsInfo.size }, state::scrollToItem, bottom) { end ->
@@ -792,8 +809,7 @@ private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onH
             modifier = Modifier.navigationBarsPadding(),
         ) {
             items(albums, key = { it.id }) { album ->
-                var options by remember { mutableStateOf(false) }
-                Column(Modifier.combinedClickable(onLongClick = { options = true }) { onAlbum(album.id) }) {
+                Column(Modifier.combinedClickable(onLongClick = { onOptions(album) }) { onAlbum(album.id) }) {
                     AlbumArt(album.id, px = 336, corner = 8.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
                     Text(
                         album.title, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -801,9 +817,6 @@ private fun AlbumGrid(albums: List<Album>, state: LazyGridState, bottom: Dp, onH
                         modifier = Modifier.padding(top = 8.dp),
                     )
                     Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
-                    DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.hide_album), style = body) }, onClick = { options = false; onHide(album) })
-                    }
                 }
             }
         }
@@ -870,6 +883,7 @@ private fun AlbumScreen(
     onBack: () -> Unit,
     onPlay: (Int) -> Unit,
     onOptions: (Track) -> Unit,
+    onAlbumOptions: () -> Unit,
     onNotes: (() -> Unit)?,
 ) {
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
@@ -880,8 +894,10 @@ private fun AlbumScreen(
         contentPadding = PaddingValues(bottom = if (hasMini) 96.dp else 24.dp),
     ) {
         item {
-            Box(Modifier.statusBarsPadding().padding(horizontal = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp).height(48.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
+                Spacer(Modifier.weight(1f))
+                IconSpot(GlowIcons.More, stringResource(R.string.album_options), onClick = onAlbumOptions)
             }
         }
         item {
@@ -1129,6 +1145,41 @@ private fun SongSheet(
     onHide: () -> Unit,
 ) {
     var radio by remember(track.id) { mutableStateOf(false) }
+    ActionSheet(album.id, track.title, "${track.artist} · ${album.title}", onDismiss) {
+        SheetItem(stringResource(R.string.play_next)) { onPlayNext(); onDismiss() }
+        SheetItem(stringResource(R.string.start_radio)) { radio = !radio }
+        if (radio) radioModes.forEach { mode -> SheetItem(stringResource(mode.label), indent = true) { onRadio(mode); onDismiss() } }
+        SheetItem(stringResource(R.string.go_to_artist)) { onArtist(); onDismiss() }
+        if (onNotes != null) SheetItem(stringResource(R.string.song_notes)) { onNotes(); onDismiss() }
+        SheetDivider()
+        SheetItem(stringResource(R.string.hide_song), color = GWarn) { onHide(); onDismiss() }
+    }
+}
+
+/** An album's actions, from a long press on its cover or the album screen's ⋮. */
+@Composable
+private fun AlbumSheet(
+    album: Album,
+    onDismiss: () -> Unit,
+    onPlay: () -> Unit,
+    onPlayNext: () -> Unit,
+    onArtist: () -> Unit,
+    onNotes: (() -> Unit)?,
+    onHide: () -> Unit,
+) {
+    ActionSheet(album.id, album.title, listOfNotNull(album.artist, album.year.takeIf { it > 0 }?.toString()).joinToString(" · "), onDismiss) {
+        SheetItem(stringResource(R.string.play)) { onPlay(); onDismiss() }
+        SheetItem(stringResource(R.string.play_next)) { onPlayNext(); onDismiss() }
+        SheetItem(stringResource(R.string.go_to_artist)) { onArtist(); onDismiss() }
+        if (onNotes != null) SheetItem(stringResource(R.string.liner_notes)) { onNotes(); onDismiss() }
+        SheetDivider()
+        SheetItem(stringResource(R.string.hide_album), color = GWarn) { onHide(); onDismiss() }
+    }
+}
+
+/** A sheet from the bottom over a dimmed screen: what it's about at the top, then [content]. */
+@Composable
+private fun ActionSheet(albumId: Long, title: String, detail: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     BackHandler(onBack = onDismiss)
     val none = remember { MutableInteractionSource() }
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .55f)).clickable(none, indication = null, onClick = onDismiss)) {
@@ -1139,23 +1190,20 @@ private fun SongSheet(
                 .navigationBarsPadding().padding(bottom = 8.dp),
         ) {
             Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                AlbumArt(album.id, px = 112, corner = 4.dp, modifier = Modifier.size(44.dp))
+                AlbumArt(albumId, px = 112, corner = 4.dp, modifier = Modifier.size(44.dp))
                 Column(Modifier.padding(start = 12.dp)) {
-                    Text(track.title, style = body.copy(fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${track.artist} · ${album.title}", style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(title, style = body.copy(fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(detail, style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
-            SheetItem(stringResource(R.string.play_next)) { onPlayNext(); onDismiss() }
-            SheetItem(stringResource(R.string.start_radio)) { radio = !radio }
-            if (radio) radioModes.forEach { mode -> SheetItem(stringResource(mode.label), indent = true) { onRadio(mode); onDismiss() } }
-            SheetItem(stringResource(R.string.go_to_artist)) { onArtist(); onDismiss() }
-            if (onNotes != null) SheetItem(stringResource(R.string.song_notes)) { onNotes(); onDismiss() }
-            Box(Modifier.padding(vertical = 4.dp).fillMaxWidth().height(1.dp).background(GFaint))
-            SheetItem(stringResource(R.string.hide_song), color = GWarn) { onHide(); onDismiss() }
+            content()
         }
     }
 }
+
+@Composable
+private fun SheetDivider() = Box(Modifier.padding(vertical = 4.dp).fillMaxWidth().height(1.dp).background(GFaint))
 
 @Composable
 private fun SheetItem(label: String, color: Color = Color.White, indent: Boolean = false, onClick: () -> Unit) {

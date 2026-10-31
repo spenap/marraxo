@@ -85,7 +85,7 @@
     <string name="play">Play</string>
 
     <!-- Hidden -->
-    <string name="hidden_none">Nothing is hidden. Hide a song from its ⋮ menu, or an album with a long press.</string>
+    <string name="hidden_none">Nothing is hidden. Hide a song or an album from its ⋮ menu.</string>
     <string name="hidden_some">Hidden from the library. The files stay on the phone.</string>
     <string name="show">Show</string>
 
@@ -165,4 +165,6 @@
     </plurals>
     <!-- On a person's or studio's page: their albums that aren't copied to this phone -->
     <string name="notes_not_here">Not on this phone</string>
+    <string name="album_options">Album options</string>
+    <string name="album_hidden">Album hidden</string>
 </resources>

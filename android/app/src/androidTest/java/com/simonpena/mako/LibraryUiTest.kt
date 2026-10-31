@@ -103,6 +103,22 @@ class LibraryUiTest {
         compose.onNodeWithText("Local Ground").assertExists()
     }
 
+    @Test fun anAlbumHasTheSameSheetWithUndo() {
+        compose.onNodeWithText("Local Ground").performTouchInput { longClick() }
+        compose.onNodeWithText("Altan · 2005").assertExists() // the sheet says which album
+        compose.onNodeWithText("Hide album").performClick()
+        compose.onNodeWithText("Local Ground").assertDoesNotExist()
+        compose.onNodeWithText("Undo").performClick()
+        compose.onNodeWithText("Local Ground").assertExists()
+    }
+
+    @Test fun theAlbumScreenHasAMenuToo() {
+        compose.onNodeWithText("A Son de Guerra").performClick()
+        compose.onNodeWithContentDescription("Album options").performClick()
+        compose.onNodeWithText("Go to artist").performClick()
+        compose.onNodeWithText("1 album").assertExists()
+    }
+
     @Test fun aHiddenSongLeavesTheRestOfTheAlbum() {
         compose.onNodeWithText("The Blue Idol").performClick()
         compose.onNodeWithText("Uncle Rat").performTouchInput { longClick() }

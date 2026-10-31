@@ -108,13 +108,15 @@ class PlayerHolder(context: Context) {
         }
     }
 
-    /** Puts [track] right after the current one; during a radio it joins the radio. */
-    fun playNext(track: Track) {
+    /** Puts [tracks] right after the current song; during a radio they join the radio. */
+    fun playNext(tracks: List<Track>) {
         val c = controller ?: return
-        if (c.mediaItemCount == 0) return play(listOf(track), 0)
+        if (c.mediaItemCount == 0) return play(tracks, 0)
         val radio = c.currentMediaItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
-        c.addMediaItem(c.currentMediaItemIndex + 1, track.toMediaItem(radio = radio))
+        c.addMediaItems(c.currentMediaItemIndex + 1, tracks.map { it.toMediaItem(radio = radio) })
     }
+
+    fun playNext(track: Track) = playNext(listOf(track))
 
     fun togglePlay() {
         controller?.run {
