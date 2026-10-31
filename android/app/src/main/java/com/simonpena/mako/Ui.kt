@@ -36,6 +36,8 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -115,6 +117,7 @@ private val GHi = Color(0xFF9FD6CF)
 private val GDeep = Color(0xFF0B1415)
 internal val GDeepest = Color(0xFF070D0E)
 private val GSheet = Color(0xFF161D1E)
+private val GWarn = Color(0xFFE8968A) // actions that take something away
 
 private fun display(size: Int) = TextStyle(
     fontSize = size.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.02 * size).sp, color = Color.White,
@@ -185,6 +188,8 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val look = remember { Look(context) }
     // "Same people" needs the liner notes on the phone.
     val radioModes = remember { RadioMode.entries.filter { it != RadioMode.People || LinerNotes.file(context).exists() } }
+    var songSheet by remember { mutableStateOf<Pair<Track, Album>?>(null) }
+    var undo by remember { mutableStateOf<Undo?>(null) }
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
@@ -214,9 +219,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 album, currentTrack, hasMini = currentTrack != null,
                 onBack = { stack.removeAt(stack.lastIndex) },
                 onPlay = { player.play(album.tracks, it) },
-                onHide = hidden::hide,
-                radioModes = radioModes,
-                onRadio = { track, mode -> player.startRadio(track, mode, context.getString(mode.label)) },
+                onOptions = { songSheet = it to album },
             )
         }
         Screen.NowPlaying ->
@@ -229,6 +232,29 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 stack.add(Screen.NowPlaying)
             }
         }
+    }
+    undo?.let { u ->
+        LaunchedEffect(u) {
+            delay(UNDO_MS)
+            if (undo === u) undo = null
+        }
+        UndoBar(stringResource(u.message), bottom = if (currentTrack != null) 96.dp else 24.dp) {
+            u.undo()
+            undo = null
+        }
+    }
+    songSheet?.let { (track, album) ->
+        SongSheet(
+            track, album, radioModes,
+            onDismiss = { songSheet = null },
+            onPlayNext = { player.playNext(track) },
+            onRadio = { mode -> player.startRadio(track, mode, context.getString(mode.label)) },
+            onArtist = { stack.add(Screen.Shelf(track.artist) { it.artist == track.artist }) },
+            onHide = {
+                hidden.hide(track)
+                undo = Undo(R.string.song_hidden) { hidden.showTrack(track.key) }
+            },
+        )
     }
 }
 
@@ -794,9 +820,7 @@ private fun AlbumScreen(
     hasMini: Boolean,
     onBack: () -> Unit,
     onPlay: (Int) -> Unit,
-    onHide: (Track) -> Unit,
-    radioModes: List<RadioMode>,
-    onRadio: (Track, RadioMode) -> Unit,
+    onOptions: (Track) -> Unit,
 ) {
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
@@ -830,28 +854,90 @@ private fun AlbumScreen(
             val on = current?.id == track.id
             val color = if (on) GHi else Color.White
             val soft = if (on) GHi else GSoft
-            var options by remember { mutableStateOf(false) }
-            var radio by remember { mutableStateOf(false) }
             Row(
-                Modifier.fillMaxWidth().combinedClickable(onLongClick = { options = true; radio = false }) { onPlay(i) }
-                    .padding(horizontal = 20.dp, vertical = 11.dp),
+                Modifier.fillMaxWidth().combinedClickable(onLongClick = { onOptions(track) }) { onPlay(i) }
+                    .padding(start = 20.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                DropdownMenu(expanded = options, onDismissRequest = { options = false }, containerColor = GSheet) {
-                    if (!radio) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.start_radio), style = body) }, onClick = { radio = true })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.hide_song), style = body) }, onClick = { options = false; onHide(track) })
-                    } else radioModes.forEach { mode ->
-                        DropdownMenuItem(text = { Text(stringResource(mode.label), style = body) }, onClick = { options = false; onRadio(track, mode) })
-                    }
-                }
                 Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft), modifier = Modifier.width(28.dp))
                 Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
+                IconSpot(GlowIcons.More, stringResource(R.string.song_options), tint = GSoft) { onOptions(track) }
             }
         }
     }
+}
+
+/** Something just done that can be taken back for a few seconds. */
+private class Undo(val message: Int, val undo: () -> Unit)
+
+private const val UNDO_MS = 5_000L
+
+@Composable
+private fun UndoBar(message: String, bottom: Dp, onUndo: () -> Unit) {
+    Box(Modifier.fillMaxSize().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = bottom), contentAlignment = Alignment.BottomCenter) {
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(GSheet).padding(start = 16.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(message, style = body, modifier = Modifier.weight(1f))
+            TextButton(onClick = onUndo) { Text(stringResource(R.string.undo), style = body.copy(color = GHi, fontWeight = FontWeight.SemiBold)) }
+        }
+    }
+}
+
+/**
+ * A song's actions, from its ⋮ or a long press: sheet from the bottom, the
+ * song at the top so it's clear which; hiding last, set apart, in the
+ * warning colour (and undoable).
+ */
+@Composable
+private fun SongSheet(
+    track: Track,
+    album: Album,
+    radioModes: List<RadioMode>,
+    onDismiss: () -> Unit,
+    onPlayNext: () -> Unit,
+    onRadio: (RadioMode) -> Unit,
+    onArtist: () -> Unit,
+    onHide: () -> Unit,
+) {
+    var radio by remember(track.id) { mutableStateOf(false) }
+    BackHandler(onBack = onDismiss)
+    val none = remember { MutableInteractionSource() }
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .55f)).clickable(none, indication = null, onClick = onDismiss)) {
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)).background(GSheet)
+                .clickable(none, indication = null) {} // taps on the sheet don't close it
+                .navigationBarsPadding().padding(bottom = 8.dp),
+        ) {
+            Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                AlbumArt(album.id, px = 112, corner = 4.dp, modifier = Modifier.size(44.dp))
+                Column(Modifier.padding(start = 12.dp)) {
+                    Text(track.title, style = body.copy(fontWeight = FontWeight.SemiBold), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${track.artist} · ${album.title}", style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
+            SheetItem(stringResource(R.string.play_next)) { onPlayNext(); onDismiss() }
+            SheetItem(stringResource(R.string.start_radio)) { radio = !radio }
+            if (radio) radioModes.forEach { mode -> SheetItem(stringResource(mode.label), indent = true) { onRadio(mode); onDismiss() } }
+            SheetItem(stringResource(R.string.go_to_artist)) { onArtist(); onDismiss() }
+            Box(Modifier.padding(vertical = 4.dp).fillMaxWidth().height(1.dp).background(GFaint))
+            SheetItem(stringResource(R.string.hide_song), color = GWarn) { onHide(); onDismiss() }
+        }
+    }
+}
+
+@Composable
+private fun SheetItem(label: String, color: Color = Color.White, indent: Boolean = false, onClick: () -> Unit) {
+    Text(
+        label, style = body.copy(color = color),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            .padding(start = if (indent) 44.dp else 20.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+    )
 }
 
 /** Everything hidden from the library, each with a way back. */

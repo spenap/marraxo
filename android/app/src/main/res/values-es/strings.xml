@@ -126,4 +126,9 @@
     <string name="radio_shares">%s en los dos</string>
     <string name="radio_artist">Más de %s</string>
     <string name="radio_wider">Más allá</string>
+    <string name="song_options">Opciones de la canción</string>
+    <string name="play_next">Reproducir a continuación</string>
+    <string name="go_to_artist">Ir al artista</string>
+    <string name="song_hidden">Canción oculta</string>
+    <string name="undo">Deshacer</string>
 </resources>

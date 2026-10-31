@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -115,6 +116,26 @@ class LibraryUiTest {
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Dúlamán").performClick() // the mini player
         compose.onNodeWithText("Radio · Same era").assertExists()
+    }
+
+    @Test fun everySongHasAVisibleMenuWithItsActions() {
+        compose.onNodeWithText("A Son de Guerra").performClick()
+        compose.onAllNodesWithContentDescription("Song options")[1].performClick() // Bachata en Fukuoka
+        compose.onNodeWithText("Juan Luis Guerra · A Son de Guerra").assertExists() // the sheet says which song
+        compose.onNodeWithText("Play next").assertExists()
+        compose.onNodeWithText("Start radio").performClick()
+        compose.onNodeWithText("Anything goes").assertExists() // the modes open in place
+        compose.onNodeWithText("Go to artist").performClick()
+        compose.onNodeWithText("1 album").assertExists() // Juan Luis Guerra's level
+    }
+
+    @Test fun aHiddenSongCanBeUndoneRightAway() {
+        compose.onNodeWithText("The Blue Idol").performClick()
+        compose.onAllNodesWithContentDescription("Song options")[1].performClick() // Uncle Rat
+        compose.onNodeWithText("Hide song").performClick()
+        compose.onNodeWithText("Uncle Rat").assertDoesNotExist()
+        compose.onNodeWithText("Undo").performClick()
+        compose.onNodeWithText("Uncle Rat").assertExists()
     }
 
     @Test fun searchIgnoresAccentsAndPlaysTheSong() {

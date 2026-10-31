@@ -137,4 +137,11 @@
     <string name="radio_artist">More %s</string>
     <!-- Nothing close was left, so the radio went further -->
     <string name="radio_wider">Further afield</string>
+    <!-- The ⋮ on each song row -->
+    <string name="song_options">Song options</string>
+    <string name="play_next">Play next</string>
+    <string name="go_to_artist">Go to artist</string>
+    <!-- Shown for a few seconds after hiding a song, beside Undo -->
+    <string name="song_hidden">Song hidden</string>
+    <string name="undo">Undo</string>
 </resources>

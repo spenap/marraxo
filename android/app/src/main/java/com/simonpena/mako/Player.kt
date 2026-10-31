@@ -99,6 +99,14 @@ class PlayerHolder(context: Context) {
         }
     }
 
+    /** Puts [track] right after the current one; during a radio it joins the radio. */
+    fun playNext(track: Track) {
+        val c = controller ?: return
+        if (c.mediaItemCount == 0) return play(listOf(track), 0)
+        val radio = c.currentMediaItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
+        c.addMediaItem(c.currentMediaItemIndex + 1, track.toMediaItem(radio = radio))
+    }
+
     fun togglePlay() {
         controller?.run {
             if (isPlaying) pause() else {
