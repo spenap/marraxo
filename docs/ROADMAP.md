@@ -64,6 +64,13 @@ Done in a separate repository.
       than three screens long gets one. Letters come from the sort key, so
       "The Corrs" is C and accented names sort and letter with their base
       letter (the sort now folds accents too).
+- [x] Genre families (2026-10-31): tags that differ only in case, accents
+      or punctuation are one genre ("Pop-Rock", "Pop Rock"; the mis-encoded
+      "Pop espańol"), "Rock/Classic Rock" counts for both, and genres that
+      share a word form a family (Indie: Indie, Indie Pop, Indie Rock; a
+      genre can be in two). A family of up to 12 albums opens straight to
+      them, a bigger one to its genres; each row says which. The Nexus 4's
+      38 tags make 25 rows, with Rock, Pop, Indie and Español as families.
 - [ ] As the home screen, Now Playing's "Playing on … Change" row sits
       where the hidden navigation bar was, and the accessibility tree
       reports it at [0,0][0,0] (not visible): it can be tapped, but
@@ -246,6 +253,10 @@ desconocido", `Compilations` and `Varios Artistas`.
 Done with beets (`tools/beets/`), copying into
 `~/Music-clean`. Automatic pass first; skipped albums are
 reviewed interactively.
+- [ ] Genre synonyms the app can't see: a short mapping, proposed by the
+      tool and approved one by one (Celta → Celtic, Britpop → Pop?), applied
+      to the clean copy with a change manifest. The app's genre families
+      then pick them up.
 - [x] Read-only inventory report (`tools/inventory/`).
 - [x] Automatic pass over the whole collection (2026-10-30): 290 albums
   (4,000 tracks) imported, 168 skipped. 135 of the skipped have clean tags

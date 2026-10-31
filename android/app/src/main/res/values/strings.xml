@@ -28,6 +28,11 @@
     <string name="tab_years">Years</string>
     <string name="songs">Songs</string>
     <string name="no_genre">No genre</string>
+    <string name="all_albums">All albums</string>
+    <plurals name="genre_count">
+        <item quantity="one">%d genre</item>
+        <item quantity="other">%d genres</item>
+    </plurals>
     <string name="unknown_year">Unknown year</string>
     <!-- While scrolling the Years tab fast: the decade, e.g. 1990 -->
     <string name="decade">%ds</string>

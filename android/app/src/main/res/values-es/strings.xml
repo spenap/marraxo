@@ -27,6 +27,11 @@
     <string name="tab_years">Años</string>
     <string name="songs">Canciones</string>
     <string name="no_genre">Sin género</string>
+    <string name="all_albums">Todos los álbumes</string>
+    <plurals name="genre_count">
+        <item quantity="one">%d género</item>
+        <item quantity="other">%d géneros</item>
+    </plurals>
     <string name="unknown_year">Año desconocido</string>
     <string name="decade">Década de %d</string>
     <string name="hide_album">Ocultar álbum</string>

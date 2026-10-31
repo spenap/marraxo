@@ -1,0 +1,74 @@
+package com.simonpena.mako
+
+/**
+ * One genre as the library shows it. Tags that differ only in case, accents
+ * or punctuation are one genre ("Pop Rock", "Pop-Rock"; "Pop español" and
+ * the mis-encoded "Pop espańol"), named as most of its albums spell it.
+ */
+data class Genre(val name: String, val key: String, val albums: List<Album>)
+
+/**
+ * A row on the Genres tab: one genre, or a family of genres that share a
+ * word (Indie: Indie, Indie Pop, Indie Rock). A genre can be in two
+ * families (Indie Pop is also Pop).
+ */
+data class GenreShelf(val name: String, val genres: List<Genre>) {
+    val isFamily get() = genres.size > 1
+    /** Each album once, in library order, though it may be in several of the genres. */
+    val albums: List<Album> by lazy { genres.flatMap { it.albums }.distinctBy { it.id }.sortedBy { order(it) } }
+    private val positions by lazy { genres.flatMap { it.albums }.mapIndexed { i, a -> a.id to i }.toMap() }
+    private fun order(album: Album) = positions.getValue(album.id)
+}
+
+/** Several genres in one tag: "Rock/Classic Rock/70'S". */
+fun genreTags(tag: String): List<String> = tag.split('/', ';').map { it.trim() }.filter { it.isNotEmpty() }
+
+fun genreKey(name: String): String = fold(name).replace(NOT_A_WORD, " ").trim()
+
+private val NOT_A_WORD = Regex("[^\\p{L}\\p{N}]+")
+
+/** The library's genres, sorted by name; albums without one are left out. */
+fun genres(library: List<Album>): List<Genre> =
+    library.flatMap { album -> genreTags(album.genre).map { it to album } }
+        .groupBy { (tag, _) -> genreKey(tag) }
+        .map { (key, tagged) ->
+            val name = tagged.groupingBy { it.first }.eachCount().maxBy { it.value }.key
+            Genre(name, key, tagged.map { it.second }.distinctBy { it.id })
+        }
+        .sortedBy { fold(it.name) }
+
+/** Words that would group unrelated genres: "en", "Children's Music" with "Film Music". */
+private val GENERIC = setOf("and", "the", "music", "musica", "del", "los", "las")
+
+private fun words(genre: Genre) = genre.key.split(' ').filter { it.length >= 3 && it !in GENERIC }
+
+/**
+ * The Genres tab's top level: a family for each word that two or more
+ * genres share, and every genre that's in no family. Words that always come
+ * together ("Heavy Metal") make one family between them.
+ */
+fun genreShelves(genres: List<Genre>): List<GenreShelf> {
+    val byWord = LinkedHashMap<String, MutableList<Genre>>()
+    genres.forEach { g -> words(g).distinct().forEach { byWord.getOrPut(it) { mutableListOf() } += g } }
+    val families = byWord.filterValues { it.size > 1 }.entries
+        .groupBy({ it.value.toSet() }, { it.key })
+        .map { (members, familyWords) ->
+            val first = members.first()
+            val ordered = familyWords.sortedBy { words(first).indexOf(it) }
+            GenreShelf(ordered.joinToString(" ") { displayWord(it, members) }, members.sortedBy { fold(it.name) })
+        }
+    val inFamilies = families.flatMap { it.genres }.toSet()
+    val singles = genres.filter { it !in inFamilies }.map { GenreShelf(it.name, listOf(it)) }
+    return (families + singles).sortedBy { fold(it.name) }
+}
+
+/** A family's word as the genres spell it, capitalised if any of them does ("Español", not "español"). */
+private fun displayWord(word: String, genres: Collection<Genre>): String {
+    val spellings = genres.flatMap { it.name.split(NOT_A_WORD) }.filter { genreKey(it) == word }
+    return spellings.firstOrNull { it.first().isUpperCase() } ?: spellings.first().replaceFirstChar { it.uppercase() }
+}
+
+/** About two screens of albums: a family that small opens straight to them. */
+const val FAMILY_OPENS_ALBUMS_UP_TO = 12
+
+fun opensAlbums(shelf: GenreShelf) = !shelf.isFamily || shelf.albums.size <= FAMILY_OPENS_ALBUMS_UP_TO

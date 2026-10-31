@@ -285,6 +285,7 @@ private data class LibraryFilter(val label: String, val matches: (Album) -> Bool
 private class LibraryState {
     var tab by mutableStateOf(Tab.Albums)
     var filter by mutableStateOf<LibraryFilter?>(null)
+    var family by mutableStateOf<String?>(null) // the genre family open on the Genres tab
     val grid = LazyGridState()
     val lists = Tab.entries.associateWith { LazyListState() } // each tab keeps its own scroll
 }
@@ -344,19 +345,7 @@ private fun LibraryScreen(
             Tab.Albums -> {
                 val filter = state.filter
                 val albums = if (filter == null) library else library.filter(filter.matches)
-                if (filter != null) {
-                    Row(Modifier.padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Row(
-                            Modifier.clip(CircleShape).background(Color.White.copy(alpha = .1f)).clickable { state.filter = null }
-                                .padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(filter.label, style = TextStyle(fontSize = 13.sp, color = Color.White))
-                            Icon(GlowIcons.Close, stringResource(R.string.clear), tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
-                        }
-                        Text(albumCount(albums.size), style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
-                    }
-                }
+                if (filter != null) FilterChip(filter.label, albumCount(albums.size)) { state.filter = null }
                 AlbumGrid(albums, state.grid, bottom, onHide, onAlbum)
             }
             Tab.Artists -> {
@@ -375,21 +364,71 @@ private fun LibraryScreen(
                 }
             }
             Tab.Genres -> {
-                val genres = remember(library) {
-                    library.groupBy { it.genre }.toList().sortedBy { (g, _) -> if (g.isEmpty()) "\uffff" else g.lowercase() } // none last
-                }
-                val noGenre = stringResource(R.string.no_genre)
-                LazyColumn(state = state.lists.getValue(state.tab), contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
-                    items(genres, key = { it.first }) { (genre, albums) ->
-                        val label = genre.ifEmpty { noGenre }
-                        ListRow(albums.first().id, round = false, title = label, detail = albumCount(albums.size)) {
-                            pick(LibraryFilter(label) { it.genre == genre })
-                        }
-                    }
-                }
+                GenresList(library, state, bottom) { label, keys -> pick(LibraryFilter(label) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } }) }
             }
             Tab.Years -> YearsList(library, state.lists.getValue(Tab.Years), bottom, onAlbum)
         }
+    }
+}
+
+/**
+ * Genres, with those that share a word gathered into a family (Indie:
+ * Indie, Indie Pop, Indie Rock). A small family opens straight to its
+ * albums, a big one to its genres; each row says which it will be.
+ * [onAlbums] shows the albums of the genres with these keys (none: no genre).
+ */
+@Composable
+private fun GenresList(library: List<Album>, state: LibraryState, bottom: Dp, onAlbums: (label: String, keys: Set<String>) -> Unit) {
+    val shelves = remember(library) { genreShelves(genres(library)) }
+    val untagged = remember(library) { library.filter { genreTags(it.genre).isEmpty() } }
+    val family = shelves.firstOrNull { it.isFamily && it.name == state.family }
+    BackHandler(enabled = family != null) { state.family = null }
+    val keys = { shelf: GenreShelf -> shelf.genres.map { it.key }.toSet() }
+    Column {
+        if (family != null) FilterChip(family.name, pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
+        val list = if (family == null) state.lists.getValue(Tab.Genres) else remember(family.name) { LazyListState() }
+        LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding()) {
+            if (family == null) {
+                items(shelves, key = { it.name }) { shelf ->
+                    val direct = opensAlbums(shelf)
+                    val detail = if (direct) albumCount(shelf.albums.size) else pluralStringResource(R.plurals.genre_count, shelf.genres.size, shelf.genres.size)
+                    ListRow(shelf.albums.first().id, round = false, title = shelf.name, detail = detail) {
+                        if (direct) onAlbums(shelf.name, keys(shelf)) else state.family = shelf.name
+                    }
+                }
+                if (untagged.isNotEmpty()) item(key = "none") {
+                    val noGenre = stringResource(R.string.no_genre)
+                    ListRow(untagged.first().id, round = false, title = noGenre, detail = albumCount(untagged.size)) { onAlbums(noGenre, emptySet()) }
+                }
+            } else {
+                item(key = "all") {
+                    ListRow(family.albums.first().id, round = false, title = stringResource(R.string.all_albums), detail = albumCount(family.albums.size)) {
+                        onAlbums(family.name, keys(family))
+                    }
+                }
+                items(family.genres, key = { it.key }) { genre ->
+                    ListRow(genre.albums.first().id, round = false, title = genre.name, detail = albumCount(genre.albums.size)) {
+                        onAlbums(genre.name, setOf(genre.key))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** What the list below is narrowed to, with a count; tap to clear. */
+@Composable
+private fun FilterChip(label: String, detail: String, onClear: () -> Unit) {
+    Row(Modifier.padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.clip(CircleShape).background(Color.White.copy(alpha = .1f)).clickable(onClick = onClear)
+                .padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, style = TextStyle(fontSize = 13.sp, color = Color.White))
+            Icon(GlowIcons.Close, stringResource(R.string.clear), tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
+        }
+        Text(detail, style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
     }
 }
 
