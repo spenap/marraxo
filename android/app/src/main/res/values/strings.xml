@@ -167,4 +167,6 @@
     <string name="notes_not_here">Not on this phone</string>
     <string name="album_options">Album options</string>
     <string name="album_hidden">Album hidden</string>
+    <!-- Read by TalkBack for the icon beside the song that is playing -->
+    <string name="now_playing">Now playing</string>
 </resources>

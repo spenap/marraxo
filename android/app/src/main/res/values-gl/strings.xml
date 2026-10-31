@@ -150,4 +150,5 @@
     <string name="notes_not_here">Non están neste teléfono</string>
     <string name="album_options">Opcións do álbum</string>
     <string name="album_hidden">Álbum agochado</string>
+    <string name="now_playing">Soando agora</string>
 </resources>

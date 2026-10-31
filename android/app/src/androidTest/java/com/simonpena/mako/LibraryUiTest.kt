@@ -2,6 +2,8 @@ package com.simonpena.mako
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
@@ -172,6 +174,23 @@ class LibraryUiTest {
         compose.onNodeWithContentDescription("Up next").performClick()
         compose.onNodeWithText("Bachata en Fukuoka").performClick()
         compose.waitUntil(5_000) { player.currentTrackId == 301L }
+    }
+
+    @Test fun shuffleSaysWhetherItsOnNotOnlyByColour() {
+        nowPlayingGuerra()
+        compose.onNodeWithContentDescription("Shuffle").assertIsOff()
+        compose.onNodeWithContentDescription("Shuffle").performClick()
+        compose.waitUntil(5_000) { player.shuffle }
+        compose.onNodeWithContentDescription("Shuffle").assertIsOn()
+        compose.onNodeWithContentDescription("Shuffle").performClick() // off again: the queue store keeps it
+        compose.waitUntil(5_000) { !player.shuffle }
+    }
+
+    @Test fun thePlayingSongIsMarkedNotOnlyByColour() {
+        compose.onNodeWithText("A Son de Guerra").performClick()
+        compose.onNodeWithText("Play").performClick()
+        compose.waitUntil(5_000) { player.currentTrackId == 300L }
+        compose.onNodeWithContentDescription("Now playing").assertExists()
     }
 
     @Test fun nowPlayingHasTheSongMenuToo() {

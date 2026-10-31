@@ -36,6 +36,9 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.media3.common.Player
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -929,7 +932,9 @@ private fun AlbumScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft), modifier = Modifier.width(28.dp))
+                Box(Modifier.width(28.dp)) {
+                    if (on) PlayingMark() else Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft))
+                }
                 Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
                 IconSpot(GlowIcons.More, stringResource(R.string.song_options), tint = GSoft) { onOptions(track) }
@@ -1096,6 +1101,7 @@ private fun QueueScreen(player: PlayerHolder, onBack: () -> Unit) {
                         Text(m.artist?.toString().orEmpty(), style = TextStyle(fontSize = 12.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         m.extras?.getString(EXTRA_REASON)?.takeIf { SHOW_RADIO_REASONS }?.let { Text(it, style = TextStyle(fontSize = 12.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis) }
                     }
+                    if (on) PlayingMark(Modifier.padding(start = 8.dp))
                 }
             }
         }
@@ -1408,7 +1414,7 @@ internal fun NowPlaying(
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconSpot(GlowIcons.Shuffle, stringResource(R.string.shuffle), tint = if (player.shuffle) GHi else GSoft) { player.toggleShuffle() }
+                IconToggle(GlowIcons.Shuffle, stringResource(R.string.shuffle), on = player.shuffle) { player.toggleShuffle() }
                 IconSpot(GlowIcons.Previous, stringResource(R.string.previous), iconSize = 32.dp) { player.previous() }
                 Box(
                     Modifier.size(66.dp).clip(CircleShape).background(Color.White).clickable { player.togglePlay() },
@@ -1418,7 +1424,7 @@ internal fun NowPlaying(
                 }
                 IconSpot(GlowIcons.Next, stringResource(R.string.next), iconSize = 32.dp) { player.next() }
                 Box {
-                    IconSpot(GlowIcons.Repeat, stringResource(R.string.repeat), tint = if (player.repeatMode == 0) GSoft else GHi) { player.cycleRepeat() }
+                    IconToggle(GlowIcons.Repeat, stringResource(R.string.repeat), on = player.repeatMode != Player.REPEAT_MODE_OFF) { player.cycleRepeat() }
                     if (player.repeatMode == 1) {
                         Text("1", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = GHi), modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp))
                     }
@@ -1586,6 +1592,24 @@ private fun MiniPlayer(album: Album, track: Track, player: PlayerHolder, modifie
         Box(Modifier.align(Alignment.BottomStart).fillMaxWidth(fraction).height(2.dp).background(Color.White))
     }
 }
+
+@Composable
+private fun IconToggle(icon: ImageVector, description: String, on: Boolean, onToggle: () -> Unit) {
+    // On is said three ways: the accent colour, a dot below (Spotify's convention) and the
+    // switch state that TalkBack reads; colour alone isn't enough (WCAG 1.4.1).
+    Box(
+        Modifier.size(44.dp).clip(CircleShape).toggleable(value = on, role = Role.Switch) { onToggle() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, description, tint = if (on) GHi else GSoft, modifier = Modifier.size(24.dp))
+        if (on) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp).size(4.dp).clip(CircleShape).background(GHi))
+    }
+}
+
+/** Marks the song playing in a list, beside the accent colour. */
+@Composable
+private fun PlayingMark(modifier: Modifier = Modifier) =
+    Icon(GlowIcons.Playing, stringResource(R.string.now_playing), tint = GHi, modifier = modifier.size(16.dp))
 
 @Composable
 private fun IconSpot(
