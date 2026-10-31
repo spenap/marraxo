@@ -1,0 +1,173 @@
+<title>Mako Liner Notes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: three phone stills in a row (stacking on a phone): a track's notes, an album's notes, one connection.
+   Single dark theme on purpose: Mako's Glow look; each screen is tinted by its album, as Now Playing is. */
+:root {
+  color-scheme: dark;
+  --bg: #0C1112;
+  --page: #080C0D;
+  --deep: #070D0E;
+  --hi: #9FD6CF;
+  --ink: #FFFFFF;
+  --soft: rgba(255, 255, 255, .64);
+  --faint: rgba(255, 255, 255, .14);
+  --display: "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --body: "Figtree", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 26px; }
+.intro { display: flex; flex-direction: column; gap: 8px; }
+.intro h1 { font: 800 30px/1.05 var(--display); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+.intro p { margin: 0; color: var(--soft); max-width: 70ch; }
+
+.stills { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+.still { display: flex; flex-direction: column; gap: 12px; }
+.caption { display: flex; flex-direction: column; gap: 4px; }
+.caption .tag { font: 400 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--hi); }
+.caption h2 { font: 800 19px/1.15 var(--display); margin: 0; text-wrap: balance; }
+.caption p { margin: 0; font-size: 13.5px; color: var(--soft); }
+
+.phone {
+  width: 100%; max-width: 360px; aspect-ratio: 9 / 18; border-radius: 22px; overflow: hidden;
+  border: 1px solid var(--faint); display: flex; flex-direction: column; box-shadow: 0 18px 40px rgba(0,0,0,.45);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--t) 70%, var(--deep)) 0%, var(--bg) 38%);
+}
+.status { display: flex; justify-content: flex-end; padding: 8px 14px 0; font: 600 11px/1 var(--body); color: var(--soft); font-variant-numeric: tabular-nums; }
+.screen { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 14px; padding: 6px 18px 0; }
+.back { font-size: 20px; line-height: 1; color: var(--ink); }
+.head { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: center; }
+.art { aspect-ratio: 1; border-radius: 5px; background: linear-gradient(150deg, var(--c), color-mix(in oklab, var(--c) 45%, #000)); display: flex; align-items: flex-end; padding: 4px 5px; font: 800 7px/1.05 var(--display); text-transform: uppercase; color: rgba(255,255,255,.88); overflow: hidden; }
+.head .kicker { font: 400 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+.head h3 { font: 800 20px/1.05 var(--display); letter-spacing: -.01em; margin: 3px 0 2px; text-wrap: balance; }
+.head span { font-size: 12.5px; color: var(--soft); }
+
+.story { font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,.86); margin: 0; }
+.story small { display: block; margin-top: 4px; font-size: 10.5px; color: var(--soft); }
+
+.sec { display: flex; flex-direction: column; gap: 5px; }
+.sec h4 { margin: 0; font: 400 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+.who { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 13.5px; }
+.who b { font-weight: 600; }
+.who i { font-style: normal; color: var(--soft); font-size: 12px; text-align: right; }
+.linked { color: var(--hi); }
+
+/* "Also in your library": a person or place that links to more albums */
+.link { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 9px; background: rgba(255,255,255,.06); }
+.link .stack { display: flex; }
+.link .stack .art { width: 26px; font-size: 0; padding: 0; box-shadow: 0 0 0 2px var(--bg); }
+.link .stack .art + .art { margin-left: -10px; }
+.link b { display: block; font-size: 13.5px; font-weight: 600; }
+.link span { font-size: 11.5px; color: var(--soft); }
+.link .go { color: var(--soft); font-size: 16px; }
+
+.rows { display: flex; flex-direction: column; gap: 9px; }
+.row { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; }
+.row .art { width: 44px; font-size: 0; padding: 0; }
+.row b { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.2; }
+.row span { font-size: 11.5px; color: var(--soft); }
+.row em { font-style: normal; font: 400 10.5px/1 var(--mono); color: var(--hi); font-variant-numeric: tabular-nums; }
+.row.here b { color: var(--hi); }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px 28px; }
+.notes div { display: flex; flex-direction: column; gap: 4px; }
+.notes h3 { font: 800 15px/1.2 var(--display); margin: 0; }
+.notes p { margin: 0; font-size: 13.5px; color: var(--soft); max-width: 60ch; }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Liner notes, from your own collection</h1>
+    <p>Who played, wrote, produced and recorded each track, and which other albums in your library share them. Every name, role and album below is a real row from the Nexus 4's <code>linernotes.db</code>; covers are tinted stand-ins.</p>
+  </div>
+
+  <div class="stills">
+    <!-- Track -->
+    <div class="still">
+      <div class="caption">
+        <span class="tag">From Now Playing</span>
+        <h2>A track: who made it</h2>
+        <p>Opened from a "Liner notes" row under the output row. People in the accent colour appear on other albums you have.</p>
+      </div>
+      <div class="phone" style="--t:#6E6252"><div class="status">21:14</div><div class="screen">
+        <span class="back">⌄</span>
+        <div class="head"><span class="art" style="--c:#8C8270">Face Value</span>
+          <div><span class="kicker">Track 1 · Face Value · 1981</span><h3>In the Air Tonight</h3><span>Phil Collins</span></div></div>
+        <div class="sec"><h4>Written by</h4><div class="who"><b>Phil Collins</b><i>music, lyrics</i></div></div>
+        <div class="sec"><h4>Played by</h4><div class="who">
+          <b>Phil Collins</b><i>drums, drum machine, Rhodes, synth, vocoder</i>
+          <b class="linked">Daryl Stuermer</b><i>guitar</i>
+          <b class="linked">John Giblin</b><i>bass guitar</i>
+          <b>Sharokav</b><i>violin</i></div></div>
+        <div class="sec"><h4>Produced and engineered by</h4><div class="who">
+          <b>Phil Collins</b><i>producer</i>
+          <b class="linked">Hugh Padgham</b><i>producer, engineer</i>
+          <b>Nick Launay, Karen Segal</b><i>assistant engineers</i></div></div>
+        <div class="sec"><h4>Recorded at</h4><div class="who"><b class="linked">The Town House</b><i>London</i><b>The Village, Old Croft</b><i></i></div></div>
+        <div class="sec"><h4>Also in your library</h4>
+          <div class="link"><span class="stack"><span class="art" style="--c:#3F5E8C"></span><span class="art" style="--c:#C9A06B"></span><span class="art" style="--c:#8C3F3F"></span></span><div><b>Hugh Padgham</b><span>6 more albums · The Police, Phil Collins</span></div><span class="go">›</span></div>
+          <div class="link"><span class="stack"><span class="art" style="--c:#A0423A"></span><span class="art" style="--c:#5A6E8C"></span><span class="art" style="--c:#C9A06B"></span></span><div><b>The Town House</b><span>7 more albums · Queen, The Cranberries…</span></div><span class="go">›</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Album -->
+    <div class="still">
+      <div class="caption">
+        <span class="tag">From an album</span>
+        <h2>An album: its story and its people</h2>
+        <p>The story is Wikipedia's summary, with its licence. Albums without data show no Liner notes entry at all.</p>
+      </div>
+      <div class="phone" style="--t:#2E5A5E"><div class="status">21:16</div><div class="screen">
+        <span class="back">‹</span>
+        <div class="head"><span class="art" style="--c:#3E7A7A">Silly Wizard</span>
+          <div><span class="kicker">1979 · Shanachie 79016 · US</span><h3>So Many Partings</h3><span>Silly Wizard</span></div></div>
+        <p class="story">So Many Partings is the third album by Silly Wizard released in 1979 on the Highway Records label in the U.K. and 1980 on the Shanachie label in the U.S. On this album the songs "The Valley Of Strathmore" and "The Highland Clearances" were written by Andy M. Stewart.<small>Wikipedia · CC BY-SA 4.0</small></p>
+        <div class="sec"><h4>Produced by</h4><div class="who"><b>Archie Fisher, Silly Wizard</b><i></i><b>John Zollman</b><i>executive</i></div></div>
+        <div class="sec"><h4>Recorded and mixed at</h4><div class="who"><b>R.E.L. Studios</b><i>all 9 tracks</i></div></div>
+        <div class="sec"><h4>Lead vocals</h4><div class="who"><b>Andy M. Stewart</b><i></i></div></div>
+        <div class="sec"><h4>Also in your library</h4>
+          <div class="link"><span class="stack"><span class="art" style="--c:#5E7A4A"></span><span class="art" style="--c:#4A6B8C"></span><span class="art" style="--c:#8C6A3F"></span></span><div><b>Phil Cunningham</b><span>11 more albums · Relativity, Wolfstone…</span></div><span class="go">›</span></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- Connection -->
+    <div class="still">
+      <div class="caption">
+        <span class="tag">Following a link</span>
+        <h2>A place: everything recorded there</h2>
+        <p>Your albums with this studio, by year. Tap one to open it. The album you came from is marked.</p>
+      </div>
+      <div class="phone" style="--t:#4A4A5E"><div class="status">21:17</div><div class="screen">
+        <span class="back">‹</span>
+        <div class="head"><span class="art" style="--c:#5A5A70">The Town House</span>
+          <div><span class="kicker">Studio · 8 of your albums</span><h3>The Town House</h3><span>1981–1999</span></div></div>
+        <div class="rows">
+          <div class="row here"><span class="art" style="--c:#8C8270"></span><div><b>Face Value</b><span>Phil Collins</span></div><em>1981 · rec</em></div>
+          <div class="row"><span class="art" style="--c:#A0423A"></span><div><b>Greatest Hits</b><span>Queen</span></div><em>1981 · rec</em></div>
+          <div class="row"><span class="art" style="--c:#C9A06B"></span><div><b>No Jacket Required</b><span>Phil Collins</span></div><em>1985 · rec, mix</em></div>
+          <div class="row"><span class="art" style="--c:#7A2E4A"></span><div><b>Greatest Hits II</b><span>Queen</span></div><em>1991 · rec, master</em></div>
+          <div class="row"><span class="art" style="--c:#5A6E8C"></span><div><b>No Need to Argue</b><span>The Cranberries</span></div><em>1994 · rec, mix</em></div>
+          <div class="row"><span class="art" style="--c:#8C3F3F"></span><div><b>…Hits</b><span>Phil Collins</span></div><em>1998 · rec, mix</em></div>
+          <div class="row"><span class="art" style="--c:#3A3A3A"></span><div><b>The Best of Me</b><span>Bryan Adams</span></div><em>1999 · rec</em></div>
+          <div class="row"><span class="art" style="--c:#6E2E2E"></span><div><b>Greatest Hits III</b><span>Queen+</span></div><em>1999 · rec</em></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div><h3>Where the data comes from</h3><p>MusicBrainz credits and Wikipedia summaries, fetched once on the laptop and copied to the phone with the music. 381 of 384 albums are matched, 234 have a story, 30,162 credits name 3,798 people and places. Nothing is fetched on the phone.</p></div>
+    <div><h3>What's real and what's not</h3><p>All names, roles, years and links are real. "London" next to The Town House is the one detail added by hand; the database holds the studio's name only. Covers are stand-ins.</p></div>
+    <div><h3>Languages</h3><p>Stories are fetched in Spanish when Wikipedia has one, else English; Face Value's is in Spanish. Now that Mako speaks Galician, the fetch could try Galician first.</p></div>
+  </div>
+</div>

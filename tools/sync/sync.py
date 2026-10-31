@@ -10,11 +10,15 @@ Only removes albums an earlier sync copied (listed on the phone in
 Music/.mako-sync). Anything else in the Music folder, such as music copied
 by hand, stays unless --replace-unmanaged is given.
 
+Also copies the liner notes (tools/linernotes/out/linernotes.db) into
+Mako's own folder, when they changed.
+
 Shows the plan and changes nothing unless --apply is given.
 
 Usage: sync.py SERIAL [--margin-gb 1.5] [--seed N] [--replace-unmanaged] [--apply]
 """
 import argparse
+import hashlib
 import os
 import random
 import sqlite3
@@ -30,6 +34,10 @@ COLLECTION = Path("~/Music-clean")
 PHONE_MUSIC = "/sdcard/Music"
 MANIFEST = f"{PHONE_MUSIC}/.mako-sync"
 HISTORY = "/data/data/com.simonpena.mako/databases/history.db"
+NOTES = HERE.parent / "linernotes" / "out" / "linernotes.db"
+# Mako's external files folder: the app reads it without a permission, and
+# adb can write it on Android 8 to 17 (checked on the Nexus 4 and the Pixel 5).
+PHONE_NOTES = "/sdcard/Android/data/com.simonpena.mako/files/linernotes.db"
 AUDIO = (".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".mpc")
 GB = 1024 ** 3
 
@@ -124,6 +132,19 @@ def write_manifest(serial, paths):
     os.unlink(f.name)
 
 
+def sync_notes(serial, local=NOTES):
+    """Copies the liner notes to the phone unless it already has this version. True if copied."""
+    if not Path(local).exists():
+        return False
+    md5 = hashlib.md5(Path(local).read_bytes()).hexdigest()
+    on_phone = adb(serial, "shell", f"md5sum {quote(PHONE_NOTES)} 2>/dev/null", check=False).split()
+    if on_phone and on_phone[0] == md5:
+        return False
+    adb(serial, "shell", f"mkdir -p {quote(os.path.dirname(PHONE_NOTES))}")
+    adb(serial, "push", str(local), PHONE_NOTES)
+    return True
+
+
 def plays_by_album(serial):
     """(artist, album) → plays, from Mako's history on the phone (needs adb root); empty if unavailable."""
     adb(serial, "root", check=False)
@@ -192,6 +213,8 @@ def main():
         managed.add(x)
         write_manifest(a.serial, managed)  # after each album, so an interrupted sync resumes
         print(f"  {n}/{len(todo.copy)} {x}", flush=True)
+    if sync_notes(a.serial):
+        print("Liner notes copied.")
     print("Done. In Mako: ⋮ → Rescan library.")
 
 

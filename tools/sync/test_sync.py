@@ -69,3 +69,44 @@ def test_a_second_run_right_after_a_sync_changes_nothing():
     on_phone = [a.path for a in first]
     again = sync.select(albums, free=int(0.9 * GB), margin=GB, already=on_phone)
     assert [a.path for a in again] == on_phone
+
+
+class FakePhone:
+    """adb, for the liner notes copy: remembers what is on the phone and what was pushed."""
+
+    def __init__(self, notes_md5=None):
+        self.notes_md5, self.pushed = notes_md5, []
+
+    def __call__(self, serial, *args, check=True):
+        if args[0] == "push":
+            self.pushed.append(args[2])
+            return ""
+        if "md5sum" in args[-1]:
+            return f"{self.notes_md5}  {sync.PHONE_NOTES}\n" if self.notes_md5 else ""
+        return ""
+
+
+def test_liner_notes_go_to_the_apps_own_folder_when_they_changed(tmp_path, monkeypatch):
+    db = tmp_path / "linernotes.db"
+    db.write_bytes(b"new notes")
+    phone = FakePhone(notes_md5="0" * 32)
+    monkeypatch.setattr(sync, "adb", phone)
+    assert sync.sync_notes("serial", db) is True
+    assert phone.pushed == [sync.PHONE_NOTES]
+    assert sync.PHONE_NOTES == "/sdcard/Android/data/com.simonpena.mako/files/linernotes.db"  # readable without a permission
+
+
+def test_unchanged_liner_notes_are_not_copied_again(tmp_path, monkeypatch):
+    import hashlib
+    db = tmp_path / "linernotes.db"
+    db.write_bytes(b"same notes")
+    phone = FakePhone(notes_md5=hashlib.md5(b"same notes").hexdigest())
+    monkeypatch.setattr(sync, "adb", phone)
+    assert sync.sync_notes("serial", db) is False
+    assert phone.pushed == []
+
+
+def test_no_liner_notes_built_is_not_an_error(tmp_path, monkeypatch):
+    phone = FakePhone()
+    monkeypatch.setattr(sync, "adb", phone)
+    assert sync.sync_notes("serial", tmp_path / "missing.db") is False

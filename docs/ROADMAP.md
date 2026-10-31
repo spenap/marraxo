@@ -301,14 +301,21 @@ the desktop.
       request/s and send a User-Agent. Optionally a Wikipedia summary via
       Wikidata (CC BY-SA: show attribution). (`tools/linernotes/fetch.py`;
       Spanish summary first, else English.)
-- [ ] Build `linernotes.db` (SQLite) keyed by the track's path inside
-      `Music-clean`, and push it with the music. Built
-      (`tools/linernotes/build.py`, schema 1); pushing it is still to do.
+- [x] Build `linernotes.db` (SQLite) keyed by the track's path inside
+      `Music-clean`, and push it with the music (`tools/linernotes/build.py`,
+      schema 1; `sync.py` copies it to Mako's own folder,
+      `Android/data/com.simonpena.mako/files/`, when it changed: readable
+      without a permission, writable by adb on Android 8 to 17). 384
+      albums, 381 matched, 234 with a story, 30,162 credits.
 - [ ] App: a Liner notes screen for track, album and artist. Credits,
       studios and dates, "first released on", other versions in your
       library, and connections between your albums through shared
       musicians. Hidden when there's no data.
-- [ ] Prototype it in `mockups/prototype.html` first.
+- [x] Prototype it first: `mockups/liner-notes.html` (2026-10-31), a
+      track (In the Air Tonight), an album (So Many Partings) and a studio
+      (The Town House, 8 of your albums), from real rows.
+- [ ] Stories in the app's language: fetch Galician first when the phone
+      is in Galician (today: Spanish, else English).
 
 ### C4. Discovery (see `discovery.md`)
 Offline similarity by sound, people, era, mood and topic, computed on the
