@@ -57,14 +57,15 @@ class LibraryUiTest {
 
     private fun main(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
 
-    @Test fun artistTabFiltersTheGridAndTheChipClearsIt() {
+    @Test fun anArtistOpensALevelDownAndBackReturnsToArtists() {
         compose.onNodeWithText("Artists").performClick()
         compose.onNodeWithText("Juan Luis Guerra").performClick()
         compose.onNodeWithText("1 album").assertExists()
         compose.onNodeWithText("A Son de Guerra").assertExists()
         compose.onNodeWithText("The Blue Idol").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Clear").performClick()
-        compose.onNodeWithText("The Blue Idol").assertExists()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("Juan Luis Guerra").assertExists() // the artists, not every album
+        compose.onNodeWithText("A Son de Guerra").assertDoesNotExist()
     }
 
     @Test fun genreTabFilters() {
@@ -73,6 +74,8 @@ class LibraryUiTest {
         compose.onNodeWithText("Celtic").performClick()
         compose.onNodeWithText("2 albums").assertExists()
         compose.onNodeWithText("A Son de Guerra").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("No genre").assertExists() // back on Genres
     }
 
     @Test fun yearsTabGroupsAlbums() {

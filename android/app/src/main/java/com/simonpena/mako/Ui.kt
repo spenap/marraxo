@@ -132,6 +132,10 @@ private sealed interface Screen {
     data object Hidden : Screen
     data object Search : Screen
     data object Licences : Screen
+    /** An artist's or a genre's albums: a level below the tab it was opened from. */
+    class Shelf(val title: String, val matches: (Album) -> Boolean) : Screen {
+        val grid = LazyGridState() // kept while an album is open on top
+    }
 }
 
 private fun fmt(ms: Long): String {
@@ -187,7 +191,15 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             visible, libraryState, look, hasMini = currentTrack != null, status = status,
             onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
             onSearch = { stack.add(Screen.Search) }, onHide = hidden::hide, home = home,
+            onShelf = { title, matches -> stack.add(Screen.Shelf(title, matches)) },
         ) { stack.add(Screen.AlbumDetail(it)) }
+        is Screen.Shelf -> {
+            val albums = visible.filter(screen.matches)
+            Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                LevelHeader(screen.title, albumCount(albums.size)) { stack.removeAt(stack.lastIndex) }
+                AlbumGrid(albums, screen.grid, if (currentTrack != null) 96.dp else 24.dp, hidden::hide) { stack.add(Screen.AlbumDetail(it)) }
+            }
+        }
         Screen.Search -> SearchScreen(
             visible, onBack = { stack.removeAt(stack.lastIndex) },
             onAlbum = { stack.add(Screen.AlbumDetail(it)) },
@@ -293,12 +305,9 @@ private fun PillButton(label: String, modifier: Modifier = Modifier, onClick: ()
 private enum class Tab(val label: Int) { Albums(R.string.tab_albums), Artists(R.string.tab_artists), Genres(R.string.tab_genres), Years(R.string.tab_years) }
 
 /** Narrows the album grid to one artist or genre; shown as a removable chip. */
-private data class LibraryFilter(val label: String, val matches: (Album) -> Boolean)
-
-/** Library state that outlives visits to an album: tab, filter and scroll positions. */
+/** Library state that outlives visits to an album: tab, genre family and scroll positions. */
 private class LibraryState {
     var tab by mutableStateOf(Tab.Albums)
-    var filter by mutableStateOf<LibraryFilter?>(null)
     var family by mutableStateOf<String?>(null) // the genre family open on the Genres tab
     var visit by mutableIntStateOf(Random.nextInt(1000)) // each arrival on a tab shows other covers on its tiles
     val genreGrid = LazyGridState()
@@ -320,6 +329,7 @@ private fun LibraryScreen(
     onSearch: () -> Unit,
     onHide: (Album) -> Unit,
     home: HomeActions,
+    onShelf: (title: String, matches: (Album) -> Boolean) -> Unit,
     onAlbum: (Long) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -356,7 +366,6 @@ private fun LibraryScreen(
                     Modifier.clip(RoundedCornerShape(6.dp)).clickable {
                         if (tab != state.tab) state.visit++
                         state.tab = tab
-                        if (tab != Tab.Albums) state.filter = null
                     }
                         .padding(horizontal = 8.dp, vertical = 6.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -366,20 +375,14 @@ private fun LibraryScreen(
                 }
             }
         }
-        val pick = { f: LibraryFilter -> state.filter = f; state.tab = Tab.Albums }
         when (state.tab) {
-            Tab.Albums -> {
-                val filter = state.filter
-                val albums = if (filter == null) library else library.filter(filter.matches)
-                if (filter != null) FilterChip(filter.label, albumCount(albums.size)) { state.filter = null }
-                AlbumGrid(albums, state.grid, bottom, onHide, onAlbum)
-            }
+            Tab.Albums -> AlbumGrid(library, state.grid, bottom, onHide, onAlbum)
             Tab.Artists -> {
                 val artists = remember(library) { library.groupBy { it.artist }.toList() } // already sorted by artist
                 val scrub = remember(artists) { letterMarks(artists.map { initial(it.first) }) }
                 val entries = artists.map { (artist, albums) ->
                     CoverEntry(artist, artist, "${albumCount(albums.size)} · ${songCount(albums.sumOf { it.tracks.size })}", coverCandidates(albums, state.visit, artist), round = true) {
-                        pick(LibraryFilter(artist) { it.artist == artist })
+                        onShelf(artist) { it.artist == artist }
                     }
                 }
                 val list = state.lists.getValue(state.tab)
@@ -395,7 +398,7 @@ private fun LibraryScreen(
                 }
             }
             Tab.Genres -> {
-                GenresList(library, state, look.tiles, bottom) { label, keys -> pick(LibraryFilter(label) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } }) }
+                GenresList(library, state, look.tiles, bottom) { label, keys -> onShelf(label) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } } }
             }
             Tab.Years -> YearsList(library, state.lists.getValue(Tab.Years), bottom, onAlbum)
         }
@@ -440,7 +443,7 @@ private fun GenresList(library: List<Album>, state: LibraryState, tiles: Boolean
         }
     }
     Column {
-        if (family != null) FilterChip(label(family), pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
+        if (family != null) LevelHeader(label(family), pluralStringResource(R.plurals.genre_count, family.genres.size, family.genres.size)) { state.family = null }
         val list = if (family == null) state.lists.getValue(Tab.Genres) else remember(family.name) { LazyListState() }
         val grid = if (family == null) state.genreGrid else remember(family.name) { LazyGridState() }
         Covers(entries, tiles, list, grid, bottom)
@@ -520,19 +523,15 @@ private fun CoverTile(title: String, detail: String, candidates: List<Album>, ac
     }
 }
 
-/** What the list below is narrowed to, with a count; tap to clear. */
+/** The top of a level below a tab (an artist, a genre family): back, its name and a count. */
 @Composable
-private fun FilterChip(label: String, detail: String, onClear: () -> Unit) {
-    Row(Modifier.padding(start = 16.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(
-            Modifier.clip(CircleShape).background(Color.White.copy(alpha = .1f)).clickable(onClick = onClear)
-                .padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(label, style = TextStyle(fontSize = 13.sp, color = Color.White))
-            Icon(GlowIcons.Close, stringResource(R.string.clear), tint = GSoft, modifier = Modifier.padding(start = 4.dp).size(16.dp))
+private fun LevelHeader(title: String, detail: String, onBack: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 16.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconSpot(GlowIcons.Back, stringResource(R.string.back), onClick = onBack)
+        Column(Modifier.padding(start = 4.dp)) {
+            Text(title, style = display(24), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = TextStyle(fontSize = 12.sp, color = GSoft))
         }
-        Text(detail, style = TextStyle(fontSize = 12.sp, color = GSoft), modifier = Modifier.padding(start = 10.dp))
     }
 }
 

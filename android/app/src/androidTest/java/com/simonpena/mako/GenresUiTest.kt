@@ -52,6 +52,8 @@ class GenresUiTest {
 
     private fun main(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
 
+    private fun back() = compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+
     @Test fun aBigFamilyOpensToItsGenresAndBackLeavesIt() {
         compose.onNodeWithText("2 genres").performClick() // Rock
         compose.onNodeWithText("All albums").assertExists()
@@ -59,9 +61,9 @@ class GenresUiTest {
         compose.onNodeWithText("2 albums").performClick()
         compose.onNodeWithText("Album 13").assertExists() // the grid, filtered to Punk Rock
         compose.onNodeWithText("Album 1").assertDoesNotExist()
-        compose.onNodeWithText("Genres").performClick()
+        back()
         compose.onNodeWithText("All albums").assertExists() // still in Rock
-        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        back()
         compose.onNodeWithText("Other").assertExists() // the top level again
     }
 
