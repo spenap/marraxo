@@ -1,7 +1,11 @@
 package com.simonpena.mako
 
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -96,6 +100,15 @@ class PlaybackService : MediaSessionService() {
                 )
             })
             .build()
+        registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
+    }
+
+    /** Puts Now Playing over the lock screen while the screen is off, so it's there on wake. */
+    private val screenOff = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val hasMusic = session?.player?.currentMediaItem != null
+            if (shouldShowLockPlayer(Build.VERSION.SDK_INT, isHomeApp(context), hasMusic)) showLockPlayer(context)
+        }
     }
 
     /** Moves the queue and position to [renderer], or back to this phone when null. */
@@ -127,6 +140,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        unregisterReceiver(screenOff)
         queue.stop()
         recorder?.close()
         recorder = null

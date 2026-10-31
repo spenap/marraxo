@@ -33,6 +33,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Now Playing over the lock screen on Android 8-9 (LockPlayer.kt). -->
+        <activity
+            android:name=".LockActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:showWhenLocked="true"
+            android:taskAffinity="com.simonpena.mako.lock" />
+
         <!-- Mako as the home screen: off unless enabled on the device
              (android/scripts/appliance.sh), so it never replaces a launcher. -->
         <activity-alias

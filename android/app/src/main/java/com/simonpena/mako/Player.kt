@@ -2,6 +2,7 @@ package com.simonpena.mako
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,6 +24,8 @@ class PlayerHolder(context: Context) {
     var isPlaying by mutableStateOf(false)
         private set
     var currentTrackId by mutableStateOf<Long?>(null)
+        private set
+    var currentItem by mutableStateOf<MediaItem?>(null)
         private set
     var shuffle by mutableStateOf(false)
         private set
@@ -55,6 +58,7 @@ class PlayerHolder(context: Context) {
     private fun sync(p: Player) {
         isPlaying = p.isPlaying
         currentTrackId = p.currentMediaItem?.mediaId?.toLongOrNull()
+        currentItem = p.currentMediaItem
         shuffle = p.shuffleModeEnabled
         repeatMode = p.repeatMode
     }
@@ -129,3 +133,15 @@ internal fun Track.toMediaItem(): MediaItem = MediaItem.Builder()
             .build()
     )
     .build()
+
+/** The track behind a session item; items from a controller carry their URI in the request metadata. */
+internal fun MediaItem.toTrack(): Track = Track(
+    id = mediaId.toLongOrNull() ?: 0,
+    title = mediaMetadata.title?.toString().orEmpty(),
+    artist = mediaMetadata.artist?.toString().orEmpty(),
+    album = mediaMetadata.albumTitle?.toString().orEmpty(),
+    albumId = mediaMetadata.extras?.getLong(EXTRA_ALBUM_ID) ?: 0,
+    durationMs = mediaMetadata.durationMs ?: 0,
+    number = 0,
+    uri = requestMetadata.mediaUri ?: localConfiguration?.uri ?: Uri.EMPTY,
+)

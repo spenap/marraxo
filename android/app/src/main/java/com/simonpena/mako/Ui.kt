@@ -103,7 +103,7 @@ private val GSoft = Color.White.copy(alpha = .64f)
 private val GFaint = Color.White.copy(alpha = .16f)
 private val GHi = Color(0xFF9FD6CF)
 private val GDeep = Color(0xFF0B1415)
-private val GDeepest = Color(0xFF070D0E)
+internal val GDeepest = Color(0xFF070D0E)
 private val GSheet = Color(0xFF161D1E)
 
 private fun display(size: Int) = TextStyle(
@@ -782,7 +782,7 @@ private fun rememberPosition(player: PlayerHolder, key: Any): Long {
 }
 
 @Composable
-private fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClose: () -> Unit) {
+internal fun NowPlaying(album: Album, track: Track, player: PlayerHolder, onClose: () -> Unit) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
     val pos = rememberPosition(player, track.id)
     var outputs by remember { mutableStateOf(false) }

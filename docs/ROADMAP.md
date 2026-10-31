@@ -94,6 +94,13 @@ values, so the phone can be put back as it was.
       returns to the library. A ⋮ menu offers Mako settings, Android
       Settings and "Other apps" (opens Trebuchet, which stays installed).
       Done when Home lands in Mako and Android Settings is two taps away.
+- [x] **Now Playing over the lock screen** (2026-10-31): with music
+      loaded, waking the phone shows Mako's Now Playing (`LockActivity`,
+      `showWhenLocked`), sharp and with working controls; Close or Back
+      unlocks to the library. The system lock screen couldn't do it:
+      Android 8–9 shrinks session artwork to 320 dp (640 px here) and
+      stretches it full screen. Only as the home screen, only below
+      Android 10.
 - [ ] **No lock screen:** screen lock set to None, so waking the phone
       lands in the player.
 - [ ] **Waking without the power button** (worn: it works only when
@@ -119,7 +126,8 @@ values, so the phone can be put back as it was.
       A full SystemUI theme (overlay APK) only if these aren't enough.
 - [ ] `android/scripts/appliance.sh [--undo]`: applies all of the above
       over ADB and saves the previous values for `--undo`. Done so far:
-      the home screen (on the Nexus 4 since 2026-10-30).
+      the home screen (on the Nexus 4 since 2026-10-30); the camera and
+      its double-press-power gesture off (2026-10-31).
 
 ## Track B: Sonos and TV (no phone needed for B0)
 
