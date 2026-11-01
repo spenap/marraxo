@@ -4,11 +4,14 @@
 Picks albums from beets' library: albums you have played on that phone
 (Mako's play history) first, the rest in a stable random order, until the
 phone's free space minus a margin is used. Then copies what is missing and
-removes what is no longer picked.
+removes what is no longer picked. An album already there that changed in
+the collection since (retagged, renamed, tracks added) is refreshed file
+by file, compared by name and size.
 
 Only removes albums an earlier sync copied (listed on the phone in
 Music/.mako-sync). Anything else in the Music folder, such as music copied
-by hand, stays unless --replace-unmanaged is given.
+by hand, stays unless --replace-unmanaged is given; a hand copy identical
+to the collection's album is adopted as if sync had copied it.
 
 Also copies the liner notes (tools/linernotes/out/linernotes.db) into
 Mako's own folder, when they changed.
@@ -103,6 +106,30 @@ def plan(selected, managed, on_phone, replace_unmanaged=False):
     return Plan(copy, remove, kept)
 
 
+def refresh(local, phone):
+    """Files to push and to delete so an album on the phone matches the
+    collection's, both given as {file name: size}."""
+    push = sorted(f for f, size in local.items() if phone.get(f) != size)
+    delete = sorted(f for f in phone if f not in local)
+    return push, delete
+
+
+def adoptable(unmanaged, local, phone):
+    """Albums copied by hand that are identical to the collection's."""
+    return [a for a in unmanaged if a in local and refresh(local[a], phone.get(a, {})) == ([], [])]
+
+
+def parse_phone_files(out):
+    """{album folder: {file name: size}} from lines of "SIZE /sdcard/Music/PATH"."""
+    files = {}
+    for line in out.splitlines():
+        size, _, path = line.partition(" ")
+        if size.isdigit() and path.startswith(PHONE_MUSIC + "/"):
+            album, name = os.path.split(path[len(PHONE_MUSIC) + 1:])
+            files.setdefault(album, {})[name] = int(size)
+    return files
+
+
 # ------------------------------------------------------------------ the phone
 
 def adb(serial, *args, check=True):
@@ -126,6 +153,10 @@ def phone_albums(serial):
     out = adb(serial, "shell", f"find {PHONE_MUSIC} -type f", check=False)
     dirs = {os.path.dirname(f[len(PHONE_MUSIC) + 1:]) for f in out.splitlines() if f.lower().endswith(AUDIO)}
     return sorted(d for d in dirs if d)
+
+
+def phone_files(serial):
+    return parse_phone_files(adb(serial, "shell", f"find {PHONE_MUSIC} -type f -exec stat -c '%s %n' {{}} +", check=False))
 
 
 def phone_bytes(serial, folders):
@@ -191,6 +222,10 @@ def plays_by_album(serial):
 
 # ------------------------------------------------------------------ the collection
 
+def local_files(album):
+    return {f.name: f.stat().st_size for f in (COLLECTION / album).iterdir() if f.is_file()}
+
+
 def collection_albums(plays):
     db = sqlite3.connect(f"file:{LIBRARY}?mode=ro", uri=True)
     rows = db.execute("SELECT albums.id, albums.albumartist, albums.album, MIN(items.path) FROM albums "
@@ -223,22 +258,41 @@ def main():
 
     on_phone, managed = phone_albums(a.serial), phone_manifest(a.serial)
     albums = collection_albums(plays_by_album(a.serial))
+    files = phone_files(a.serial)
+    local = {x.path: local_files(x.path) for x in albums if x.path in on_phone}
+    adopted = adoptable([x for x in on_phone if x not in managed], local, files)
+    managed = managed + adopted
     unmanaged = [x for x in on_phone if x not in managed]
     reclaimable = phone_bytes(a.serial, unmanaged) if a.replace_unmanaged else 0
     chosen = select(albums, phone_free(a.serial), int(a.margin_gb * GB), [x for x in on_phone if x in managed],
                     a.seed, reclaimable, a.rotate, a.include)
     todo = plan([c.path for c in chosen], managed, on_phone, a.replace_unmanaged)
     size = {x.path: x.bytes for x in albums}
+    refreshes = {x: refresh(local[x], files.get(x, {})) for x in sorted({c.path for c in chosen} & set(managed))
+                 if x in local and x not in todo.remove}
+    refreshes = {x: r for x, r in refreshes.items() if r != ([], [])}
     print(f"{len(chosen)} of {len(albums)} albums fit ({sum(c.bytes for c in chosen) / GB:.1f} GB).")
     print(f"Copy {len(todo.copy)} ({sum(size[x] for x in todo.copy) / GB:.1f} GB), remove {len(todo.remove)}.")
     for x in todo.remove:
         print(f"  remove {x}")
     for x in todo.kept:
         print(f"  keep as copied by hand: {x}")
+    if adopted:
+        print(f"Adopt {len(adopted)} albums copied by hand, identical to the collection's.")
+    for x, (push, delete) in refreshes.items():
+        print(f"  refresh {x}: copy {len(push)}, delete {len(delete)}")
     if not a.apply:
         print("Plan only; nothing changed. Add --apply to do it.")
         return
     managed = set(managed)
+    if adopted:
+        write_manifest(a.serial, managed)
+    for x, (push, delete) in refreshes.items():
+        for f in delete:
+            adb(a.serial, "shell", f"rm {quote(f'{PHONE_MUSIC}/{x}/{f}')}")
+        for f in push:
+            adb(a.serial, "push", str(COLLECTION / x / f), f"{PHONE_MUSIC}/{x}/{f}")
+        print(f"  refreshed {x}", flush=True)
     for x in todo.remove:
         adb(a.serial, "shell", f"rm -r {quote(f'{PHONE_MUSIC}/{x}')}")
         managed.discard(x)
@@ -254,7 +308,7 @@ def main():
         print("Liner notes copied.")
     if sync_file(a.serial, LYRICS, PHONE_LYRICS):
         print("Lyrics copied.")
-    if (todo.copy or todo.remove) and index_music(a.serial):
+    if (todo.copy or todo.remove or refreshes) and index_music(a.serial):
         print("Indexed by Android.")
     print("Done. In Mako: ⋮ → Rescan library.")
 
