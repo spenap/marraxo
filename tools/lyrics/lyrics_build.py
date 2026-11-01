@@ -12,6 +12,7 @@ lyrics (or known to be instrumental) are stored.
 
 Usage: lyrics_build.py [OUT]   (default out/lyrics.db)
 """
+import argparse
 import sqlite3
 import sys
 from pathlib import Path
@@ -48,10 +49,13 @@ def build(out, cache):
     return n
 
 
-def main(out=HERE / "out" / "lyrics.db"):
+def main():
+    p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    p.add_argument("out", nargs="?", type=Path, default=HERE / "out" / "lyrics.db")
+    out = p.parse_args().out
     n = build(out, lyrics_fetch.Cache(lyrics_fetch.CACHE))
     print(f"{n} songs with lyrics → {out}")
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    sys.exit(main())

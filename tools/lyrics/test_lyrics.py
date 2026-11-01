@@ -118,3 +118,19 @@ def test_when_the_api_is_down_the_run_stops_instead_of_crawling(tmp_path):
     failed = fetch.fetch_all(fetch.Patient(web, sleep=lambda s: None, jitter=lambda: 0), cache, many)
     assert len(failed) == fetch.GIVE_UP_AFTER  # it stopped there, nothing cached
     assert not any(cache.has(s["path"]) for s in many)
+
+
+def test_only_the_albums_asked_for_are_fetched(tmp_path):
+    inv = tmp_path / "inventory.jsonl"
+    rows = [
+        {"path": FACE["path"], "kind": "audio", "duration": 336.4,
+         "tags": {"title": "In the Air Tonight", "artist": "Phil Collins", "album": "Face Value"}},
+        {"path": "Various/Hits/01 Song.mp3", "kind": "audio", "duration": 200.0,
+         "tags": {"title": "Song", "artist": "Someone", "album": "Hits"}},
+        {"path": "Quique González/Avería y redención #7/02 Doble fila.mp3", "kind": "audio", "duration": 154.0,
+         "tags": {"title": "Doble fila", "artist": "Quique González", "album": "Avería y redención #7"}},
+    ]
+    inv.write_text("\n".join(json.dumps(r) for r in rows))
+    cleared = tmp_path / "cleared.txt"
+    cleared.write_text("# from the cleaning session\nPhil Collins/Face Value/\n\nQuique González/Avería y redención #7\n")
+    assert [s["path"] for s in fetch.songs(inv, fetch.read_albums(cleared))] == [FACE["path"], rows[2]["path"]]

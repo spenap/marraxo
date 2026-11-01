@@ -38,12 +38,20 @@ INTERVAL = 0.7
 TOLERANCE = 2  # seconds: LRCLIB's own for /api/get
 
 
-def songs(inventory):
-    """The songs the phones can play (tagged audio), as LRCLIB is asked about them."""
+def read_albums(file):
+    """Album folders, one per line, relative to the Music folder; a line starting with "#" is a comment ("#" can be in a name)."""
+    lines = (line.strip().rstrip("/") for line in Path(file).read_text().splitlines())
+    return {line for line in lines if line and not line.startswith("#")}
+
+
+def songs(inventory, albums=None):
+    """The songs the phones can play (tagged audio), as LRCLIB is asked about them; only from [albums] if given."""
     for line in Path(inventory).read_text().splitlines():
         r = json.loads(line)
         tags = r.get("tags")
         if r.get("kind") != "audio" or not tags or not r.get("duration"):
+            continue
+        if albums is not None and r["path"].rsplit("/", 1)[0] not in albums:
             continue
         yield {"path": r["path"], "title": tags.get("title", ""), "artist": tags.get("artist") or tags.get("albumartist", ""),
                "album": tags.get("album", ""), "duration": round(r["duration"])}
@@ -151,8 +159,9 @@ def web_getter():
 def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--limit", type=int)
+    p.add_argument("--albums", type=Path, help="only these album folders, one per line (e.g. the ones cleared by the cleanup)")
     a = p.parse_args()
-    todo = list(songs(INVENTORY))[: a.limit]
+    todo = list(songs(INVENTORY, read_albums(a.albums) if a.albums else None))[: a.limit]
     found = [0]
 
     def report(n, total, song, answer):
