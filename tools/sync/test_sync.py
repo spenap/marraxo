@@ -187,23 +187,33 @@ def test_lyrics_go_to_the_apps_own_folder_like_the_notes(tmp_path, monkeypatch):
 
 
 def test_an_album_changed_since_it_was_copied_is_refreshed_file_by_file():
-    local = {"01-01 Man on the Moon.mp3": 10, "02-01 Pop Song.mp3": 8, "cover.jpg": 5}
-    phone = {"01 Man on the Moon.mp3": 10, "cover.jpg": 4}
+    local = {"01-01 Man on the Moon.mp3": (10, 100), "02-01 Pop Song.mp3": (8, 100), "cover.jpg": (5, 100)}
+    phone = {"01 Man on the Moon.mp3": (10, 100), "cover.jpg": (4, 100)}
     push, delete = sync.refresh(local, phone)
     assert push == ["01-01 Man on the Moon.mp3", "02-01 Pop Song.mp3", "cover.jpg"]  # new names, new tracks, new cover
     assert delete == ["01 Man on the Moon.mp3"]  # the old name
 
 
 def test_an_unchanged_album_is_left_alone():
-    assert sync.refresh({"01 a.mp3": 10}, {"01 a.mp3": 10}) == ([], [])
+    assert sync.refresh({"01 a.mp3": (10, 100)}, {"01 a.mp3": (10, 100)}) == ([], [])
+
+
+def test_a_retagged_file_of_the_same_size_is_copied_again():
+    # A tag edit often fits in the tag's padding: same size, newer time ("[desconocido]" → "Various Artists").
+    assert sync.refresh({"61 Mix 1.mp3": (10, 200)}, {"61 Mix 1.mp3": (10, 100)}) == (["61 Mix 1.mp3"], [])
+
+
+def test_times_a_second_or_two_apart_are_the_same_file():
+    assert sync.refresh({"01 a.mp3": (10, 101)}, {"01 a.mp3": (10, 100)}) == ([], [])
 
 
 def test_a_copy_by_hand_identical_to_the_collection_counts_as_synced():
-    local = {"A/same": {"01 a.mp3": 10}, "A/other rip": {"01 a.mp3": 10}}
-    phone = {"A/same": {"01 a.mp3": 10}, "A/other rip": {"01 track 1.mp3": 11}}
+    # Copied by hand, so its times are its own: only the sizes count.
+    local = {"A/same": {"01 a.mp3": (10, 100)}, "A/other rip": {"01 a.mp3": (10, 100)}}
+    phone = {"A/same": {"01 a.mp3": (10, 555)}, "A/other rip": {"01 track 1.mp3": (11, 100)}}
     assert sync.adoptable(["A/same", "A/other rip"], local, phone) == ["A/same"]
 
 
 def test_the_phones_files_are_grouped_by_album_folder():
-    out = "10 /sdcard/Music/A/X/01 a.mp3\n5 /sdcard/Music/A/X/cover.jpg\n3 /sdcard/Music/.mako-sync\n"
-    assert sync.parse_phone_files(out) == {"A/X": {"01 a.mp3": 10, "cover.jpg": 5}, "": {".mako-sync": 3}}
+    out = "10 100 /sdcard/Music/A/X/01 a.mp3\n5 100 /sdcard/Music/A/X/cover.jpg\n3 7 /sdcard/Music/.mako-sync\n"
+    assert sync.parse_phone_files(out) == {"A/X": {"01 a.mp3": (10, 100), "cover.jpg": (5, 100)}, "": {".mako-sync": (3, 7)}}

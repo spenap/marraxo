@@ -106,27 +106,34 @@ def plan(selected, managed, on_phone, replace_unmanaged=False):
     return Plan(copy, remove, kept)
 
 
-def refresh(local, phone):
+SAME_TIME = 2  # seconds; adb push keeps a file's time, some filesystems round it
+
+
+def refresh(local, phone, times=True):
     """Files to push and to delete so an album on the phone matches the
-    collection's, both given as {file name: size}."""
-    push = sorted(f for f, size in local.items() if phone.get(f) != size)
+    collection's, both given as {file name: (size, time)}. A retag often
+    keeps the size (the tag has padding), so the time counts too."""
+    def same(a, b):
+        return b is not None and a[0] == b[0] and (not times or abs(a[1] - b[1]) <= SAME_TIME)
+    push = sorted(f for f, st in local.items() if not same(st, phone.get(f)))
     delete = sorted(f for f in phone if f not in local)
     return push, delete
 
 
 def adoptable(unmanaged, local, phone):
-    """Albums copied by hand that are identical to the collection's."""
-    return [a for a in unmanaged if a in local and refresh(local[a], phone.get(a, {})) == ([], [])]
+    """Albums copied by hand that are identical to the collection's; by size only, as a hand copy has its own times."""
+    return [a for a in unmanaged if a in local and refresh(local[a], phone.get(a, {}), times=False) == ([], [])]
 
 
 def parse_phone_files(out):
-    """{album folder: {file name: size}} from lines of "SIZE /sdcard/Music/PATH"."""
+    """{album folder: {file name: (size, time)}} from lines of "SIZE TIME /sdcard/Music/PATH"."""
     files = {}
     for line in out.splitlines():
-        size, _, path = line.partition(" ")
-        if size.isdigit() and path.startswith(PHONE_MUSIC + "/"):
+        size, _, rest = line.partition(" ")
+        time, _, path = rest.partition(" ")
+        if size.isdigit() and time.isdigit() and path.startswith(PHONE_MUSIC + "/"):
             album, name = os.path.split(path[len(PHONE_MUSIC) + 1:])
-            files.setdefault(album, {})[name] = int(size)
+            files.setdefault(album, {})[name] = (int(size), int(time))
     return files
 
 
@@ -156,7 +163,7 @@ def phone_albums(serial):
 
 
 def phone_files(serial):
-    return parse_phone_files(adb(serial, "shell", f"find {PHONE_MUSIC} -type f -exec stat -c '%s %n' {{}} +", check=False))
+    return parse_phone_files(adb(serial, "shell", f"find {PHONE_MUSIC} -type f -exec stat -c '%s %Y %n' {{}} +", check=False))
 
 
 def phone_bytes(serial, folders):
@@ -223,7 +230,7 @@ def plays_by_album(serial):
 # ------------------------------------------------------------------ the collection
 
 def local_files(album):
-    return {f.name: f.stat().st_size for f in (COLLECTION / album).iterdir() if f.is_file()}
+    return {f.name: (st.st_size, int(st.st_mtime)) for f in (COLLECTION / album).iterdir() if f.is_file() for st in [f.stat()]}
 
 
 def collection_albums(plays):
