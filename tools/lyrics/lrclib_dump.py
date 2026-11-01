@@ -496,12 +496,13 @@ class Mine:
             SELECT t.id, t.name, t.artist_name, t.album_name, t.duration, l.plain, l.synced, l.instrumental
             FROM tracks t JOIN lyrics l ON l.id = t.lyrics_id WHERE t.name_key = ?""", (title_key(song["title"]),))
         artist = artist_keys(song["artist"])
-        close = [r for r in rows if artist_keys(r[2] or "") & artist and abs(r[4] - song["duration"]) <= lyrics_fetch.TOLERANCE]
+        close = [r for r in rows if r[4] is not None and artist_keys(r[2] or "") & artist
+                 and abs(r[4] - song["duration"]) <= lyrics_fetch.TOLERANCE]
         if not close:
             return {"status": "missing"}
         # As LRCLIB: the same album first (its /api/get), then any close version, timed lyrics first (its search).
-        album = title_key(song["album"])
-        r = min(close, key=lambda r: (title_key(r[3]) != album, not r[6], abs(r[4] - song["duration"])))
+        album = title_key(song["album"] or "")
+        r = min(close, key=lambda r: (title_key(r[3] or "") != album, not r[6], abs(r[4] - song["duration"])))
         return {"status": "found", "id": r[0], "trackName": r[1], "artistName": r[2], "albumName": r[3], "duration": r[4],
                 "instrumental": bool(r[7]), "plainLyrics": r[5], "syncedLyrics": r[6]}
 

@@ -189,6 +189,13 @@ def test_more_than_two_seconds_off_is_missing(tmp_path):
     assert mine.lookup(song()) == {"status": "missing"}
 
 
+def test_tracks_without_a_duration_or_album_are_passed_over_not_a_crash(tmp_path):
+    mine = mine_with(tmp_path,
+                     (1, "Llamando a la Tierra", "M-Clan", None, None, "No length", None, 0),
+                     (2, "Llamando a la Tierra", "M-Clan", None, 280.5, "Plain", None, 0))
+    assert mine.lookup(song())["id"] == 2
+
+
 def test_column_names_skip_constraints_however_they_are_spaced():
     sql = """CREATE TABLE tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, duration FLOAT,
              UNIQUE(name, duration), FOREIGN KEY (id) REFERENCES x (id), lyricsfile TEXT)"""
