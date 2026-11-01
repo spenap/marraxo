@@ -61,7 +61,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -925,6 +928,7 @@ private fun AlbumScreen(
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
     val minutes = album.tracks.sumOf { it.durationMs } / 60000
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(
         Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(tint, GBg), endY = fadePx)),
         contentPadding = PaddingValues(bottom = if (hasMini) 96.dp else 24.dp),
@@ -978,6 +982,9 @@ private fun AlbumScreen(
 }
 
 /** A section's heading on the liner notes screens. */
+    // The list scrolls under the status bar: cover it in the gradient's top colour, unseen until something scrolls there.
+    Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
+    }
 private val Section.label get() = when (this) {
     Section.Written -> R.string.notes_written
     Section.Played -> R.string.notes_played
