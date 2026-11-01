@@ -21,7 +21,7 @@ android {
         versionCode = git("rev-list", "--count", "HEAD").toInt()
         versionName = git("describe", "--tags", "--always", "--dirty")
         // The commit's date, not the build time, so rebuilding gives the same APK.
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.simonpena.mako.AwakeRunner"
         manifestPlaceholders["appLabel"] = "Mako"
         buildConfigField("String", "COMMIT_DATE", "\"${git("log", "-1", "--format=%cs")}\"")
     }
