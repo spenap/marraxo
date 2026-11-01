@@ -2,3 +2,4 @@
 pytest==8.3.4
 mutagen==1.47.0
 Pillow==11.0.0
+isal==1.8.0  # lyrics/lrclib_dump.py: reads LRCLIB's 49 GB dump 2.5 times as fast as gzip

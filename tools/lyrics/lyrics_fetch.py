@@ -15,7 +15,10 @@ Polite by LRCLIB's rules: identifies itself, sends one request at a time
 ~0.7 s apart (~85 a minute, under its ~90 for identified clients), and
 waits as long as a 429 or 503 says.
 
-Usage: lyrics_fetch.py [--limit N]
+Usage: lyrics_fetch.py [--limit N] [--albums FILE] [--dump out/lrclib-mine.sqlite3]
+
+With --dump, songs are looked up in an extract of LRCLIB's database dump
+(lrclib_dump.py) instead of its API: offline, with the same matching.
 """
 import argparse
 import hashlib
@@ -117,13 +120,14 @@ class Cache:
             yield json.loads(f.read_text())
 
 
-def fetch_all(web, cache, todo, report=lambda n, total, song, answer: None):
-    """Asks about every song not cached yet; returns the paths the server kept failing on (left uncached, for the next run)."""
+def fetch_all(web, cache, todo, report=lambda n, total, song, answer: None, ask=lookup):
+    """Asks about every song not cached yet; returns the paths the server kept failing on (left uncached, for the next run).
+    [ask] answers for one song: LRCLIB's API by default, or an extract of its dump (lrclib_dump.Mine)."""
     todo = [s for s in todo if not cache.has(s["path"])]
     failed, in_a_row = [], 0
     for n, song in enumerate(todo, 1):
         try:
-            answer = lookup(web, song)
+            answer = ask(web, song)
         except (RuntimeError, OSError, ValueError) as e:
             failed.append(song["path"])
             report(n, len(todo), song, {"status": "failed", "error": str(e)})
@@ -160,6 +164,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--limit", type=int)
     p.add_argument("--albums", type=Path, help="only these album folders, one per line (e.g. the ones cleared by the cleanup)")
+    p.add_argument("--dump", type=Path, help="look songs up in an extract of LRCLIB's dump (lrclib_dump.py), offline")
     a = p.parse_args()
     todo = list(songs(INVENTORY, read_albums(a.albums) if a.albums else None))[: a.limit]
     found = [0]
@@ -169,7 +174,12 @@ def main():
         if n % 50 == 0 or n == total:
             print(f"  {n}/{total}, {found[0]} found", flush=True)
 
-    failed = fetch_all(web_getter(), Cache(CACHE), todo, report)
+    if a.dump:
+        import lrclib_dump
+        mine = lrclib_dump.Mine(a.dump)
+        failed = fetch_all(None, Cache(CACHE), todo, report, ask=lambda _, song: mine.lookup(song))
+    else:
+        failed = fetch_all(web_getter(), Cache(CACHE), todo, report)
     print(f"Done: {found[0]} found; {len(failed)} left for the next run (server errors).")
     return 1 if failed else 0
 

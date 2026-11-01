@@ -134,3 +134,16 @@ def test_only_the_albums_asked_for_are_fetched(tmp_path):
     cleared = tmp_path / "cleared.txt"
     cleared.write_text("# from the cleaning session\nPhil Collins/Face Value/\n\nQuique González/Avería y redención #7\n")
     assert [s["path"] for s in fetch.songs(inv, fetch.read_albums(cleared))] == [FACE["path"], rows[2]["path"]]
+
+
+def test_answers_can_come_from_somewhere_other_than_the_api(tmp_path):
+    cache = fetch.Cache(tmp_path / "cache")
+    asked = []
+
+    def local(web, song):
+        asked.append(song["path"])
+        return {"status": "found", "id": 7, "syncedLyrics": SYNCED}
+
+    assert fetch.fetch_all(None, cache, [FACE], ask=local) == []
+    assert asked == [FACE["path"]]
+    assert cache.has(FACE["path"])
