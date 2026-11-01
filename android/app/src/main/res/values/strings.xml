@@ -174,4 +174,9 @@
         <item quantity="one">%d string player</item>
         <item quantity="other">%d string players</item>
     </plurals>
+    <string name="lyrics">Lyrics</string>
+    <!-- A song LRCLIB knows has no words -->
+    <string name="lyrics_instrumental">Instrumental</string>
+    <!-- Credit under the lyrics: where they come from -->
+    <string name="lyrics_source">Lyrics from LRCLIB</string>
 </resources>

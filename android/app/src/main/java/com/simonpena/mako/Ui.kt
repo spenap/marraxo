@@ -36,6 +36,8 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.media3.common.Player
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.selection.toggleable
@@ -142,6 +144,7 @@ private sealed interface Screen {
     data object Search : Screen
     data object Licences : Screen
     data object Queue : Screen
+    data object Lyrics : Screen
     /** Liner notes: a song's, an album's (by one of its tracks' path), and a person's or place's albums. */
     data class SongNotes(val path: String) : Screen
     data class AlbumNotes(val path: String) : Screen
@@ -205,6 +208,11 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val radioModes = remember { RadioMode.entries.filter { it != RadioMode.People || LinerNotes.file(context).exists() } }
     var songSheet by remember { mutableStateOf<Pair<Track, Album>?>(null) }
     var albumSheet by remember { mutableStateOf<Album?>(null) }
+    val lyricsDb by produceState<LyricsDb?>(null) {
+        value = withContext(Dispatchers.IO) { LyricsDb.open(LyricsDb.file(context)) }
+        awaitDispose { value?.close() }
+    }
+    val currentLyrics = remember(currentTrack?.path, lyricsDb) { currentTrack?.let { lyricsDb?.lyrics(it.path) } }
     val notes by produceState<LinerNotes?>(null) {
         value = withContext(Dispatchers.IO) { LinerNotes.open(LinerNotes.file(context)) }
         awaitDispose { value?.close() }
@@ -258,9 +266,13 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
                 onArtist = { stack.add(Screen.Shelf(currentTrack.artist, { it.albumId }) { it.artist == currentTrack.artist }) },
                 onQueue = { stack.add(Screen.Queue) },
+                onLyrics = if (currentLyrics != null) ({ stack.add(Screen.Lyrics) }) else null,
                 onOptions = { songSheet = currentTrack to currentAlbum },
             ) { stack.removeAt(stack.lastIndex) }
         Screen.Queue -> QueueScreen(player) { stack.removeAt(stack.lastIndex) }
+        Screen.Lyrics ->
+            if (currentTrack == null || currentLyrics == null) stack.removeAt(stack.lastIndex)
+            else LyricsScreen(currentTrack, currentLyrics, player) { stack.removeAt(stack.lastIndex) }
         is Screen.SongNotes -> notes?.let { n ->
             SongNotesScreen(n, screen.path, onPerson = { stack.add(Screen.NotesPerson(it)) }) { stack.removeAt(stack.lastIndex) }
         }
@@ -273,7 +285,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             }
         }
     }
-    if (stack.last() != Screen.NowPlaying && stack.last() != Screen.Queue && currentAlbum != null && currentTrack != null) {
+    if (stack.last() !in setOf(Screen.NowPlaying, Screen.Queue, Screen.Lyrics) && currentAlbum != null && currentTrack != null) {
         Box(Modifier.fillMaxSize()) {
             MiniPlayer(currentAlbum, currentTrack, player, Modifier.align(Alignment.BottomCenter)) {
                 stack.add(Screen.NowPlaying)
@@ -1115,6 +1127,63 @@ private fun NotesPersonScreen(notes: LinerNotes, name: String, libraryAlbum: (St
 
 private fun notesAlbumDetail(a: NotesAlbum) = listOfNotNull(a.artist, a.year.takeIf { it > 0 }?.toString(), a.roles).joinToString(" · ")
 
+/**
+ * The song's lyrics. Timed ones follow the song: the line being sung is
+ * white and bold, kept a third of the way down, and a tap on a line goes
+ * there. Words without times scroll as text.
+ */
+@Composable
+private fun LyricsScreen(track: Track, lyrics: Lyrics, player: PlayerHolder, onBack: () -> Unit) {
+    Column(Modifier.fillMaxSize().background(GDeep).statusBarsPadding()) {
+        LevelHeader(track.title, track.artist, onBack)
+        when {
+            lyrics.timed.isNotEmpty() -> TimedLyrics(lyrics.timed, track.id, player, Modifier.weight(1f))
+            lyrics.plain != null -> Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 8.dp)) {
+                Text(lyrics.plain, style = body.copy(fontSize = 18.sp, lineHeight = 28.sp))
+            }
+            else -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.lyrics_instrumental), style = body.copy(color = GSoft))
+            }
+        }
+        Text(
+            stringResource(R.string.lyrics_source), style = TextStyle(fontSize = 11.sp, color = GSoft),
+            modifier = Modifier.navigationBarsPadding().padding(horizontal = 24.dp, vertical = 10.dp),
+        )
+    }
+}
+
+@Composable
+private fun TimedLyrics(lines: List<LrcLine>, trackId: Long, player: PlayerHolder, modifier: Modifier) {
+    var current by remember(trackId) { mutableIntStateOf(lineAt(lines, player.positionMs())) }
+    // Wakes when the next line is due (at least once a second, to follow seeks), not every frame.
+    LaunchedEffect(trackId, player.isPlaying) {
+        while (true) {
+            val pos = player.positionMs()
+            current = lineAt(lines, pos)
+            val next = lines.getOrNull(current + 1)?.timeMs
+            delay(if (!player.isPlaying || next == null) 1_000 else (next - pos).coerceIn(30, 1_000))
+        }
+    }
+    val list = rememberLazyListState()
+    val third = with(LocalDensity.current) { 180.dp.roundToPx() }
+    LaunchedEffect(current) {
+        if (current >= 0 && !list.isScrollInProgress) list.animateScrollToItem(current, -third)
+    }
+    LazyColumn(modifier, state = list, contentPadding = PaddingValues(top = 24.dp, bottom = 240.dp)) {
+        itemsIndexed(lines) { i, line ->
+            val on = i == current
+            Text(
+                line.text.ifEmpty { "♪" },
+                style = body.copy(
+                    fontSize = 20.sp, lineHeight = 27.sp,
+                    color = if (on) Color.White else GSoft, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                ),
+                modifier = Modifier.fillMaxWidth().clickable { player.seekTo(line.timeMs) }.padding(horizontal = 24.dp, vertical = 7.dp),
+            )
+        }
+    }
+}
+
 /** What's playing and what comes next, radio reasons included; tap a song to play it. */
 @Composable
 private fun QueueScreen(player: PlayerHolder, onBack: () -> Unit) {
@@ -1407,6 +1476,7 @@ internal fun NowPlaying(
     onAlbum: (() -> Unit)? = null,
     onArtist: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null,
+    onLyrics: (() -> Unit)? = null,
     onOptions: (() -> Unit)? = null,
     onClose: () -> Unit,
 ) {
@@ -1470,6 +1540,7 @@ internal fun NowPlaying(
             }
             Row(verticalAlignment = Alignment.Bottom) {
                 Box(Modifier.weight(1f)) { OutputRow(player.output) { outputs = true } }
+                if (onLyrics != null) IconSpot(GlowIcons.Lyrics, stringResource(R.string.lyrics), onClick = onLyrics)
                 if (onQueue != null) IconSpot(GlowIcons.Queue, stringResource(R.string.up_next), onClick = onQueue)
             }
         }

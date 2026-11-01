@@ -155,4 +155,7 @@
         <item quantity="one">%d músico de corda</item>
         <item quantity="other">%d músicos de corda</item>
     </plurals>
+    <string name="lyrics">Letra</string>
+    <string name="lyrics_instrumental">Instrumental</string>
+    <string name="lyrics_source">Letra de LRCLIB</string>
 </resources>
