@@ -111,22 +111,25 @@ it again at every step, from what's playing.
 and `tools/linernotes/out`): the clean collection, 20 seeds × 100 songs
 per mode.
 
-2026-11-01, after genre synonyms and the Musepack album converted to
-AAC: 388 albums, 5,248 songs, 298 albums with notes, no files skipped.
+2026-11-01, after 9 albums were added to the clean copy: 397 albums,
+5,349 songs, 311 albums with notes. The 20 seeds are drawn from the album
+list, so they changed too.
 
 | Mode | Wider | Artist within 5 | Album within 3 | ms/pick (laptop) | Albums per 100 | Shares | Genre | Decade |
 |---|---|---|---|---|---|---|---|---|
-| Similar | 0% | 0 | 0 | 1.6 | 46 | 10% | 82% | 8% |
-| Era | 0% | 0 | 0 | 1.3 | 65 | 0% | 0% | 100% |
-| People | 0.7% | 0 | 0 | 1.6 | 40 | 84% | 15% | 0% |
-| Anything | 10.6% | 0 | 0 | 1.4 | 89 | 1% | 16% | 73% |
-| **Radio** (the mix, 2026-11-01) | 0% | 0 | 0 | 1.5 | 43 | 29% | 12% | 59% |
+| Similar | 0% | 0 | 0 | 1.7 | 45 | 7% | 87% | 6% |
+| Era | 0% | 0 | 0 | 1.5 | 61 | 0% | 0% | 100% |
+| People | 1.2% | 0 | 0 | 1.7 | 38 | 81% | 16% | 1% |
+| Anything | 16.4% | 0 | 0 | 1.6 | 90 | 0% | 14% | 70% |
+| **Radio** (the mix) | 0% | 0 | 0 | 1.6 | 41 | 33% | 18% | 49% |
 
 The columns on the right count each pick's main reason only: in the mix,
 a shared decade is common and usually counts most, so most picks also
 share a genre or people without that being their main reason.
 
-Earlier the same night (386 albums, 9 Musepack files skipped): People
+Earlier on 1 Nov (388 albums, 5,248 songs, 298 with notes): Similar 82%
+genre, People 84% shares, the mix 29% shares and 59% decade.
+Earlier the night before (386 albums, 9 Musepack files skipped): People
 69% shares, Similar 88% genre.
 First run (290 albums, 4,000 songs, before the second import pass):
 Similar 41 albums per 100 with 75% genre; People 80% shares.
