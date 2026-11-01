@@ -15,6 +15,14 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-01 · Now Playing: lyrics and notes scroll below, the heart stays by the title
+Why: buttons for lyrics and notes competed for room with the cover (the
+Nexus 4 has little) and with a favourites heart. Of six layouts mocked,
+the user chose Spotify's: cards below the controls, shown only when there
+is something to show. A heart on the cover or a flipping cover were
+set aside: the heart should stay visible and mean the song.
+Detail: `mockups/now-playing.html`, ROADMAP.md (A3).
+
 ## 2026-11-01 · Lyrics from LRCLIB's dump, streamed, saved by artist
 Updates: 2026-11-01 "Lyrics from LRCLIB, fetched on the laptop", whose
 "the dump is held back" no longer holds.

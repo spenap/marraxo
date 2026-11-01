@@ -132,6 +132,16 @@ Done in a separate repository.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
+- [ ] Now Playing scrolls, as Spotify's (layout F in
+      `mockups/now-playing.html`): cards below the controls for lyrics
+      (following the song; "Ver la letra" opens the full screen) and liner
+      notes (story, a few credits, "Ver las notas"), each only when the
+      song has it; when there's nothing, there's nothing. The top of the
+      first card peeks (~30 dp) so it's found. The bottom row loses
+      "Change" (the row is the button; TalkBack still says it) and shares
+      one rule with Up next, centred on "Playing on …". The heart for
+      favourites goes beside the title, which truncates. Measure the
+      Nexus 4 (scroll-bench on Now Playing).
 - [x] About screen, with open-source licences (AboutLibraries: 89
       libraries, Apache 2.0 and MIT, texts readable offline) (from a ⋮ menu on the Library header, alongside
       "Rescan library"): `versionName` from `git describe --tags --always

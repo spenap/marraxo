@@ -1,0 +1,278 @@
+<title>Now Playing, rearranged</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: a row of phones at true dp size, each with a short verdict underneath; the page uses the prototype's neutral tokens, the phones Mako's Glow palette. */
+:root {
+  --bg: #eef0f1;
+  --surface: #f8f9fa;
+  --ink: #15181b;
+  --muted: #5b636b;
+  --line: #d2d7db;
+  --accent: #1f6f66;
+  --good: #2f7d4f;
+  --warn: #a5552f;
+  --f-body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --g-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --g-body: "Figtree", "Helvetica Neue", Arial, sans-serif;
+  --g-deep: #0b1415;
+  --g-deepest: #070d0e;
+  --g-soft: rgba(255,255,255,.64);
+  --g-faint: rgba(255,255,255,.16);
+  --g-hi: #9fd6cf;
+  --tint: #6e3a2e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111416; --surface: #181c1f; --ink: #e5e8eb; --muted: #9aa2a9; --line: #2a3035; --accent: #8fd3c8; --good: #7fc79b; --warn: #e3a07e; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111416; --surface: #181c1f; --ink: #e5e8eb; --muted: #9aa2a9; --line: #2a3035; --accent: #8fd3c8; --good: #7fc79b; --warn: #e3a07e; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1760px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: end; justify-content: space-between; margin-bottom: 24px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 4px; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 64ch; }
+.device { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.device input { position: absolute; opacity: 0; pointer-events: none; }
+.device label { padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.device input:checked + label { background: var(--accent); color: var(--bg); font-weight: 600; }
+.device input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dims { font-family: var(--f-mono); font-size: 12px; color: var(--muted); margin-top: 6px; text-align: right; }
+
+.row { display: flex; gap: 28px; overflow-x: auto; padding-bottom: 12px; }
+.mock { flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px; width: var(--w); }
+.mock h2 { font-size: 15px; margin: 0; display: flex; gap: 8px; align-items: baseline; }
+.mock h2 .tag { font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.notes { font-size: 13.5px; color: var(--muted); margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.notes li::before { content: "– "; }
+.notes .plus::before { content: "+ "; color: var(--good); font-weight: 700; }
+.notes .minus::before { content: "− "; color: var(--warn); font-weight: 700; }
+.cover-size { font-family: var(--f-mono); font-size: 12px; color: var(--ink); }
+
+/* The phone: always Glow, whatever the page theme. */
+.phone { --w: 360px; --h: 640px; width: var(--w); height: var(--h); border-radius: 18px; overflow: hidden; position: relative; color: #fff; font-family: var(--g-body);
+  background: linear-gradient(to bottom, var(--tint) 0%, var(--g-deep) 62%, var(--g-deepest) 100%); box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 10px 30px rgba(0,0,0,.25); }
+body.pixel .phone { --h: 851px; --w: 393px; }
+body.pixel .mock { --w: 393px; }
+.mock { --w: 360px; }
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 0 22px 14px; }
+.status { height: 24px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,.9); padding: 0 2px; flex: none; }
+.navbar { height: 40px; flex: none; }
+.top { height: 48px; display: flex; align-items: center; gap: 4px; flex: none; }
+.top .mid { flex: 1; text-align: center; min-width: 0; }
+.top .from { font-size: 10.5px; letter-spacing: .07em; color: var(--g-soft); text-transform: uppercase; }
+.top .alb { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ic { width: 44px; height: 44px; display: grid; place-items: center; flex: none; color: #fff; }
+.ic svg { width: 24px; height: 24px; }
+.ic.soft { color: var(--g-soft); }
+
+.art { flex: 1 1 auto; min-height: 0; container-type: size; display: grid; place-items: center; margin: 6px 0; }
+.cover { width: min(86cqw, 100cqh); aspect-ratio: 1; border-radius: 10px; position: relative; overflow: hidden;
+  background: radial-gradient(60% 50% at 35% 70%, #c98a5e 0%, transparent 70%), linear-gradient(160deg, #e9e2d3 0 30%, #3b2a33 30% 100%); }
+.cover b { position: absolute; left: 10%; right: 10%; top: 6%; font-family: var(--g-display); font-weight: 800; color: #4a3036; font-size: 15cqw; line-height: .9; letter-spacing: -.02em; text-align: center; }
+.cover i { position: absolute; left: 7%; right: 7%; bottom: 7%; height: 54%; background: linear-gradient(120deg, #2a2630, #5b3e3a 55%, #2d2229); border-radius: 2px; }
+
+.pills { display: flex; gap: 10px; justify-content: center; flex: none; margin: 4px 0 10px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.4); font-size: 13.5px; font-weight: 600; }
+.pill svg { width: 16px; height: 16px; }
+.chips { display: flex; gap: 18px; justify-content: center; flex: none; margin: 2px 0 8px; font-size: 13px; color: var(--g-soft); }
+.chips span { display: inline-flex; gap: 6px; align-items: center; }
+.chips svg { width: 16px; height: 16px; color: var(--g-hi); }
+
+.meta { flex: none; display: flex; align-items: end; gap: 6px; }
+.meta .t { flex: 1; min-width: 0; }
+.title { font-family: var(--g-display); font-weight: 600; font-size: 26px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.artist { font-size: 16px; color: var(--g-soft); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen.scroll { display: block; padding: 0; overflow-y: auto; scrollbar-width: none; }
+.screen.scroll::-webkit-scrollbar { display: none; }
+.fold { height: calc(var(--h) - 30px); display: flex; flex-direction: column; padding: 0 22px 10px; box-sizing: border-box; }
+.below { display: grid; gap: 12px; padding: 0 14px 28px; }
+.card { border-radius: 14px; padding: 14px 16px 16px; background: rgba(255,255,255,.07); }
+.card.lyr { background: linear-gradient(160deg, #8a4a3a, #5a2e26); }
+.card h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.85); display: flex; justify-content: space-between; }
+.card h3 small { font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--g-soft); font-weight: 400; }
+.ph { display: block; height: 11px; border-radius: 6px; background: rgba(255,255,255,.22); margin: 9px 0; }
+.ph.now { background: #fff; height: 13px; }
+.ph.past { background: rgba(255,255,255,.4); }
+.cred { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin-top: 12px; }
+.cred dt { color: var(--g-soft); }
+.cred dd { margin: 0; }
+.more { margin-top: 12px; display: inline-flex; height: 32px; align-items: center; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); font-size: 13px; font-weight: 600; }
+.meta .ic { width: 40px; height: 40px; color: var(--g-hi); }
+.meta .ic svg { width: 22px; height: 22px; }
+.meta .ic.fav { color: #fff; }
+.flipart { perspective: 1000px; }
+.flip { width: min(86cqw, 100cqh); aspect-ratio: 1; position: relative; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.3,.7,.2,1); cursor: pointer; border-radius: 10px; }
+.flip.on { transform: rotateY(180deg); }
+.flip:focus-visible { outline: 2px solid var(--g-hi); outline-offset: 4px; }
+.flip .face { position: absolute; inset: 0; width: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; }
+.flip .back { transform: rotateY(180deg); background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03)), #2a1a17; border: 1px solid rgba(255,255,255,.14); display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 10px; padding: 0 14%; }
+.flip .opt { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); font-size: 14.5px; font-weight: 600; }
+.flip .opt svg { width: 18px; height: 18px; color: var(--g-hi); flex: none; }
+.flip .hint { text-align: center; font-size: 11.5px; color: var(--g-soft); margin-top: 4px; }
+.tryit { font-size: 13px; font-weight: 600; color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .flip { transition: none; } }
+.onart { position: absolute; right: 3.5%; bottom: 3.5%; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: rgba(7,13,14,.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.onart svg { width: 22px; height: 22px; }
+.meta .ic.fav svg { width: 26px; height: 26px; }
+
+.seek { flex: none; margin-top: 14px; }
+.bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.22); position: relative; }
+.bar::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 29%; background: #fff; border-radius: 2px; }
+.bar::after { content: ""; position: absolute; left: 29%; top: 50%; width: 12px; height: 12px; margin: -6px; background: #fff; border-radius: 50%; }
+.times { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--g-soft); margin-top: 6px; font-variant-numeric: tabular-nums; }
+
+.controls { flex: none; display: flex; align-items: center; justify-content: space-between; margin: 10px 0 12px; }
+.controls .ic svg { width: 28px; height: 28px; }
+.controls .ic.small svg { width: 22px; height: 22px; }
+.play { width: 62px; height: 62px; border-radius: 50%; background: #fff; color: #0e2226; display: grid; place-items: center; }
+.play svg { width: 28px; height: 28px; }
+
+.out { flex: none; }
+.out .rule { height: 1px; background: var(--g-faint); }
+.out .line { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; color: var(--g-soft); }
+.out .line .where { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.out .line b { color: #fff; font-weight: 600; }
+.out .line .dev { width: 18px; height: 18px; color: var(--g-hi); flex: none; }
+.out .change { font-size: 12px; color: var(--g-soft); }
+/* Today's arrangement: the rule stops at the icons, which sit on the row's bottom edge. */
+.out.today { display: flex; align-items: flex-end; }
+.out.today .left { flex: 1; min-width: 0; }
+.out.today .left .line { padding-top: 12px; min-height: 0; }
+.out.today .ic { margin-bottom: -6px; }
+.mark { outline: 1.5px dashed #ffcf70; outline-offset: 2px; border-radius: 8px; }
+</style>
+
+<div class="page">
+  <header>
+    <div>
+      <h1>Now Playing, rearranged</h1>
+      <p class="lede">Lyrics and liner notes move up beside the song; the bottom row loses "Cambiar" and lines up the queue with the output. The heart (favourites, not built yet) stays visible beside the title; long titles end in "…". F shows lyrics and notes as cards below, as Spotify does. The cover takes whatever height is left, so each layout shows its real cost on the screen you pick.</p>
+    </div>
+    <div>
+      <div class="device" role="radiogroup" aria-label="Screen">
+        <input type="radio" name="device" id="dev-n4" checked><label for="dev-n4">Nexus 4</label>
+        <input type="radio" name="device" id="dev-px"><label for="dev-px">Pixel 5</label>
+      </div>
+      <div class="device" role="radiogroup" aria-label="Song" style="margin-left:8px">
+        <input type="radio" name="song" id="song-short" checked><label for="song-short">Carry On</label>
+        <input type="radio" name="song" id="song-long"><label for="song-long">A long title</label>
+      </div>
+      <div class="dims" id="dims">360 × 640 dp · 768 × 1280 px</div>
+    </div>
+  </header>
+
+  <div class="row" id="row"></div>
+</div>
+
+<script>
+const I = {
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>',
+  shuffle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+  prev: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+  repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 014-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 01-4 4H3"/></svg>',
+  speaker: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="14" r="3.5"/><circle cx="12" cy="6.5" r=".6" fill="currentColor"/></svg>',
+  queue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h14M3 12h14M3 18h8"/><path d="M15 15l6 3-6 3z" fill="currentColor"/></svg>',
+  lyrics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h8M8 13h5"/></svg>',
+  notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5z"/><path d="M4 19.5A2.5 2.5 0 006.5 22H20v-5"/></svg>',
+  heart: '<svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.4-7.5 10.4z"/></svg>',
+};
+const heart = `<span class="ic fav" title="Favourite (not built yet)">${I.heart}</span>`;
+
+const topBar = `<div class="status"><span>21:19</span><span>▾ ▴ ▮</span></div>
+  <div class="top"><span class="ic">${I.down}</span><div class="mid"><div class="from">Reproduciendo del álbum</div><div class="alb">Some Nights</div></div><span class="ic">${I.more}</span></div>`;
+const art = `<div class="art"><div class="cover"><b>SOME NIGHTS</b><i></i></div></div>`;
+const artFlip = `<div class="art flipart"><div class="flip" role="button" tabindex="0" aria-pressed="false" aria-label="Flip the cover">
+  <div class="face cover"><b>SOME NIGHTS</b><i></i></div>
+  <div class="face back">
+    <span class="opt">${I.heart}Favorita</span>
+    <span class="opt">${I.lyrics}Letra</span>
+    <span class="opt">${I.notes}Notas del disco</span>
+    <span class="hint">Toca para volver</span>
+  </div></div></div>`;
+const artFav = `<div class="art"><div class="cover"><b>SOME NIGHTS</b><i></i><span class="onart mark" title="Favourite (not built yet)">${I.heart}</span></div></div>`;
+const seek = `<div class="seek"><div class="bar"></div><div class="times"><span>1:22</span><span>4:41</span></div></div>
+  <div class="controls"><span class="ic soft small">${I.shuffle}</span><span class="ic">${I.prev}</span><span class="play">${I.play}</span><span class="ic">${I.next}</span><span class="ic soft small">${I.repeat}</span></div>`;
+const meta = (extra = '') => `<div class="meta"><div class="t"><div class="title">Carry On</div><div class="artist">Fun</div></div>${extra}</div>`;
+const where = `<span class="dev">${I.speaker}</span><span class="where">Sonando en <b>Cocina</b></span>`;
+const outNew = (mark) => `<div class="out ${mark ? 'mark' : ''}"><div class="rule"></div><div class="line">${where}<span class="ic">${I.queue}</span></div></div>`;
+const outToday = `<div class="out today"><div class="left"><div class="rule"></div><div class="line">${where}<span class="change">Cambiar</span></div></div><span class="ic">${I.lyrics}</span><span class="ic">${I.queue}</span></div>`;
+
+const RETIRED = ['D', 'E']; // heart on the cover, flipping the cover: set aside for a visible heart beside the title
+const mocks = [
+  { name: 'Today', tag: 'now', body: art + meta() + seek + outToday,
+    notes: [['', 'Lyrics and Up next sit at the bottom right; there is no liner notes button.'], ['minus', '"Cambiar" crowds the icons; the rule stops short of them and they sit a little high.']] },
+  { name: 'Two pills under the cover', tag: 'A', body: art + `<div class="pills mark"><span class="pill">${I.lyrics}Letra</span><span class="pill">${I.notes}Notas del disco</span></div>` + meta(heart) + seek + outNew(true),
+    notes: [['plus', 'Plain words, same pills as the album screen: the easiest to find.'], ['plus', 'The heart has the title row to itself, as in the prototype.'], ['minus', 'The tallest addition (~44 dp): the cover gives up the most.']] },
+  { name: 'Icons beside the title', tag: 'B', body: art + meta(`<span class="ic mark">${I.lyrics}</span><span class="ic mark">${I.notes}</span>` + heart) + seek + outNew(true),
+    notes: [['plus', 'Costs no height: the cover stays as big as today.'], ['minus', 'With the heart, three icons beside the title: crowded, and a long title has little room.'], ['minus', 'Icons alone are less obvious than words.']] },
+  { name: 'Quiet links under the cover', tag: 'C', body: art + `<div class="chips mark"><span>${I.lyrics}Letra</span><span>${I.notes}Notas</span></div>` + meta(heart) + seek + outNew(true),
+    notes: [['plus', 'Labelled, but half the height of the pills (~26 dp).'], ['plus', 'The heart has the title row to itself.'], ['minus', 'Lighter to look at, so a little easier to miss.']] },
+  { name: 'Heart on the cover', tag: 'D', body: artFav + meta(`<span class="ic mark">${I.lyrics}</span><span class="ic mark">${I.notes}</span>`) + seek + outNew(true),
+    notes: [['plus', 'No height cost, and the title row holds just two icons.'], ['plus', 'The heart sits on what it marks: this record.'], ['minus', 'Covers vary: it needs the dark disc to read, and it hides a corner (logos often live there).'], ['minus', 'A heart on the art can read as the album, not the song.']] },
+  { name: 'Flip the cover', tag: 'E', body: artFlip + meta() + seek + outNew(true), tryit: 'Tap the cover to flip it.',
+    notes: [['plus', 'The cover stays full size and untouched; the screen is today\'s, minus clutter.'], ['plus', 'Room on the back for more later (radio, go to album) without crowding the front.'], ['minus', 'Hidden: nothing says the cover turns. Needs a hint the first time, or a small mark.'], ['minus', 'Two taps to reach lyrics instead of one; lyrics are something you open often.']] },
+  { name: 'Scroll for more, as Spotify', tag: 'F', scroll: true, body: art + meta(heart) + seek + outNew(true), tryit: 'Scroll inside the phone.',
+    below: `<div class="below">
+      <div class="card lyr"><h3>Letra <small>de LRCLIB</small></h3><span class="ph past" style="width:72%"></span><span class="ph now" style="width:88%"></span><span class="ph" style="width:64%"></span><span class="ph" style="width:80%"></span><span class="more">Ver la letra</span></div>
+      <div class="card"><h3>Notas del disco <small>Some Nights · 2012</small></h3><span class="ph" style="width:96%"></span><span class="ph" style="width:90%"></span><span class="ph" style="width:58%"></span>
+        <dl class="cred"><dt>Producción</dt><dd>Jeff Bhasker</dd><dt>Voz</dt><dd>Nate Ruess</dd></dl><span class="more">Ver las notas</span></div>
+    </div>`,
+    notes: [['plus', 'No buttons at all: lyrics and notes appear below when a song has them, one scroll away.'], ['plus', 'The lyrics card follows the song, so a glance is often enough.'], ['plus', 'Grows naturally: radio, the artist, "also in your library" later.'], ['minus', 'Something must peek at the bottom (~30 dp here) or nobody scrolls; on the Nexus 4 that is the cost.']] },
+];
+
+const row = document.getElementById('row');
+function render() {
+  row.innerHTML = mocks.filter(m => !RETIRED.includes(m.tag)).map(m => `
+    <section class="mock">
+      <h2><span class="tag">${m.tag}</span>${m.name}</h2>
+      <div class="phone">${m.scroll
+        ? `<div class="screen scroll"><div class="fold">${topBar}${m.body}</div>${m.below}<div class="navbar"></div></div>`
+        : `<div class="screen">${topBar}${m.body}<div class="navbar"></div></div>`}</div>
+      <div class="cover-size" data-size></div>${m.tryit ? `<div class="tryit">${m.tryit}</div>` : ''}
+      <ul class="notes">${m.notes.map(([k, t]) => `<li class="${k}">${t}</li>`).join('')}</ul>
+    </section>`).join('');
+  setSong();
+}
+const SONGS = {
+  short: { title: 'Carry On', artist: 'Fun', album: 'Some Nights' },
+  long: { title: 'Silence (DJ Tiësto’s In Search of Sunshine remix)', artist: 'Delerium feat. Sarah McLachlan', album: 'Anthems: Trance' },
+};
+let song = SONGS.short;
+function setSong() {
+  row.querySelectorAll('.title').forEach(t => t.textContent = song.title);
+  row.querySelectorAll('.artist').forEach(t => t.textContent = song.artist);
+  row.querySelectorAll('.alb').forEach(t => t.textContent = song.album);
+  requestAnimationFrame(measure);
+}
+function measure() {
+  const phones = [...row.querySelectorAll('.phone')];
+  const base = phones[0].querySelector('.cover').getBoundingClientRect().width;
+  row.querySelectorAll('.mock').forEach((m, i) => {
+    const w = phones[i].querySelector('.cover').getBoundingClientRect().width;
+    const pct = Math.round(w / phones[i].getBoundingClientRect().width * 100);
+    const d = Math.round(w - base);
+    m.querySelector('[data-size]').textContent = `Cover ${Math.round(w)} dp wide (${pct}% of the screen)` + (i ? ` · ${d === 0 ? 'same as today' : (d > 0 ? '+' : '') + d + ' dp vs today'}` : '');
+  });
+}
+function setDevice(pixel) {
+  document.body.classList.toggle('pixel', pixel);
+  document.getElementById('dims').textContent = pixel ? '393 × 851 dp · 1080 × 2340 px' : '360 × 640 dp · 768 × 1280 px';
+  requestAnimationFrame(measure);
+}
+function flip(el) { el.classList.toggle('on'); el.setAttribute('aria-pressed', el.classList.contains('on')); }
+row.addEventListener('click', e => { const f = e.target.closest('.flip'); if (f) flip(f); });
+row.addEventListener('keydown', e => { const f = e.target.closest('.flip'); if (f && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); flip(f); } });
+document.getElementById('song-short').addEventListener('change', () => { song = SONGS.short; setSong(); });
+document.getElementById('song-long').addEventListener('change', () => { song = SONGS.long; setSong(); });
+document.getElementById('dev-n4').addEventListener('change', () => setDevice(false));
+document.getElementById('dev-px').addEventListener('change', () => setDevice(true));
+render();
+document.fonts && document.fonts.ready.then(measure);
+</script>
