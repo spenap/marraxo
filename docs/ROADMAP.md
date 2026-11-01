@@ -359,6 +359,13 @@ the desktop.
       credits by section, the album's story with its licence, "Also in
       your library" leading to everyone's albums by year. From the song
       sheet, Now Playing and the album screen; hidden without data.
+- [x] Lyrics v1 (2026-11-01, overnight; `lyrics.md`): fetched from LRCLIB
+      on the laptop (`tools/lyrics`), `lyrics.db` synced like the notes,
+      shown from Now Playing, timed lines following the song (also on
+      the speakers, by their reported position). Lyrics never in git.
+- [ ] Lyrics, next: word-by-word where LRCLIB has it; a per-song early or
+      late nudge; search by words; lyrics for any song from its sheet;
+      the 49 GB LRCLIB dump if the API's outages or misses justify it.
 - [x] "Played by": the artist, then the band; a string section folds into
       one row (linked players stay in view) (2026-11-01).
 - [ ] Liner notes polish: role words ("guitar", "producer") are English in every language;
