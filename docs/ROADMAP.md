@@ -5,7 +5,7 @@ first, and anything that doesn't need the phone can start while the ROM is
 being flashed.
 
 Each item has a "done when" criterion. Tick items off as they're completed
-and record decisions in the log at the bottom.
+and record decisions in `decisions.md`.
 
 ## Track A: Phone
 
@@ -21,7 +21,7 @@ Done in a separate repository.
       (Nexus 4 done since 2026-10-29; S25 not tried yet.)
 - [x] Compose vs Views decision. Done when a trivial scrolling album grid
       exists in the chosen toolkit, it scrolls smoothly on the device, and
-      the decision is logged below. (Compose: 1.3% janky frames.)
+      the decision is logged in `decisions.md`. (Compose: 1.3% janky frames.)
 - [x] Local MP3 playback with Media3. Done when a pushed MP3 plays.
 - [ ] Background playback. Done when playback continues with the screen
       off for 10+ minutes and lock-screen/media-session controls work.
@@ -471,7 +471,7 @@ Local only: a log on the phone, read on the laptop, never sent anywhere
       - How often does a renderer stop on its own or fail?
       - How long from tapping the app to hearing music, per phone?
 - Rule: a feature unused for 30 days gets questioned (improve, hide or
-  remove), and the decision goes in the decision log.
+  remove), and the decision goes in `decisions.md`.
 
 ## Ideas and not doing
 New ideas wait here until there is evidence (Track U) or a clear need;
@@ -539,64 +539,8 @@ Not doing (and why):
   hold everything.
 
 ## Open questions
-- Does local UPnP playback still work on S2 18.6, and on the TV?
-  Services are advertised; playback not yet tested. (B0)
-- Compose or Views? (A1)
+None open. Both earlier ones are answered: UPnP playback works on S2 18.6
+and on the TV (B0), and Compose stays (A1); see `decisions.md`.
 
 ## Decision log
-- 2026-10-29: One repo with `android/`, `tools/`, `docs/`. The three
-  tracks run in parallel, with risky items first.
-- 2026-10-29: Speakers are S2 (firmware 18.6), two separate rooms
-  (Estudio, Cocina), not paired. See `upnp-renderers.md`.
-- 2026-10-29: Music collection is a few GB on a backup drive; fits on
-  the phone.
-- 2026-10-29: UI direction is Glow (artwork-tinted, dark), with Sleeve's
-  "Playing on <room> · <model>" output row. See `mockups/directions.html`.
-- 2026-10-29: The Samsung The Frame TV (UE55LS003) is an output target
-  too. All targets are generic UPnP renderers, with Sonos-specific
-  grouping on top.
-- 2026-10-29: Interactive prototype in `mockups/prototype.html` is the UI
-  reference. Stats need play history, which can't be rebuilt later, so
-  history recording ships in A2, long before the stats screens.
-- 2026-10-29: The app also targets a Samsung Galaxy S25 (main phone). One
-  APK: minSdk from the Nexus 4 ROM, targetSdk current. The Nexus 4 stays the
-  development device and performance floor.
-- 2026-10-29: ROM is LineageOS 15.1 (Android 8.1, API 27), so minSdk 27.
-  For Sonos (B1), from the firmware tests: receive SSDP replies on an
-  unconnected socket (Sonos replies from a random port), hold a
-  MulticastLock to receive multicast with the screen off, and keep a
-  WifiLock plus wake lock while serving HTTP.
-- 2026-10-29: First APK uses Jetpack Compose, provisionally. A1 decides
-  whether it stays, based on how it performs on the Nexus 4.
-- 2026-10-30: The library is the shared `Music/` folder only; other folders
-  (test tones, recordings) are ignored. Choosing folders can become a
-  setting later. Removing music: the app only *hides* tracks; deleting
-  files belongs to the desktop collection and its sync to the phone.
-- 2026-10-30: The Nexus 4 holds a 3.8 GB test sample (50 albums, 664
-  tracks, spread across the alphabet, including M4A and OGG) until sync
-  and rotation exist.
-- 2026-10-30: Cleanup uses beets (MusicBrainz + AcoustID, fetchart,
-  embedart) instead of a custom tagger. It copies into `Music-clean`, so
-  the source collection stays untouched; we write config, not a tagger.
-- 2026-10-30: Glow's art-tinted look comes from a common pattern (Apple
-  Music, Spotify, Android's media notification). We don't use another player (a
-  GNOME player with a similar look) as a reference, and don't contribute
-  to it: its maintainer doesn't want LLM-written code.
-- 2026-10-30: Compose stays. Album grid fling benchmark on the Nexus 4:
-  debug 97% janky (median 101 ms); release 27% (7 ms); release + AOT
-  `speed-profile` 1.3% (5 ms, p90 9 ms). Install with
-  `android/scripts/install.sh`. Generating a proper Baseline Profile can
-  replace the manual compile step later.
-- 2026-10-30: "Liner notes" (offline X-ray) is planned as C3. Data is
-  fetched and packaged on the desktop; the app never goes online.
-- 2026-10-30: Discovery (`discovery.md`): separate, explained views
-  (sound, people, era, mood, topic) instead of one blended score; heavy
-  models run on the desktop only; results keyed by audio content so they
-  survive renames.
-- 2026-10-30: The app is model-agnostic: it reads a versioned
-  `discovery.db` contract (views, label sets, scalars, edges) and never
-  ships a model. Radio starts as tag-based biases (Amarok-style) and gains
-  sound-based biases later without changing the engine.
-- 2026-10-31: Languages are English, Spanish and Galician, following the
-  phone (or Android 13+'s per-app language). No in-app picker: the Nexus 4
-  can switch its system language, and Galician ships with AOSP 8.1.
+Moved to `decisions.md` (2026-11-01), newest first.

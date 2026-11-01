@@ -7,7 +7,10 @@ SL speakers or a Samsung TV.
 
 - Full original brief: `docs/original-brief.md` (a guide, not gospel).
 - Plan and progress: `docs/ROADMAP.md`. Update it when a milestone item is
-  done or a decision is made.
+  done.
+- Decisions: `docs/decisions.md`, newest first. Add an entry for each
+  lasting decision (why, and where the detail lives); a reversal is a new
+  entry that supersedes the old one, never a rewrite.
 - UI reference: `docs/mockups/prototype.html` (interactive, "Glow").
 
 ## Components (one repo)
