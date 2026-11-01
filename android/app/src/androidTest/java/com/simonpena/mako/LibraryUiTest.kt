@@ -132,12 +132,11 @@ class LibraryUiTest {
     @Test fun aSongStartsARadioAndNowPlayingSaysSo() {
         compose.onNodeWithText("Local Ground").performClick()
         compose.onNodeWithText("Dúlamán").performTouchInput { longClick() }
-        compose.onNodeWithText("Start radio").performClick()
-        compose.onNodeWithText("Same era").performClick()
+        compose.onNodeWithText("Start radio").performClick() // one radio, no modes to choose
         compose.waitUntil(5_000) { player.currentTrackId == 200L }
         compose.onNodeWithContentDescription("Back").performClick()
         compose.onNodeWithText("Dúlamán").performClick() // the mini player
-        compose.onNodeWithText("Radio · Same era").assertExists()
+        compose.onNodeWithText("Radio from Dúlamán").assertExists()
     }
 
     @Test fun everySongHasAVisibleMenuWithItsActions() {
@@ -145,8 +144,7 @@ class LibraryUiTest {
         compose.onAllNodesWithContentDescription("Song options")[1].performClick() // Bachata en Fukuoka
         compose.onNodeWithText("Juan Luis Guerra · A Son de Guerra").assertExists() // the sheet says which song
         compose.onNodeWithText("Play next").assertExists()
-        compose.onNodeWithText("Start radio").performClick()
-        compose.onNodeWithText("Anything goes").assertExists() // the modes open in place
+        compose.onNodeWithText("Start radio").assertExists()
         compose.onNodeWithText("Go to artist").performClick()
         compose.onNodeWithText("1 album").assertExists() // Juan Luis Guerra's level
     }

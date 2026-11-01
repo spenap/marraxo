@@ -14,7 +14,7 @@ import kotlin.random.Random
 class RadioQueueTest {
     private val library = (1L..12).map { album(it, "LP $it", "Artist $it", "A", "B", "C", genre = "Rock").copy(year = 1984) }
     private val seed = library[0].tracks[0]
-    private val radio = Radio(library, RadioMode.Era, seed, random = Random(1))
+    private val radio = Radio(library, RadioWeights.Era, seed, random = Random(1))
     // Picks on the main looper here, so idle() runs them.
     private val reasons = RadioQueue(MainScope(), Dispatchers.Main) { reason -> "because $reason" }
 

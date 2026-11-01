@@ -12,7 +12,7 @@ import kotlin.random.Random
 
 /**
  * Radios on the real collection, a regression gate like scroll-bench.sh:
- * 20 seeds × 100 songs in each mode, from the desktop inventory and liner
+ * 20 seeds × 100 songs for each feed and the mix the app plays, from the desktop inventory and liner
  * notes (tools/, never committed). Skipped where those files aren't.
  * Numbers and thresholds: docs/radio.md.
  */
@@ -50,7 +50,8 @@ class RadioSimulationTest {
         val seeds = library.shuffled(Random(0)).take(20).map { it.tracks.first() }
         val report = StringBuilder("${library.size} albums, ${library.sumOf { it.tracks.size }} songs, ${links.size} with notes\n")
         report.append("mode       wider  artist<5  album<3  ms/pick  albums/100  shares genre decade artist\n")
-        val results = RadioMode.entries.associateWith { mode ->
+        val modes = mapOf("Similar" to RadioWeights.Similar, "Era" to RadioWeights.Era, "People" to RadioWeights.People, "Anything" to RadioWeights.Anything, "Radio" to RadioWeights.Radio)
+        val results = modes.mapValues { (name, mode) ->
             var wider = 0
             var artistRepeats = 0
             var albumRepeats = 0
@@ -77,13 +78,16 @@ class RadioSimulationTest {
             }
             val ms = (System.nanoTime() - start) / 1e6 / 2000
             report.append("%-9s %5.1f%% %9d %8d %8.1f %11.1f %5.0f%% %4.0f%% %5.0f%% %5.0f%%\n".format(
-                mode.name, wider / 20.0, artistRepeats, albumRepeats, ms, albums / 20.0, *reasons.map { it / 20.0 }.toTypedArray()))
+                name, wider / 20.0, artistRepeats, albumRepeats, ms, albums / 20.0, *reasons.map { it / 20.0 }.toTypedArray()))
             assertTrue(report.toString(), artistRepeats == 0 && albumRepeats == 0)
             mapOf("wider" to wider / 20.0, "shares" to reasons[0] / 20.0)
         }
         println(report)
-        assertTrue(report.toString(), results.getValue(RadioMode.Similar).getValue("wider") < 5)
-        assertTrue(report.toString(), results.getValue(RadioMode.Era).getValue("wider") < 5)
-        assertTrue(report.toString(), results.getValue(RadioMode.People).getValue("shares") > 60)
+        assertTrue(report.toString(), results.getValue("Similar").getValue("wider") < 5)
+        assertTrue(report.toString(), results.getValue("Era").getValue("wider") < 5)
+        assertTrue(report.toString(), results.getValue("People").getValue("shares") > 60)
+        // The one radio the app offers stays close and still follows the liner notes.
+        assertTrue(report.toString(), results.getValue("Radio").getValue("wider") < 5)
+        assertTrue(report.toString(), results.getValue("Radio").getValue("shares") > 20)
     }
 }

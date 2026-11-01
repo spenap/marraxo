@@ -93,14 +93,14 @@ class TranslationsTest {
         assertEquals("1980s", reasonText(res, Reason.Decade(1980)))
         assertEquals("More Altan", reasonText(res, Reason.Artist("Altan")))
         assertEquals("Further afield", reasonText(res, Reason.Wider))
-        assertEquals("Radio · Same era", res.getString(R.string.radio_now, res.getString(RadioMode.Era.label)))
+        assertEquals("Radio from In the Air Tonight", res.getString(R.string.radio_from, "In the Air Tonight"))
     }
 
     @Config(qualifiers = "gl")
     @Test fun `why the radio picked a song, in Galician`() {
         assertEquals("Hugh Padgham nos dous", reasonText(res, Reason.Shares("Hugh Padgham")))
         assertEquals("Década de 1980", reasonText(res, Reason.Decade(1980)))
-        assertEquals("Mesma xente", res.getString(RadioMode.People.label))
+        assertEquals("Radio a partir de Calma", res.getString(R.string.radio_from, "Calma"))
     }
 
     @Test fun `the rescan summary in English`() {

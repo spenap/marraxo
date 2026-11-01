@@ -9,11 +9,24 @@ import kotlin.random.Random
  * How a radio chooses (docs/radio.md): what counts as close, and how far
  * below the closest a song may score and still be picked ([band]).
  */
-enum class RadioMode(val label: Int, val genre: Double, val decade: Double, val people: Double, val artist: Double, val band: Double) {
-    Similar(R.string.radio_similar, genre = 3.0, decade = 2.0, people = 3.0, artist = 0.5, band = 0.6),
-    Era(R.string.radio_era, genre = 1.0, decade = 4.0, people = 0.5, artist = 0.3, band = 0.75),
-    People(R.string.radio_people, genre = 1.0, decade = 0.5, people = 5.0, artist = 1.5, band = 0.5),
-    Anything(R.string.radio_anything, genre = 0.3, decade = 0.3, people = 0.3, artist = 0.0, band = 0.0),
+data class RadioWeights(val genre: Double, val decade: Double, val people: Double, val artist: Double, val band: Double) {
+    companion object {
+        // Feeds, each leaning on one thing in common; not offered by name, kept to mix and to measure.
+        val Similar = RadioWeights(genre = 3.0, decade = 2.0, people = 3.0, artist = 0.5, band = 0.6)
+        val Era = RadioWeights(genre = 1.0, decade = 4.0, people = 0.5, artist = 0.3, band = 0.75)
+        val People = RadioWeights(genre = 1.0, decade = 0.5, people = 5.0, artist = 1.5, band = 0.5)
+        val Anything = RadioWeights(genre = 0.3, decade = 0.3, people = 0.3, artist = 0.0, band = 0.0)
+
+        /** The weighted average of [feeds]: one feed at 1 and the rest at 0 is that feed. */
+        fun mix(vararg feeds: Pair<RadioWeights, Double>): RadioWeights {
+            val total = feeds.sumOf { it.second }
+            fun avg(of: (RadioWeights) -> Double) = feeds.sumOf { (w, k) -> of(w) * k } / total
+            return RadioWeights(avg { it.genre }, avg { it.decade }, avg { it.people }, avg { it.artist }, avg { it.band })
+        }
+
+        /** The one radio the app offers. */
+        val Radio = mix(Similar to 1.0, Era to 1.0, People to 1.0, Anything to 0.0)
+    }
 }
 
 /** Why a song was picked, for Now Playing. */
@@ -50,7 +63,7 @@ fun reasonText(res: Resources, reason: Reason): String = when (reason) {
  */
 class Radio(
     library: List<Album>,
-    private val mode: RadioMode,
+    private val mode: RadioWeights,
     private val seed: Track,
     private val links: Map<Long, Set<String>> = emptyMap(),
     private val random: Random = Random.Default,

@@ -63,7 +63,7 @@ it again at every step, from what's playing.
   the TV and the speakers just work.
 - Every pick carries its reason ("Phil Cunningham plays on both",
   "Celtic, 1980s"), shown in Now Playing.
-- Named modes, as Plexamp's Guest DJ (see Decisions).
+- One radio, mixing feeds by hidden weights (see Decisions).
 
 **Smart playlists v0 (the card shelves in `cards.md`)**
 - Your genres (families), Decades, Players in your collection (liner
@@ -89,10 +89,16 @@ it again at every step, from what's playing.
 
 1. **A radio replaces the queue,** as Spotify's does: the seed plays,
    then picks follow, three ahead.
-2. **Named modes,** not one knob: *Similar* (genre, era and people
-   together), *Same era*, *Same people* (liner notes; offered only when
-   the notes are on the phone) and *Anything goes* (spread, barely
-   biased).
+2. ~~Named modes~~ **One radio** (2026-11-01, after using it: three or
+   four radio types in the UI was too many). The former modes are feeds
+   (`RadioWeights.Similar`, `Era`, `People`, `Anything`), and the radio
+   the app offers, `RadioWeights.Radio`, is their weighted average:
+   Similar, Era and People at 1, Anything at 0. The weights aren't shown
+   to the user. Nothing is lost: a 1 on one feed and 0 on the rest gives
+   back that feed exactly, and the simulation still measures each. Being
+   linear, averaging the weights is averaging the scores; only the band
+   (how far below the best a pick may be) is averaged as a number. Without
+   liner notes on the phone, the people weight simply finds nothing.
 3. **Reasons are for development** (2026-10-31, after using it): shown in
    debug builds only, in Now Playing and Up next; the log keeps them.
    Amarok didn't show them either.
@@ -114,14 +120,19 @@ AAC: 388 albums, 5,248 songs, 298 albums with notes, no files skipped.
 | Era | 0% | 0 | 0 | 1.3 | 65 | 0% | 0% | 100% |
 | People | 0.7% | 0 | 0 | 1.6 | 40 | 84% | 15% | 0% |
 | Anything | 10.6% | 0 | 0 | 1.4 | 89 | 1% | 16% | 73% |
+| **Radio** (the mix, 2026-11-01) | 0% | 0 | 0 | 1.5 | 43 | 29% | 12% | 59% |
+
+The columns on the right count each pick's main reason only: in the mix,
+a shared decade is common and usually counts most, so most picks also
+share a genre or people without that being their main reason.
 
 Earlier the same night (386 albums, 9 Musepack files skipped): People
 69% shares, Similar 88% genre.
 First run (290 albums, 4,000 songs, before the second import pass):
 Similar 41 albums per 100 with 75% genre; People 80% shares.
 
-Gate: no repeats; Similar and Era widen under 5%; People explains over
-60% of picks by the liner notes.
+Gate: no repeats; Similar, Era and the mix widen under 5%; People
+explains over 60% of picks by the liner notes, the mix over 20%.
 
 Sources: [Amarok manual: dynamic playlists](https://docs.kde.org/trunk_kf6/en/amarok/amarok/dynamic-playlists.html);
 [Navidrome smart playlists](https://navidrome.org/docs/usage/features/smart-playlists/);

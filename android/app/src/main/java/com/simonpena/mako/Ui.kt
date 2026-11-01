@@ -205,7 +205,6 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val context = LocalContext.current
     val look = remember { Look(context) }
     // "Same people" needs the liner notes on the phone.
-    val radioModes = remember { RadioMode.entries.filter { it != RadioMode.People || LinerNotes.file(context).exists() } }
     var songSheet by remember { mutableStateOf<Pair<Track, Album>?>(null) }
     var albumSheet by remember { mutableStateOf<Album?>(null) }
     val lyricsDb by produceState<LyricsDb?>(null) {
@@ -318,10 +317,10 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     }
     songSheet?.let { (track, album) ->
         SongSheet(
-            track, album, radioModes,
+            track, album,
             onDismiss = { songSheet = null },
             onPlayNext = { player.playNext(track) },
-            onRadio = { mode -> player.startRadio(track, mode, context.getString(mode.label)) },
+            onRadio = { player.startRadio(track, context.getString(R.string.radio_from, track.title)) },
             onArtist = { stack.add(Screen.Shelf(track.artist, { it.albumId }) { it.artist == track.artist }) },
             onNotes = if (remember(track.path, notes) { notes?.album(track.path) != null }) ({ stack.add(Screen.SongNotes(track.path)) }) else null,
             onHide = {
@@ -1249,19 +1248,16 @@ private fun UndoBar(message: String, bottom: Dp, onUndo: () -> Unit) {
 private fun SongSheet(
     track: Track,
     album: Album,
-    radioModes: List<RadioMode>,
     onDismiss: () -> Unit,
     onPlayNext: () -> Unit,
-    onRadio: (RadioMode) -> Unit,
+    onRadio: () -> Unit,
     onArtist: () -> Unit,
     onNotes: (() -> Unit)?,
     onHide: () -> Unit,
 ) {
-    var radio by remember(track.id) { mutableStateOf(false) }
     ActionSheet(album.id, track.title, "${track.artist} · ${album.title}", onDismiss) {
         SheetItem(stringResource(R.string.play_next)) { onPlayNext(); onDismiss() }
-        SheetItem(stringResource(R.string.start_radio)) { radio = !radio }
-        if (radio) radioModes.forEach { mode -> SheetItem(stringResource(mode.label), indent = true) { onRadio(mode); onDismiss() } }
+        SheetItem(stringResource(R.string.start_radio)) { onRadio(); onDismiss() }
         SheetItem(stringResource(R.string.go_to_artist)) { onArtist(); onDismiss() }
         if (onNotes != null) SheetItem(stringResource(R.string.song_notes)) { onNotes(); onDismiss() }
         SheetDivider()
@@ -1319,11 +1315,11 @@ private fun ActionSheet(albumId: Long, title: String, detail: String, onDismiss:
 private fun SheetDivider() = Box(Modifier.padding(vertical = 4.dp).fillMaxWidth().height(1.dp).background(GFaint))
 
 @Composable
-private fun SheetItem(label: String, color: Color = Color.White, indent: Boolean = false, onClick: () -> Unit) {
+private fun SheetItem(label: String, color: Color = Color.White, onClick: () -> Unit) {
     Text(
         label, style = body.copy(color = color),
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
-            .padding(start = if (indent) 44.dp else 20.dp, end = 20.dp, top = 14.dp, bottom = 14.dp),
+            .padding(horizontal = 20.dp, vertical = 14.dp),
     )
 }
 
@@ -1493,7 +1489,7 @@ internal fun NowPlaying(
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     val radio = player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
                     Text(
-                        if (radio != null) stringResource(R.string.radio_now, radio) else stringResource(R.string.playing_from_album),
+                        radio ?: stringResource(R.string.playing_from_album),
                         style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft),
                     )
                     Text(

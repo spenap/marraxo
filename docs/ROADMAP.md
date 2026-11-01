@@ -102,11 +102,11 @@ Done in a separate repository.
       2010 `fastScroll` look.
 - [ ] Original visual identity (Now Playing, Library, Queue, Details).
 - [ ] Done when it stays responsive with the full library on the device.
-- [x] Radio v0 (2026-10-31): long-press a song → Start radio → Similar,
-      Same era, Same people (only with the liner notes on the phone) or
-      Anything goes. Replaces the queue; the seed plays at once, then the
+- [x] Radio v0 (2026-10-31): long-press a song → Start radio (one radio
+      since 2026-11-01: the four modes became hidden, weighted feeds).
+      Replaces the queue; the seed plays at once, then the
       service keeps 3 songs ahead (`RadioQueue`), on the phone or a
-      speaker; Now Playing shows "Radio · Same people" and why each song
+      speaker; Now Playing shows "Radio from <song>" and, in debug builds, why each song
       came ("The Town House on both"). Engine: `Radio.kt`, research and
       simulation baseline: `radio.md`. Nexus 4: ~60 ms a pick (off the
       main thread), ~4 s to read the library and notes before the first

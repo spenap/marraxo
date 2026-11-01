@@ -92,7 +92,7 @@ class PlaybackService : MediaSessionService() {
                 ): ListenableFuture<SessionResult> {
                     when (customCommand.customAction) {
                         SET_OUTPUT -> setOutput(if (args.isEmpty) null else Renderer.fromBundle(args))
-                        START_RADIO -> startRadio(args.getLong(EXTRA_SEED), RadioMode.valueOf(args.getString(EXTRA_MODE) ?: return notSupported()))
+                        START_RADIO -> startRadio(args.getLong(EXTRA_SEED))
                         else -> return notSupported()
                     }
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
@@ -123,7 +123,7 @@ class PlaybackService : MediaSessionService() {
      * keeps three songs ahead. If the library can't be read (no permission),
      * the seed plays on its own.
      */
-    private fun startRadio(seedId: Long, mode: RadioMode) {
+    private fun startRadio(seedId: Long) {
         val hidden = Hidden(this)
         val start = SystemClock.elapsedRealtime()
         scope.launch {
@@ -134,8 +134,8 @@ class PlaybackService : MediaSessionService() {
                 LinerNotes.open(LinerNotes.file(this@PlaybackService))?.use { it.links(library) }.orEmpty()
             }
             val seed = library.firstNotNullOfOrNull { a -> a.tracks.find { it.id == seedId } } ?: return@launch
-            val built = Radio(library, mode, seed, links)
-            Log.i(TAG, "radio: $mode from ${seed.title}, ${links.size} albums with notes, ready in ${SystemClock.elapsedRealtime() - start} ms")
+            val built = Radio(library, RadioWeights.Radio, seed, links)
+            Log.i(TAG, "radio from ${seed.title}, ${links.size} albums with notes, ready in ${SystemClock.elapsedRealtime() - start} ms")
             radio.start(built, seed)
         }
     }
@@ -200,7 +200,6 @@ class PlaybackService : MediaSessionService() {
         private const val TAG = "PlaybackService"
         const val START_RADIO = "com.simonpena.mako.START_RADIO"
         const val EXTRA_SEED = "seed"
-        const val EXTRA_MODE = "mode"
     }
 }
 

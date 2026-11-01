@@ -91,7 +91,7 @@ class PlayerHolder(context: Context) {
     }
 
     /** Plays [seed] now and a radio from it after: the queue becomes the radio. */
-    fun startRadio(seed: Track, mode: RadioMode, label: String) {
+    fun startRadio(seed: Track, label: String) {
         controller?.run {
             shuffleModeEnabled = false
             repeatMode = Player.REPEAT_MODE_OFF
@@ -102,7 +102,6 @@ class PlayerHolder(context: Context) {
                 SessionCommand(PlaybackService.START_RADIO, Bundle.EMPTY),
                 Bundle().apply {
                     putLong(PlaybackService.EXTRA_SEED, seed.id)
-                    putString(PlaybackService.EXTRA_MODE, mode.name)
                 },
             )
         }

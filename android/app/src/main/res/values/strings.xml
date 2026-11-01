@@ -124,14 +124,10 @@
     <string name="outputs_looking">Looking for speakers and TVs…</string>
     <string name="outputs_none">No speakers or TVs found on this Wi-Fi</string>
     <string name="outputs_found">Found on this Wi-Fi</string>
-    <!-- Long-press a song: start a radio from it, then choose how -->
+    <!-- Long-press a song: start a radio from it -->
     <string name="start_radio">Start radio</string>
-    <string name="radio_similar">Similar</string>
-    <string name="radio_era">Same era</string>
-    <string name="radio_people">Same people</string>
-    <string name="radio_anything">Anything goes</string>
-    <!-- Now Playing, during a radio: "Radio · Same era" -->
-    <string name="radio_now">Radio · %s</string>
+    <!-- Now Playing, during a radio: "Radio from In the Air Tonight" (the song it started from) -->
+    <string name="radio_from">Radio from %s</string>
     <!-- Why the radio picked this song: a musician, producer or studio on this album and the one before -->
     <string name="radio_shares">%s on both</string>
     <string name="radio_artist">More %s</string>
