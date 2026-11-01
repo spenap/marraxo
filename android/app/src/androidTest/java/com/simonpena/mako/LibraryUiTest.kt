@@ -2,12 +2,14 @@ package com.simonpena.mako
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -44,6 +46,9 @@ class LibraryUiTest {
         album(2, "Local Ground", "Altan", 2005, "Celtic", "Dúlamán"),
         album(3, "A Son de Guerra", "Juan Luis Guerra", 2010, "Merengue", "Apaga y vámonos", "Bachata en Fukuoka"),
         album(4, "Demo", "An Danzza", 0, "", "Exiled Druid"),
+        Album(5, "Anthems: Trance", "Various Artists", 2013, genre = "Trance", tracks = listOf("Insomnia" to "Faithless", "Sandstorm" to "Darude").mapIndexed { i, (s, a) ->
+            Track(500L + i, s, a, "Anthems: Trance", 5, 200_000, i + 1, Uri.parse("content://media/external/audio/media/${500 + i}"))
+        }),
     )
 
     @Before fun setUp() {
@@ -119,6 +124,18 @@ class LibraryUiTest {
         compose.onNodeWithContentDescription("Album options").performClick()
         compose.onNodeWithText("Go to artist").performClick()
         compose.onNodeWithText("1 album").assertExists()
+    }
+
+    @Test fun aCompilationSaysWhoPlaysEachSong() {
+        compose.onNodeWithText("Anthems: Trance").performClick()
+        compose.onNodeWithText("Faithless").assertExists()
+        compose.onNodeWithText("Darude").assertExists()
+    }
+
+    @Test fun anAlbumByOneArtistDoesntRepeatItOnEverySong() {
+        compose.onNodeWithText("The Blue Idol").performClick()
+        compose.onNodeWithText("Uncle Rat").assertExists()
+        compose.onAllNodesWithText("Altan").assertCountEquals(1) // the header only
     }
 
     @Test fun aHiddenSongLeavesTheRestOfTheAlbum() {

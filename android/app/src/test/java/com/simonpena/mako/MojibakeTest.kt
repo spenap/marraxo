@@ -1,6 +1,8 @@
 package com.simonpena.mako
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Android sometimes misreads correct UTF-8 tags as Windows-1252 (seen on the Pixel 5, Android 17). */
@@ -39,5 +41,36 @@ class AlbumGroupingTest {
             track(2, "b", album = "Greatest Hits", artist = "Journey", albumId = 2),
         ), years = emptyMap())
         assertEquals(2, albums.size)
+    }
+
+    @Test fun `a compilation is by various artists, in the phone's language`() {
+        // Anthems: Trance: 60 artists once each, and three DJ mixes credited to MusicBrainz's "[unknown]".
+        val tracks = (1..60).map { track(it.toLong(), "Song $it", album = "Anthems: Trance", artist = "Artist $it", albumArtist = "Various Artists") } +
+            (61..63).map { track(it.toLong(), "Mix $it", album = "Anthems: Trance", artist = "[desconocido]", albumArtist = "Various Artists") }
+        val album = groupAlbums(tracks, years = emptyMap(), various = "Varios artistas").single()
+        assertEquals("Varios artistas", album.artist)
+        assertTrue(album.mixedArtists)
+    }
+
+    @Test fun `a band's album with guests is the band's`() {
+        // The Best of Battlefield Band: one track credited to "Fiddlers 5", the rest to the band, some with guests.
+        val tracks = listOf(
+            track(1, "a", album = "The Best of", artist = "Fiddlers 5", albumArtist = "Battlefield Band"),
+            track(2, "b", album = "The Best of", artist = "Battlefield Band feat. Alan Reid", albumArtist = "Battlefield Band"),
+            track(3, "c", album = "The Best of", artist = "Battlefield Band", albumArtist = "Battlefield Band"),
+        )
+        val album = groupAlbums(tracks, years = emptyMap()).single()
+        assertEquals("Battlefield Band", album.artist)
+        assertTrue(album.mixedArtists) // three different credits: each song says whose it is
+    }
+
+    @Test fun `without an album artist the most frequent artist names the album`() {
+        val tracks = listOf(track(1, "a", artist = "Altan"), track(2, "b", artist = "Altan"), track(3, "c", artist = "Altan feat. Dolores Keane"))
+        assertEquals("Altan", groupAlbums(tracks, years = emptyMap()).single().artist)
+    }
+
+    @Test fun `an album by one artist doesn't repeat it on every song`() {
+        val tracks = listOf(track(1, "a", artist = "Fun", albumArtist = "Fun"), track(2, "b", artist = "Fun", albumArtist = "Fun"))
+        assertFalse(groupAlbums(tracks, years = emptyMap()).single().mixedArtists)
     }
 }

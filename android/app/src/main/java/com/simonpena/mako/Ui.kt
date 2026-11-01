@@ -973,18 +973,21 @@ private fun AlbumScreen(
                 Box(Modifier.width(28.dp)) {
                     if (on) PlayingMark() else Text("${if (track.number > 0) track.number else i + 1}", style = TextStyle(fontSize = 13.sp, color = soft))
                 }
-                Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Column(Modifier.weight(1f)) {
+                    Text(track.title, style = body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (album.mixedArtists) Text(track.artist, style = TextStyle(fontSize = 12.sp, color = soft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
                 IconSpot(GlowIcons.More, stringResource(R.string.song_options), tint = GSoft) { onOptions(track) }
             }
         }
     }
-}
-
-/** A section's heading on the liner notes screens. */
     // The list scrolls under the status bar: cover it in the gradient's top colour, unseen until something scrolls there.
     Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
     }
+}
+
+/** A section's heading on the liner notes screens. */
 private val Section.label get() = when (this) {
     Section.Written -> R.string.notes_written
     Section.Played -> R.string.notes_played

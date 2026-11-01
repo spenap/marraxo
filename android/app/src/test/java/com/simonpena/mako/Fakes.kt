@@ -11,8 +11,9 @@ import com.google.common.util.concurrent.ListenableFuture
 import org.robolectric.Shadows.shadowOf
 import java.time.Duration
 
-fun track(id: Long, title: String, album: String = "Album", artist: String = "Artist", albumId: Long = 1, durationMs: Long = 180_000) =
-    Track(id, title, artist, album, albumId, durationMs, id.toInt(), Uri.parse("content://media/external/audio/media/$id"))
+fun track(id: Long, title: String, album: String = "Album", artist: String = "Artist", albumId: Long = 1, durationMs: Long = 180_000,
+          albumArtist: String = "") =
+    Track(id, title, artist, album, albumId, durationMs, id.toInt(), Uri.parse("content://media/external/audio/media/$id"), albumArtist = albumArtist)
 
 fun album(id: Long, title: String, artist: String, vararg songs: String, genre: String = "") =
     Album(id, title, artist, 0, songs.mapIndexed { i, s -> track(id * 100 + i, s, title, artist, id) }, genre)

@@ -128,6 +128,7 @@
     <string name="start_radio">Start radio</string>
     <!-- Now Playing, during a radio: "Radio from In the Air Tonight" (the song it started from) -->
     <string name="radio_from">Radio from %s</string>
+    <string name="various_artists">Various Artists</string>
     <!-- Why the radio picked this song: a musician, producer or studio on this album and the one before -->
     <string name="radio_shares">%s on both</string>
     <string name="radio_artist">More %s</string>

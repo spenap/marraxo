@@ -27,6 +27,8 @@ data class Track(
     val uri: Uri,
     /** Inside the Music folder ("Altan/The Blue Idol/01 Daily Growing.mp3"): how the liner notes know it. */
     val path: String = "",
+    /** The album's artist as tagged ("Various Artists" on a compilation); empty if untagged. */
+    val albumArtist: String = "",
 )
 
 data class Album(
@@ -36,7 +38,10 @@ data class Album(
     val year: Int,
     val tracks: List<Track>,
     val genre: String = "",
-)
+) {
+    /** The songs aren't all by the same credit (a compilation, guests): each song says whose it is. */
+    val mixedArtists: Boolean get() = tracks.any { it.artist != tracks[0].artist }
+}
 
 /** Artists sort ignoring a leading "The", so The Strokes is under S, and ignoring accents. */
 fun sortKey(artist: String) = fold(artist.removePrefix("The "))
@@ -104,6 +109,7 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
         MediaStore.Audio.Media.DURATION,
         MediaStore.Audio.Media.TRACK,
         MediaStore.Audio.Media.YEAR,
+        ALBUM_ARTIST,
         *pathColumns(),
     )
     val tracks = mutableListOf<Track>()
@@ -119,6 +125,7 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
         val duration = c.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
         val track = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
         val year = c.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
+        val albumArtist = c.getColumnIndexOrThrow(ALBUM_ARTIST)
         val path = pathReader(c)
         while (c.moveToNext()) {
             val trackId = c.getLong(id)
@@ -133,12 +140,13 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
                 number = c.getInt(track) % 1000, // stored as disc * 1000 + track
                 uri = ContentUris.withAppendedId(m, trackId),
                 path = path(),
+                albumArtist = clean(c.getString(albumArtist), ""),
             )
             if (!c.isNull(year)) years[aId] = c.getInt(year)
         }
     }
     val genres = trackGenres(context)
-    groupAlbums(tracks, years).map { album ->
+    groupAlbums(tracks, years, context.getString(R.string.various_artists)).map { album ->
         // The genre most of the album's songs share.
         album.copy(genre = album.tracks.mapNotNull { genres[it.id] }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key.orEmpty())
     }
@@ -169,8 +177,12 @@ private fun trackGenres(context: Context): Map<Long, String> {
  * can give one album two ids when it reads the name differently for some
  * tracks (see [repairMojibake]). The id most tracks share stays, for the cover.
  */
-fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>): List<Album> {
+fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>, various: String = VARIOUS_ARTISTS): List<Album> {
     fun mainArtist(list: List<Track>) = list.groupingBy { it.artist }.eachCount().maxBy { it.value }.key
+    // The album artist tag when there is one (a compilation's most frequent song artist is a guest), else the main artist.
+    fun albumArtist(list: List<Track>) = list.map { it.albumArtist }.filter { it.isNotEmpty() }
+        .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+        ?.let { if (fold(it) == fold(VARIOUS_ARTISTS)) various else it } ?: mainArtist(list)
     return tracks.groupBy { it.albumId }.values
         .groupBy { list -> fold(list.first().album) + "\u0000" + fold(mainArtist(list)) }.values
         .map { groups ->
@@ -178,10 +190,16 @@ fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>): List<Album> {
             val id = main.first().albumId
             val sorted = groups.flatten().sortedWith(compareBy({ it.number }, { it.title }))
             val year = years[id] ?: groups.firstNotNullOfOrNull { years[it.first().albumId] } ?: 0
-            Album(id, main.first().album, mainArtist(main), year, sorted)
+            Album(id, main.first().album, albumArtist(main), year, sorted)
         }
         .sortedWith(compareBy({ sortKey(it.artist) }, { it.year }, { it.title }))
 }
+
+/** How MusicBrainz and beets tag a compilation's album artist. */
+const val VARIOUS_ARTISTS = "Various Artists"
+
+/** MediaStore's album artist column: public from API 30 (AudioColumns.ALBUM_ARTIST), present on the Nexus 4's API 27 too. */
+private const val ALBUM_ARTIST = "album_artist"
 
 private val AUDIO = setOf("mp3", "m4a", "aac", "ogg", "oga", "opus", "flac", "wav", "mpc")
 
