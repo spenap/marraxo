@@ -5,3 +5,4 @@ __pycache__/
 beets/out/
 linernotes/out/
 sync/*.log
+lyrics/out/
