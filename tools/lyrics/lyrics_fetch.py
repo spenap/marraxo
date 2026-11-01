@@ -175,6 +175,7 @@ def main():
             print(f"  {n}/{total}, {found[0]} found", flush=True)
 
     if a.dump:
+        sys.path.insert(0, str(HERE))  # lrclib_dump.py, also under python -I
         import lrclib_dump
         mine = lrclib_dump.Mine(a.dump)
         failed = fetch_all(None, Cache(CACHE), todo, report, ask=lambda _, song: mine.lookup(song))
