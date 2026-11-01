@@ -315,11 +315,25 @@ reviewed interactively.
   ~88% similarity, missing tracks allowed): 62 more imported, 103 left.
 - [x] Spot-check pass-2 matches near 88%, and the 2 duplicate releases
   (no wrong matches; duplicate copies removed after fingerprint checks).
-- [ ] Interactive review: 24 of 103 done, plus Totem, Dylan disc 1 and three
-  as-is imports, and 9 accepted by triage (`out/triage-79.md`); 70 left
-  in `out/review-remaining-70.txt` (`./review`). Among them are the only
-  electronic albums (Moby's Play, the SFUR house compilation); check
-  their genres against Discogs once imported.
+- [x] Interactive review (2026-11-01): the last 60 albums decided on a
+  phone-friendly page (an artifact keeping each choice in its database),
+  five at a time, then imported by script. Duplicates inside a folder
+  (same recording twice, found by Chromaprint fingerprint, not by name)
+  are set aside before matching: they sank good matches (Journey: 77%
+  with every track right) and were in 9 of the 60 folders. 50 imported
+  (matched, as-is or added to an existing album), Robin Hood rebuilt
+  from three artist folders, R.E.M.'s In Time rebuilt as two discs,
+  7 left out. Files a release doesn't list are kept as extra tracks.
+  Manifests: `out/review-imports-*.tsv`, `out/drop-list.tsv`,
+  `out/removed-albums.tsv`, `out/cover-changes-*.tsv`.
+- [x] Reconciliation before the wipe (2026-11-01): every one of the
+  6,818 files in `~/Music` is in Music-clean (audio compared without its
+  last 3 packets, where rewritten tags bleed in), in `~/Audiobooks` or
+  `~/Music-extras` (byte-identical copies), converted, on the drop list,
+  or junk (`out/reconcile-*.tsv`). Spoken word went to `~/Audiobooks`,
+  videos, booklets, lyrics and scans to `~/Music-extras`.
+- [ ] Wipe `~/Music` and rename Music-clean to Music (paths in the beets
+  config and `library.db`, `sync.py`, `build.py`), on the user's word.
 - [x] Musepack (2026-11-01): No. 2 Patrick Street, the only `.mpc` album,
   converted from the originals to AAC 256 kbps `.m4a` and re-imported
   (manifest `out/format-changes-*.tsv`). This also restored track 4,
