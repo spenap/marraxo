@@ -118,6 +118,14 @@ when it was stopped.
 To fetch the rest, run `fetch-until-done.sh` again when the API is
 healthy. The cache keeps what was already answered.
 
+The afternoon run (1 Nov, 14:50): only the albums the cleanup has cleared
+(`lyrics_fetch.py --albums out/cleared-albums.txt`; 442 albums, 5,904
+songs). LRCLIB was partly up. Popular songs came back in ~0.15 s ("Waterloo",
+"Rehab"), but anything that needed a real lookup got 503 after ~0.7 s, the
+timing of a backend timeout. The outage rule stopped the run after 10 songs
+(2 found). `lyrics.db` now has 141 songs and is on the three devices; 5,714
+cleared songs are still to fetch.
+
 ## Next
 
 - Word-by-word highlighting where LRCLIB has word timings.
