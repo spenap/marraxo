@@ -199,3 +199,12 @@ def test_suspect_and_rejected_lyrics_stay_off_the_phone(tmp_path):
     build.build(out, cache, rejected={"Odd/One/01 Wrong.mp3"})
     paths = [r[0] for r in sqlite3.connect(out).execute("SELECT path FROM lyrics")]
     assert paths == [FACE["path"]]
+
+
+def test_lyrics_far_too_short_or_long_for_the_song_are_listed_for_review():
+    import lyrics_check as check
+    words = lambda n: " ".join(["la"] * n)
+    assert check.review({"duration": 264, "plainLyrics": "Si de verdad fuera un poeta Te morder"}) == "too few words (2 a minute)"
+    assert check.review({"duration": 126, "plainLyrics": words(776)}) == "too many words (370 a minute)"
+    assert check.review({"duration": 200, "plainLyrics": words(200)}) is None
+    assert check.review({"duration": 200, "instrumental": True}) is None  # nothing to judge

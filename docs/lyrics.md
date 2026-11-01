@@ -183,6 +183,16 @@ That Way (Michael Jackson) and repeated hooks ("Digital Punk").
 words, a Lyrics button would only open "instrumental". `lyrics.db`: 3,878
 songs (483 instrumental and 15 non-lyrics left out).
 
+Length helps as a reason to look, not to reject: words a minute against
+the song's length (median 57; 90% of songs within 23–119). Under 4 or over
+250, `lyrics_check.py` lists the song for review. Of 21 listed, 14 were
+wrong: cut short mid-word (Quique González ×4, maga), another song's lyrics
+(Gorillaz's "Clint Eastwood" on the *Million Dollar Baby* score), a longer
+version's on a short track (the Oasis reprise), no real words ("Ho / Ho").
+7 were real: a hook sung once, fast rap, *Tubular Bells*' announcements.
+Misattributed lyrics of normal length (the two on *Anthems: Trance*) sit
+in the normal range, so length can't find those. `lyrics.db`: 3,864 songs.
+
 ## Next
 
 - Word-by-word highlighting where LRCLIB has word timings.
