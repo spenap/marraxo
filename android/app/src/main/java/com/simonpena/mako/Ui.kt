@@ -928,9 +928,12 @@ private fun AlbumScreen(
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
     val minutes = album.tracks.sumOf { it.durationMs } / 60000
+    val list = rememberLazyListState()
+    val scrolled by remember { derivedStateOf { list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 0 } }
     Box(Modifier.fillMaxSize()) {
     LazyColumn(
         Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(tint, GBg), endY = fadePx)),
+        state = list,
         contentPadding = PaddingValues(bottom = if (hasMini) 96.dp else 24.dp),
     ) {
         item {
@@ -982,8 +985,8 @@ private fun AlbumScreen(
             }
         }
     }
-    // The list scrolls under the status bar: cover it in the gradient's top colour, unseen until something scrolls there.
-    Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
+    // The list scrolls under the status bar: once it does, cover the bar in the gradient's top colour.
+    if (scrolled) Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
     }
 }
 
