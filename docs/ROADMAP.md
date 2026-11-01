@@ -506,6 +506,12 @@ New ideas wait here until there is evidence (Track U) or a clear need;
 then they move into a track with a "done when".
 
 Parked:
+- Hero covers (2026-11-02): the cover edge to edge at the top, as Google
+  Play Music, Rdio and early Spotify did, on Now Playing, the album
+  screen and an artist screen (an artist's hero is a collage of their own
+  covers: no artist photos offline). Costs height on the Nexus 4 (a
+  360 dp cover leaves ~250 dp below) and needs a scrim under text over
+  art. Mockup: `mockups/hero.html`.
 - Party light (2026-11-01, "another Homer's car idea"): pulse the torch on
   the beat. Feasible: `CameraManager.setTorchMode()` works from API 23
   (Nexus 4 included), needs no camera permission, switches in ~10-30 ms.

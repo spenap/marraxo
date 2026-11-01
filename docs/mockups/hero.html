@@ -1,0 +1,353 @@
+<title>Hero covers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one band per screen (Now Playing, album, artist); in each, today and the hero version side by side at true dp size, with a verdict underneath. Page in the prototype's neutral tokens, phones in Mako's Glow palette. */
+:root {
+  --bg: #eef0f1;
+  --surface: #f8f9fa;
+  --ink: #15181b;
+  --muted: #5b636b;
+  --line: #d2d7db;
+  --accent: #1f6f66;
+  --good: #2f7d4f;
+  --warn: #a5552f;
+  --f-body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --g-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --g-body: "Figtree", "Helvetica Neue", Arial, sans-serif;
+  --g-bg: #0c1112;
+  --g-deep: #0b1415;
+  --g-deepest: #070d0e;
+  --g-soft: rgba(255,255,255,.64);
+  --g-faint: rgba(255,255,255,.16);
+  --g-hi: #9fd6cf;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #111416; --surface: #181c1f; --ink: #e5e8eb; --muted: #9aa2a9; --line: #2a3035; --accent: #8fd3c8; --good: #7fc79b; --warn: #e3a07e; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #111416; --surface: #181c1f; --ink: #e5e8eb; --muted: #9aa2a9; --line: #2a3035; --accent: #8fd3c8; --good: #7fc79b; --warn: #e3a07e; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1200px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+header { display: flex; flex-wrap: wrap; gap: 12px 32px; align-items: end; justify-content: space-between; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 4px; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 66ch; }
+.device { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.device input { position: absolute; opacity: 0; pointer-events: none; }
+.device label { padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.device input:checked + label { background: var(--accent); color: var(--bg); font-weight: 600; }
+.device input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dims { font-family: var(--f-mono); font-size: 12px; color: var(--muted); margin-top: 6px; text-align: right; }
+
+section.band { display: grid; gap: 14px; border-top: 1px solid var(--line); padding-top: 22px; }
+section.band > h2 { margin: 0; font-size: 19px; }
+section.band > p { margin: 0; color: var(--muted); max-width: 70ch; }
+.row { display: flex; gap: 28px; overflow-x: auto; padding-bottom: 8px; }
+.mock { flex: 0 0 auto; width: var(--w); display: flex; flex-direction: column; gap: 10px; }
+.mock h3 { font-size: 15px; margin: 0; display: flex; gap: 8px; align-items: baseline; }
+.mock h3 .tag { font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.notes { font-size: 13.5px; color: var(--muted); margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.notes .plus::before { content: "+ "; color: var(--good); font-weight: 700; }
+.notes .minus::before { content: "− "; color: var(--warn); font-weight: 700; }
+.notes .eq::before { content: "– "; }
+
+/* The phone: always Glow, whatever the page theme. */
+body { --w: 360px; --h: 640px; }
+body.pixel { --w: 393px; --h: 851px; }
+.phone { width: var(--w); height: var(--h); border-radius: 18px; overflow: hidden; position: relative; color: #fff; font-family: var(--g-body); background: var(--g-bg); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.scroll { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+.status { position: absolute; left: 0; right: 0; top: 0; height: 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 12px; z-index: 3; color: rgba(255,255,255,.92); }
+.ic { width: 44px; height: 44px; display: grid; place-items: center; flex: none; color: #fff; }
+.ic svg { width: 24px; height: 24px; }
+.soft { color: var(--g-soft); }
+
+/* Covers, drawn: no images. */
+.art { position: relative; overflow: hidden; aspect-ratio: 1; }
+.art.some { background: radial-gradient(60% 50% at 35% 70%, #c98a5e 0%, transparent 70%), linear-gradient(160deg, #e9e2d3 0 30%, #3b2a33 30% 100%); }
+.art.some b { position: absolute; left: 10%; right: 10%; top: 6%; font-family: var(--g-display); font-weight: 800; color: #4a3036; font-size: calc(var(--s) * .15); line-height: .9; text-align: center; }
+.art.some i { position: absolute; left: 7%; right: 7%; bottom: 7%; height: 54%; background: linear-gradient(120deg, #2a2630, #5b3e3a 55%, #2d2229); }
+.art.trance { background: radial-gradient(42% 42% at 52% 55%, #7cff6a 0%, #1f8a3a 35%, transparent 70%), radial-gradient(70% 40% at 90% 0%, #cfe6ff 0%, transparent 60%), linear-gradient(170deg, #0d1f3a, #071226 70%); }
+.art.trance b { position: absolute; left: 7%; top: 6%; font-size: calc(var(--s) * .07); line-height: 1.05; font-weight: 400; color: #fff; }
+.art.trance b em { display: block; font-style: normal; color: #7be07a; }
+.art.trance i { position: absolute; left: 30%; top: 30%; width: 44%; height: 44%; border-radius: 50%; border: calc(var(--s) * .012) solid rgba(160,255,140,.8); box-shadow: 0 0 calc(var(--s) * .05) #6fff66; }
+.art.ls1 { background: linear-gradient(135deg, #c9b37a, #6b5228); }
+.art.ls2 { background: linear-gradient(135deg, #2e4b6b, #0f1d2c); }
+.art.ls3 { background: linear-gradient(135deg, #8a2f2f, #2b0e12); }
+.art.ls4 { background: linear-gradient(135deg, #5c6b4a, #1f2617); }
+.art.ls5 { background: linear-gradient(135deg, #b9b2a6, #534c44); }
+.art .cap { position: absolute; left: 8%; bottom: 8%; right: 8%; font-family: var(--g-display); font-weight: 600; font-size: calc(var(--s) * .085); line-height: 1.05; color: rgba(255,255,255,.88); }
+
+/* Text over art: a scrim, top for icons, bottom for titles. */
+.scrim-top { position: absolute; left: 0; right: 0; top: 0; height: 96px; background: linear-gradient(rgba(0,0,0,.55), transparent); z-index: 2; }
+.scrim-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(transparent, rgba(7,13,14,.92)); }
+.overbar { position: absolute; left: 0; right: 0; top: 24px; height: 48px; display: flex; align-items: center; padding: 0 6px; z-index: 3; }
+.overbar .mid { flex: 1; text-align: center; min-width: 0; }
+.from { font-size: 10.5px; letter-spacing: .07em; color: var(--g-soft); text-transform: uppercase; }
+.alb { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Now Playing pieces */
+.np { display: flex; flex-direction: column; height: calc(var(--h) - 30px); padding: 0 22px 12px; box-sizing: border-box; }
+.np.today { padding-top: 24px; background: linear-gradient(to bottom, #6e3a2e 0%, var(--g-deep) 62%, var(--g-deepest) 100%); }
+.np.hero { padding: 0 22px 12px; background: linear-gradient(to bottom, #3a211c 0%, var(--g-deepest) 100%); }
+.np .topbar { height: 48px; display: flex; align-items: center; flex: none; }
+.np .topbar .mid { flex: 1; text-align: center; }
+.np .artwrap { flex: 1 1 auto; min-height: 0; container-type: size; display: grid; place-items: center; margin: 4px 0; }
+.np .artwrap .art { width: min(86cqw, 100cqh); border-radius: 10px; --s: min(86cqw, 100cqh); }
+.np .heroart { margin: 0 -22px; width: var(--w); flex: none; --s: var(--w); }
+.meta { flex: none; display: flex; align-items: center; gap: 4px; margin-top: 10px; }
+.meta .t { flex: 1; min-width: 0; }
+.title { font-family: var(--g-display); font-weight: 600; font-size: 24px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.artist { font-size: 15px; color: var(--g-soft); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seek { flex: none; margin-top: 10px; }
+.bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.22); position: relative; }
+.bar::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 29%; background: #fff; border-radius: 2px; }
+.bar::after { content: ""; position: absolute; left: 29%; top: 50%; width: 12px; height: 12px; margin: -6px; background: #fff; border-radius: 50%; }
+.times { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--g-soft); margin-top: 5px; }
+.controls { flex: none; display: flex; align-items: center; justify-content: space-between; margin: 6px 0 8px; }
+.controls .ic svg { width: 26px; height: 26px; }
+.play { width: 58px; height: 58px; border-radius: 50%; background: #fff; color: #0e2226; display: grid; place-items: center; }
+.play svg { width: 26px; height: 26px; }
+.out { flex: none; }
+.out .rule { height: 1px; background: var(--g-faint); }
+.out .line { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; color: var(--g-soft); }
+.out .line .where { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.out .line b { color: #fff; font-weight: 600; }
+.out .dev { width: 18px; height: 18px; color: var(--g-hi); flex: none; }
+.cards { display: grid; gap: 12px; padding: 0 14px 28px; }
+.card { border-radius: 14px; padding: 14px 16px 16px; background: rgba(255,255,255,.07); }
+.card.lyr { background: #6e3a2e; }
+.card h4 { margin: 0 0 8px; font-size: 13px; display: flex; justify-content: space-between; }
+.card h4 small { font-size: 11px; color: var(--g-soft); font-weight: 400; }
+.ph { display: block; height: 11px; border-radius: 6px; background: rgba(255,255,255,.22); margin: 9px 0; }
+.ph.now { background: #fff; height: 13px; }
+
+/* Album and artist pieces */
+.lvl { padding-top: 24px; }
+.lvl .bar48 { height: 48px; display: flex; align-items: center; padding: 0 6px; }
+.albhead { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 4px 24px 16px; text-align: center; }
+.albhead .art { width: 200px; border-radius: 8px; --s: 200px; }
+.albtitle { font-family: var(--g-display); font-weight: 600; font-size: 26px; line-height: 1.15; }
+.small { font-size: 12px; color: var(--g-soft); }
+.pills { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+.pill { height: 40px; padding: 0 18px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,.4); }
+.pill.solid { background: #9fd6cf; color: #0e2226; border-color: transparent; }
+.pill.round { width: 40px; padding: 0; justify-content: center; }
+.pill svg { width: 18px; height: 18px; }
+.rows { padding: 0 4px 0 20px; }
+.trow { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+.trow .n { width: 22px; font-size: 13px; color: var(--g-soft); }
+.trow .tt { flex: 1; min-width: 0; }
+.trow .tt div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trow .tt .a { font-size: 12px; color: var(--g-soft); }
+.trow .d { font-size: 13px; color: var(--g-soft); }
+.heroalb { position: relative; width: var(--w); --s: var(--w); }
+.heroalb .over { position: absolute; left: 20px; right: 20px; bottom: 14px; z-index: 2; }
+.heroalb .over .albtitle { font-size: 28px; }
+.herobtns { display: flex; gap: 10px; padding: 14px 20px 8px; }
+.collage { position: relative; width: var(--w); height: calc(var(--w) * .8); display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.collage .art { aspect-ratio: auto; --s: calc(var(--w) / 2); }
+.collage .over { position: absolute; left: 20px; right: 20px; bottom: 14px; z-index: 2; }
+.artistname { font-family: var(--g-display); font-weight: 600; font-size: 30px; line-height: 1.1; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; padding: 4px 16px 24px; }
+.grid2 .art { border-radius: 6px; --s: calc((var(--w) - 44px) / 2); }
+.grid2 .lab { font-size: 13px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid2 .lab span { display: block; font-size: 12px; color: var(--g-soft); }
+.lvlhead { padding: 0 20px 12px; }
+.lvlhead .artistname { font-size: 24px; }
+</style>
+
+<div class="page">
+  <header>
+    <div>
+      <h1>Hero covers</h1>
+      <p class="lede">The cover across the whole width, edge to edge, its height taken from the width: Google Play Music on the Nexus 4, Rdio, Spotify until about 2015. Each screen shows today's Mako beside the hero version; scroll inside a phone to see the rest.</p>
+    </div>
+    <div>
+      <div class="device" role="radiogroup" aria-label="Screen">
+        <input type="radio" name="device" id="hero-n4" checked><label for="hero-n4">Nexus 4</label>
+        <input type="radio" name="device" id="hero-px"><label for="hero-px">Pixel 5</label>
+      </div>
+      <div class="dims" id="hero-dims">360 × 640 dp · 768 × 1280 px</div>
+    </div>
+  </header>
+
+  <!-- 1. Now Playing -->
+  <section class="band">
+    <h2>Now Playing</h2>
+    <p>Layout F in both: lyrics and notes as cards below, the heart beside the title, one rule over "Sonando en" and the queue.</p>
+    <div class="row">
+      <div class="mock">
+        <h3><span class="tag">Today</span>Inset cover (F)</h3>
+        <div class="phone"><div class="scroll">
+          <div class="status"><span>21:19</span><span>▾ ▴ ▮</span></div>
+          <div class="np today">
+            <div class="topbar"><span class="ic" data-i="down"></span><div class="mid"><div class="from">Reproduciendo del álbum</div><div class="alb">Some Nights</div></div><span class="ic" data-i="more"></span></div>
+            <div class="artwrap"><div class="art some"><b>SOME NIGHTS</b><i></i></div></div>
+            <div class="meta"><div class="t"><div class="title">Carry On</div><div class="artist">Fun</div></div><span class="ic" data-i="heart"></span></div>
+            <div class="seek"><div class="bar"></div><div class="times"><span>1:22</span><span>4:41</span></div></div>
+            <div class="controls"><span class="ic soft" data-i="shuffle"></span><span class="ic" data-i="prev"></span><span class="play" data-i="play"></span><span class="ic" data-i="next"></span><span class="ic soft" data-i="repeat"></span></div>
+            <div class="out"><div class="rule"></div><div class="line"><span class="dev" data-i="speaker"></span><span class="where">Sonando en <b>Cocina</b></span><span class="ic" data-i="queue"></span></div></div>
+          </div>
+          <div class="cards"><div class="card lyr"><h4>Letra <small>LRCLIB</small></h4><span class="ph" style="width:72%"></span><span class="ph now" style="width:88%"></span><span class="ph" style="width:64%"></span></div><div class="card"><h4>Notas del disco <small>Some Nights · 2012</small></h4><span class="ph" style="width:94%"></span><span class="ph" style="width:60%"></span></div></div>
+        </div></div>
+        <ul class="notes"><li class="eq">What's being built now.</li></ul>
+      </div>
+
+      <div class="mock">
+        <h3><span class="tag">Hero</span>Cover across the width</h3>
+        <div class="phone"><div class="scroll">
+          <div class="status"><span>21:19</span><span>▾ ▴ ▮</span></div>
+          <div class="np hero">
+            <div class="heroart">
+              <div class="art some" style="--s:var(--w)"><b>SOME NIGHTS</b><i></i></div>
+              <div class="scrim-top"></div>
+              <div class="overbar"><span class="ic" data-i="down"></span><div class="mid"><div class="from">Reproduciendo del álbum</div><div class="alb">Some Nights</div></div><span class="ic" data-i="more"></span></div>
+            </div>
+            <div class="meta"><div class="t"><div class="title">Carry On</div><div class="artist">Fun</div></div><span class="ic" data-i="heart"></span></div>
+            <div class="seek"><div class="bar"></div><div class="times"><span>1:22</span><span>4:41</span></div></div>
+            <div class="controls"><span class="ic soft" data-i="shuffle"></span><span class="ic" data-i="prev"></span><span class="play" data-i="play"></span><span class="ic" data-i="next"></span><span class="ic soft" data-i="repeat"></span></div>
+            <div style="flex:1"></div>
+            <div class="out"><div class="rule"></div><div class="line"><span class="dev" data-i="speaker"></span><span class="where">Sonando en <b>Cocina</b></span><span class="ic" data-i="queue"></span></div></div>
+          </div>
+          <div class="cards"><div class="card lyr" style="background:#3a211c"><h4>Letra <small>LRCLIB</small></h4><span class="ph" style="width:72%"></span><span class="ph now" style="width:88%"></span><span class="ph" style="width:64%"></span></div><div class="card"><h4>Notas del disco <small>Some Nights · 2012</small></h4><span class="ph" style="width:94%"></span><span class="ph" style="width:60%"></span></div></div>
+        </div></div>
+        <ul class="notes">
+          <li class="plus">The biggest the cover can be: 360 dp on the Nexus 4, against about 290 dp inset.</li>
+          <li class="plus">No art-tinted gradient needed: the cover is the colour.</li>
+          <li class="minus">The clock and the top icons sit on the art: a dark scrim at the top, or they vanish on light covers.</li>
+          <li class="minus">On the Nexus 4 the rest gets ~250 dp: title, seek bar, controls and output row only just fit, and the cards' peek is barely there.</li>
+          <li class="minus">Non-square art (a few scans, booklet crops) must be cropped to fill, never letterboxed.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Album -->
+  <section class="band">
+    <h2>Album</h2>
+    <p>Anthems: Trance, a compilation: each song shows its artist.</p>
+    <div class="row">
+      <div class="mock">
+        <h3><span class="tag">Today</span>Cover in the middle</h3>
+        <div class="phone" style="background:linear-gradient(to bottom,#123322,var(--g-bg) 380px)"><div class="scroll lvl">
+          <div class="status"><span>22:30</span><span>▾ ▴ ▮</span></div>
+          <div class="bar48"><span class="ic" data-i="back"></span><span style="flex:1"></span><span class="ic" data-i="more"></span></div>
+          <div class="albhead">
+            <div class="art trance"><b>Anthems<em>TRANCE</em></b><i></i></div>
+            <div class="albtitle">Anthems: Trance</div>
+            <div style="font-size:14px;color:var(--g-soft)">Varios artistas</div>
+            <div class="small">2013 · 63 canciones · 581 min</div>
+            <div class="pills"><span class="pill solid">Reproducir</span><span class="pill round" data-i="shuffle"></span><span class="pill">Notas del disco</span></div>
+          </div>
+          <div class="rows" data-rows></div>
+        </div></div>
+        <ul class="notes"><li class="eq">Today: 200 dp cover, then title and buttons; the first songs start about halfway down the Nexus 4.</li></ul>
+      </div>
+
+      <div class="mock">
+        <h3><span class="tag">Hero</span>Cover across the width</h3>
+        <div class="phone"><div class="scroll">
+          <div class="status"><span>22:30</span><span>▾ ▴ ▮</span></div>
+          <div class="heroalb">
+            <div class="art trance" style="--s:var(--w)"><b>Anthems<em>TRANCE</em></b><i></i></div>
+            <div class="scrim-top"></div>
+            <div class="overbar"><span class="ic" data-i="back"></span><span style="flex:1"></span><span class="ic" data-i="more"></span></div>
+            <div class="scrim-bottom"></div>
+            <div class="over"><div class="albtitle">Anthems: Trance</div><div style="font-size:14px;color:rgba(255,255,255,.8)">Varios artistas · 2013 · 63 canciones</div></div>
+          </div>
+          <div class="herobtns"><span class="pill solid">Reproducir</span><span class="pill round" data-i="shuffle"></span><span class="pill">Notas del disco</span></div>
+          <div class="rows" data-rows></div>
+        </div></div>
+        <ul class="notes">
+          <li class="plus">The cover at full size, and the title over it saves a block: songs start a little higher.</li>
+          <li class="minus">Text over art needs the bottom scrim, which darkens the lower half of every cover.</li>
+          <li class="minus">The scrim hides what covers often put at the bottom (this one's small logo).</li>
+          <li class="eq">Scrolling could shrink the hero into the top bar (a collapsing header); more work, smooth on the Nexus 4 only if measured.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Artist -->
+  <section class="band">
+    <h2>Artist</h2>
+    <p>Los Secretos, five albums. Mako has no artist photos (offline, nothing fetched for artists yet), so a hero has to come from their covers.</p>
+    <div class="row">
+      <div class="mock">
+        <h3><span class="tag">Today</span>Title and grid</h3>
+        <div class="phone"><div class="scroll lvl">
+          <div class="status"><span>22:31</span><span>▾ ▴ ▮</span></div>
+          <div class="bar48"><span class="ic" data-i="back"></span></div>
+          <div class="lvlhead"><div class="artistname">Los Secretos</div><div class="small">5 álbumes</div></div>
+          <div class="pills" style="justify-content:flex-start;padding:0 16px 14px"><span class="pill solid">Reproducir</span><span class="pill round" data-i="shuffle"></span></div>
+          <div class="grid2" data-grid></div>
+        </div></div>
+        <ul class="notes"><li class="eq">Today: name, count, buttons, then the albums.</li></ul>
+      </div>
+
+      <div class="mock">
+        <h3><span class="tag">Hero</span>A collage of their covers</h3>
+        <div class="phone"><div class="scroll">
+          <div class="status"><span>22:31</span><span>▾ ▴ ▮</span></div>
+          <div class="collage">
+            <div class="art ls1"></div><div class="art ls2"></div><div class="art ls3"></div><div class="art ls4"></div>
+            <div class="scrim-top"></div>
+            <div class="overbar"><span class="ic" data-i="back"></span></div>
+            <div class="scrim-bottom"></div>
+            <div class="over"><div class="artistname">Los Secretos</div><div style="font-size:14px;color:rgba(255,255,255,.8)">5 álbumes</div></div>
+          </div>
+          <div class="herobtns"><span class="pill solid">Reproducir</span><span class="pill round" data-i="shuffle"></span></div>
+          <div class="grid2" data-grid></div>
+        </div></div>
+        <ul class="notes">
+          <li class="plus">Gives an artist a face without fetching anything: four of their own covers.</li>
+          <li class="minus">The same covers appear again just below, in the grid.</li>
+          <li class="minus">An artist with one album gets one cover stretched across: the album screen again, not an artist.</li>
+          <li class="eq">Real artist photos would need a desktop fetch (like the liner notes) and a licence check: an idea, not part of this.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const icons = {
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>',
+    shuffle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+    prev: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>',
+    next: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+    repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11v-1a4 4 0 014-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 01-4 4H3"/></svg>',
+    speaker: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="14" r="3.5"/></svg>',
+    queue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h14M3 12h14M3 18h8"/><path d="M15 15l6 3-6 3z" fill="currentColor"/></svg>',
+    heart: '<svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.4-7.5 10.4z"/></svg>',
+  };
+  document.querySelectorAll('[data-i]').forEach(el => { el.innerHTML = icons[el.dataset.i] || ''; });
+
+  const songs = [['Insomnia (Monster mix)', 'Faithless', '3:33'], ['For an Angel (E-Werk club mix)', 'Paul van Dyk', '7:44'],
+    ['Silence (DJ Tiësto’s In Search of Sunshine remix)', 'Delerium feat. Sarah McLachlan', '11:35'], ['Gouryella', 'Gouryella', '10:45'],
+    ['1998 (original mix)', 'Binary Finary', '7:58'], ['Adagio for Strings (original mix)', 'Tiësto', '9:33'], ['Carte Blanche', 'Veracocha', '7:05'],
+    ['Resurrection', 'PPK', '8:02'], ['Bullet in a Gun', 'Planet Perfecto', '9:27'], ['Fire Wire (original mix)', 'Cosmic Gate', '2:52']];
+  const rowsHtml = songs.map(([t, a, d], i) => `<div class="trow"><span class="n">${i + 1}</span><div class="tt"><div>${t}</div><div class="a">${a}</div></div><span class="d">${d}</span><span class="ic soft">${icons.more}</span></div>`).join('');
+  document.querySelectorAll('[data-rows]').forEach(el => { el.innerHTML = rowsHtml; });
+
+  const albums = [['ls1', 'Todo sigue igual', 1982], ['ls2', 'Continuará', 1986], ['ls3', 'Directo', 1987], ['ls4', 'Grandes éxitos', 1991], ['ls5', 'A tu lado', 2003]];
+  const gridHtml = albums.map(([c, t, y]) => `<div><div class="art ${c}"><span class="cap">${t}</span></div><div class="lab">${t}<span>${y}</span></div></div>`).join('');
+  document.querySelectorAll('[data-grid]').forEach(el => { el.innerHTML = gridHtml; });
+
+  const dimsLabel = document.getElementById('hero-dims');
+  const pickDevice = pixel => {
+    document.body.classList.toggle('pixel', pixel);
+    dimsLabel.textContent = pixel ? '393 × 851 dp · 1080 × 2340 px' : '360 × 640 dp · 768 × 1280 px';
+  };
+  document.getElementById('hero-n4').addEventListener('change', () => pickDevice(false));
+  document.getElementById('hero-px').addEventListener('change', () => pickDevice(true));
+})();
+</script>
