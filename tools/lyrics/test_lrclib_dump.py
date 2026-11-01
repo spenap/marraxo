@@ -74,12 +74,13 @@ def make_dump(tmp_path, seed=1, n=500):
 
 
 def expected(db, mine):
-    keys = set().union(*(dump.artist_keys(a) for a in mine))
+    keys = dump.wanted_keys(mine)
     tracks = [t for t in db.execute("SELECT id, name, artist_name, album_name, duration, last_lyrics_id FROM tracks ORDER BY id")
               if dump.artist_keys(t[2]) & keys]
     ids = [t[5] for t in tracks if t[5] is not None]
-    lyrics = [r for r in db.execute("SELECT id, track_id, plain_lyrics, synced_lyrics, instrumental FROM lyrics ORDER BY id")
-              if r[0] in ids]
+    lyrics = [(i, t, None if synced else plain, synced, inst)  # plain words only where there are no timed ones
+              for i, t, plain, synced, inst in db.execute("SELECT id, track_id, plain_lyrics, synced_lyrics, instrumental FROM lyrics ORDER BY id")
+              if i in ids]
     return tracks, lyrics
 
 
@@ -200,3 +201,28 @@ def test_column_names_skip_constraints_however_they_are_spaced():
     sql = """CREATE TABLE tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, duration FLOAT,
              UNIQUE(name, duration), FOREIGN KEY (id) REFERENCES x (id), lyricsfile TEXT)"""
     assert dump.column_names(sql) == ["id", "name", "duration", "lyricsfile"]
+
+
+def test_from_a_duet_only_the_first_artist_counts_unless_the_other_is_yours_too():
+    keys = dump.wanted_keys(["Queen", "Queen & Elton John", "Michael Jackson with Paul McCartney", "Miles Davis",
+                             "Cannonball Adderley feat. Miles Davis", "A. R. Rahman feat. Blaaze & Tanvi Shah"])
+    assert {"queen", "michaeljackson", "milesdavis", "cannonballadderley", "arrahman"} <= keys
+    assert not {"eltonjohn", "paulmccartney", "blaaze", "tanvishah"} & keys
+
+
+def test_slimming_drops_other_artists_and_plain_words_that_timed_lyrics_already_have(tmp_path):
+    out = tmp_path / "mine.sqlite3"
+    db = dump.create(out)
+    for t in [(1, "Don't Stop Me Now", "Queen", "Jazz", 209.0, None, "[00:01.00] Tonight\n[00:03.50] I'm gonna", 0),
+              (2, "Your Song", "Elton John", "Elton John", 241.0, "It's a little bit funny", None, 0),
+              (3, "Under Pressure", "Queen & David Bowie", "Hot Space", 248.0, "Pressure", "[00:10.00] Pressure", 0)]:
+        db.execute("INSERT INTO tracks (id, name, artist_name, album_name, duration, lyrics_id) VALUES (?, ?, ?, ?, ?, ?)", (*t[:5], t[0] * 10))
+        db.execute("INSERT INTO lyrics (id, track_id, plain, synced, instrumental) VALUES (?, ?, ?, ?, ?)", (t[0] * 10, t[0], *t[5:]))
+    dump.finish(db, artists=["Queen", "Queen & Elton John"])
+    dump.slim(out, ["Queen", "Queen & Elton John"])
+    got = sqlite3.connect(out)
+    assert [r[0] for r in got.execute("SELECT id FROM tracks ORDER BY id")] == [1, 3]
+    assert [r[0] for r in got.execute("SELECT id FROM lyrics ORDER BY id")] == [10, 30]
+    assert got.execute("SELECT count(*) FROM lyrics WHERE plain IS NOT NULL").fetchone()[0] == 0
+    song = {"path": "Queen/Jazz/12 Don't Stop Me Now.mp3", "title": "Don't Stop Me Now", "artist": "Queen", "album": "Jazz", "duration": 209}
+    assert dump.Mine(out).lookup(song)["plainLyrics"] == "Tonight\nI'm gonna"  # rebuilt from the timed lines

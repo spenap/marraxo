@@ -146,6 +146,14 @@ The API stayed half-down, so lyrics now come from LRCLIB's dump
   other artist's whole catalogue. Matching splits credits on `&`, `/`,
   "feat." and so on, so "AC/DC" also matches artists credited just "AC"
   or "DC": ~8,400 tracks, 0.3%, left in as not worth a special rule.
+- **Slimmed** (`lrclib_dump.py EXTRACT --slim`, 1.5 min; new extractions
+  do the same): from a duet or "feat." credit only the first artist
+  counts, unless the others are in the collection on their own ("Queen &
+  Elton John" keeps Queen, not Elton John's 52,000 tracks); and plain
+  words are dropped where timed lyrics exist, rebuilt from them when
+  asked. 8.9 GB → 4.7 GB, 2.34 million tracks. Of the 4,338 songs found
+  before, 4,295 come back the same, 42 as another version, and one
+  ("Carnival", matched to another band's recording) no longer.
 - **Lookup** (`lyrics_fetch.py --dump`), as the API answers: the same
   album within 2 s first, then any version within 2 s, timed lyrics first.
   The cleared albums (5,585 songs not yet cached) took 3.7 s: **4,095

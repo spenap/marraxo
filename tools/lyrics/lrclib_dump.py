@@ -71,12 +71,37 @@ def title_key(s):
     return re.sub(r"[\W_]", "", fold(s))
 
 
+def credit_keys(name):
+    """The key of a whole credit, then of each artist in it in order, without a leading "the"."""
+    s = fold(name).replace("&", " and ")
+    keys = [re.sub(r"[\W_]", "", re.sub(r"^the\s+", "", part.strip())) for part in [s, *BETWEEN_ARTISTS.split(s)]]
+    return [k if len(k) > 1 and k not in NOT_AN_ARTIST else None for k in keys]
+
+
 @functools.lru_cache(maxsize=1 << 20)
 def artist_keys(name):
-    """Keys for a credit and each artist in it, without a leading "the": two credits match if they share one."""
-    s = fold(name).replace("&", " and ")
-    keys = {re.sub(r"[\W_]", "", re.sub(r"^the\s+", "", part.strip())) for part in [s, *BETWEEN_ARTISTS.split(s)]}
-    return frozenset(k for k in keys if len(k) > 1 and k not in NOT_AN_ARTIST)
+    """Keys for a credit and each artist in it: two credits match if they share one."""
+    return frozenset(k for k in credit_keys(name) if k)
+
+
+def wanted_keys(artists):
+    """The artists to keep tracks by: each credit, its first artist, and others in it only if credited on their own too
+    ("Queen & Elton John" brings Queen, not Elton John's whole catalogue)."""
+    credits = [credit_keys(a) for a in artists]
+    own = {c[0] for c in credits}
+    return frozenset(k for c in credits for i, k in enumerate(c) if k and (i <= 1 or k in own))
+
+
+TIMES = re.compile(r"\[\d+:\d+(?:[.:]\d+)?\]|<\d+:\d+(?:[.:]\d+)?>")
+TAG_LINE = re.compile(r"^\[[a-z#]+:.*\]$", re.I)
+
+
+def plain_from(synced):
+    """The words of timed lyrics, one line each: what LRCLIB's plain lyrics hold when it has both."""
+    if not synced:
+        return None
+    lines = (TIMES.sub("", line).strip() for line in synced.splitlines() if not TAG_LINE.match(line.strip()))
+    return "\n".join(lines).strip() or None
 
 
 # --- Reading SQLite pages from a stream -----------------------------------
@@ -430,7 +455,8 @@ def create(out):
 
 def finish(db, artists, **meta):
     """Records which artists the extract covers, and indexes it for lookups."""
-    db.executemany("INSERT OR IGNORE INTO artists VALUES (?, ?)", [(k, a) for a in artists for k in artist_keys(a)])
+    keep = wanted_keys(artists)
+    db.executemany("INSERT OR IGNORE INTO artists VALUES (?, ?)", [(k, a) for a in artists for k in artist_keys(a) if k in keep])
     db.executemany("INSERT OR REPLACE INTO meta VALUES (?, ?)", [("schema", SCHEMA), *((k, str(v)) for k, v in meta.items())])
     db.create_function("title_key", 1, title_key)
     db.execute("UPDATE tracks SET name_key = title_key(name) WHERE name_key IS NULL")
@@ -447,7 +473,7 @@ def extract(path, artists, out, log=lambda msg: None, window=WINDOW):
     tables = schema(dump, trees)
     t, ly = tables["tracks"], tables["lyrics"]
     ti, li = [t.columns.index(c) for c in TRACK_COLUMNS], [ly.columns.index(c) for c in LYRICS_COLUMNS]
-    mine = frozenset().union(*(artist_keys(a) for a in artists))
+    mine = wanted_keys(artists)
     db = create(out)
     lyric_ids = {}  # lyrics leaf page → the ids wanted on it
     stats = {"tracks": 0, "lyrics": 0}
@@ -474,7 +500,7 @@ def extract(path, artists, out, log=lambda msg: None, window=WINDOW):
 
     def lyrics(rowid, values):
         plain, synced, track_id, instrumental = (values[i] for i in li)
-        db.execute("INSERT INTO lyrics VALUES (?, ?, ?, ?, ?)", (rowid, track_id, plain, synced, instrumental))
+        db.execute("INSERT INTO lyrics VALUES (?, ?, ?, ?, ?)", (rowid, track_id, None if synced else plain, synced, instrumental))
         stats["lyrics"] += 1
 
     for leaf in (leaves := trees.leaves(t.root)):
@@ -504,7 +530,22 @@ class Mine:
         album = title_key(song["album"] or "")
         r = min(close, key=lambda r: (title_key(r[3] or "") != album, not r[6], abs(r[4] - song["duration"])))
         return {"status": "found", "id": r[0], "trackName": r[1], "artistName": r[2], "albumName": r[3], "duration": r[4],
-                "instrumental": bool(r[7]), "plainLyrics": r[5], "syncedLyrics": r[6]}
+                "instrumental": bool(r[7]), "plainLyrics": r[5] or plain_from(r[6]), "syncedLyrics": r[6]}
+
+
+def slim(path, artists):
+    """Shrinks an extract in place to [artists] by wanted_keys, without plain words that timed lyrics already have."""
+    keep = wanted_keys(artists)
+    db = sqlite3.connect(path)
+    db.create_function("wanted", 1, lambda name: bool(artist_keys(name or "") & keep), deterministic=True)
+    db.execute("DELETE FROM tracks WHERE NOT wanted(artist_name)")
+    db.execute("DELETE FROM lyrics WHERE id NOT IN (SELECT lyrics_id FROM tracks WHERE lyrics_id IS NOT NULL)")
+    db.execute("UPDATE lyrics SET plain = NULL WHERE synced IS NOT NULL")
+    db.execute("DELETE FROM artists")
+    db.executemany("INSERT OR IGNORE INTO artists VALUES (?, ?)", [(k, a) for a in artists for k in artist_keys(a) if k in keep])
+    db.commit()
+    db.execute("VACUUM")
+    db.close()
 
 
 def collection_artists(inventory):
@@ -520,8 +561,14 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("dump", type=Path)
     p.add_argument("--out", type=Path, default=OUT)
+    p.add_argument("--slim", action="store_true", help="shrink an existing extract (DUMP is then the extract) instead")
     a = p.parse_args()
     artists = collection_artists(lyrics_fetch.INVENTORY)
+    if a.slim:
+        before = a.dump.stat().st_size
+        slim(a.dump, artists)
+        print(f"{a.dump.name}: {before / 1e9:.1f} GB → {a.dump.stat().st_size / 1e9:.1f} GB")
+        return 0
     h = header(a.dump)
     print(f"{a.dump.name}: {h.page_count:,} pages of {h.page_size} bytes ({h.page_count * h.page_size / 1e9:.1f} GB unpacked); "
           f"{len(artists)} artists", flush=True)
