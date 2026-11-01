@@ -147,3 +147,19 @@ def test_answers_can_come_from_somewhere_other_than_the_api(tmp_path):
     assert fetch.fetch_all(None, cache, [FACE], ask=local) == []
     assert asked == [FACE["path"]]
     assert cache.has(FACE["path"])
+
+
+def test_songs_remembered_as_missing_can_be_asked_again(tmp_path):
+    cache = fetch.Cache(tmp_path / "cache")
+    other = {**FACE, "path": "Other/Album/01 Song.mp3"}
+    cache.put(FACE["path"], {"status": "missing"})
+    cache.put(other["path"], {"status": "found", "id": 1, "syncedLyrics": SYNCED})
+    asked = []
+
+    def local(web, song):
+        asked.append(song["path"])
+        return {"status": "found", "id": 7, "syncedLyrics": SYNCED}
+
+    fetch.fetch_all(None, cache, [FACE, other], ask=local, recheck_missing=True)
+    assert asked == [FACE["path"]]  # what was found stays as it was
+    assert cache.get(FACE["path"])["id"] == 7

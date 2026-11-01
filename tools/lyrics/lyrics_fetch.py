@@ -112,6 +112,9 @@ class Cache:
     def has(self, path):
         return self._file(path).exists()
 
+    def get(self, path):
+        return json.loads(self._file(path).read_text()) if self.has(path) else None
+
     def put(self, path, answer):
         self._file(path).write_text(json.dumps({"path": path, **answer}, ensure_ascii=False))
 
@@ -120,10 +123,11 @@ class Cache:
             yield json.loads(f.read_text())
 
 
-def fetch_all(web, cache, todo, report=lambda n, total, song, answer: None, ask=lookup):
+def fetch_all(web, cache, todo, report=lambda n, total, song, answer: None, ask=lookup, recheck_missing=False):
     """Asks about every song not cached yet; returns the paths the server kept failing on (left uncached, for the next run).
-    [ask] answers for one song: LRCLIB's API by default, or an extract of its dump (lrclib_dump.Mine)."""
-    todo = [s for s in todo if not cache.has(s["path"])]
+    [ask] answers for one song: LRCLIB's API by default, or an extract of its dump (lrclib_dump.Mine).
+    [recheck_missing] asks again about songs remembered as missing, as when a new source may have them."""
+    todo = [s for s in todo if not cache.has(s["path"]) or recheck_missing and cache.get(s["path"])["status"] == "missing"]
     failed, in_a_row = [], 0
     for n, song in enumerate(todo, 1):
         try:
@@ -165,6 +169,7 @@ def main():
     p.add_argument("--limit", type=int)
     p.add_argument("--albums", type=Path, help="only these album folders, one per line (e.g. the ones cleared by the cleanup)")
     p.add_argument("--dump", type=Path, help="look songs up in an extract of LRCLIB's dump (lrclib_dump.py), offline")
+    p.add_argument("--recheck-missing", action="store_true", help="ask again about songs remembered as missing")
     a = p.parse_args()
     todo = list(songs(INVENTORY, read_albums(a.albums) if a.albums else None))[: a.limit]
     found = [0]
@@ -178,9 +183,10 @@ def main():
         sys.path.insert(0, str(HERE))  # lrclib_dump.py, also under python -I
         import lrclib_dump
         mine = lrclib_dump.Mine(a.dump)
-        failed = fetch_all(None, Cache(CACHE), todo, report, ask=lambda _, song: mine.lookup(song))
+        failed = fetch_all(None, Cache(CACHE), todo, report, ask=lambda _, song: mine.lookup(song),
+                           recheck_missing=a.recheck_missing)
     else:
-        failed = fetch_all(web_getter(), Cache(CACHE), todo, report)
+        failed = fetch_all(web_getter(), Cache(CACHE), todo, report, recheck_missing=a.recheck_missing)
     print(f"Done: {found[0]} found; {len(failed)} left for the next run (server errors).")
     return 1 if failed else 0
 
