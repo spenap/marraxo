@@ -42,4 +42,22 @@ class LrcTest {
     @Test fun `text that isn't LRC has no timed lines`() {
         assertEquals(emptyList<LrcLine>(), parseLrc("Just words\nwithout times"))
     }
+
+    @Test fun `a card shows the line being sung with one before and two after`() {
+        val lines = (0 until 10).map { LrcLine(it * 10_000L, "Line $it") }
+        val lyrics = Lyrics(lines, null, false)
+        assertEquals(CardLines(listOf("Line 3", "Line 4", "Line 5", "Line 6"), current = 1), cardLines(lyrics, 41_000))
+        assertEquals(CardLines(listOf("Line 0", "Line 1", "Line 2", "Line 3"), current = -1), cardLines(lyrics, -1)) // before the first line
+        assertEquals(listOf("Line 6", "Line 7", "Line 8", "Line 9"), cardLines(lyrics, 600_000).lines) // the end: the last four
+    }
+
+    @Test fun `a card of words without times shows the first lines`() {
+        val lyrics = Lyrics(emptyList(), "One\n\nTwo\nThree\nFour\nFive", false)
+        assertEquals(CardLines(listOf("One", "Two", "Three", "Four"), current = -1), cardLines(lyrics, 0))
+    }
+
+    @Test fun `pauses aren't shown on the card`() {
+        val lyrics = Lyrics(listOf(LrcLine(0, "Sing"), LrcLine(5_000, ""), LrcLine(9_000, "Again")), null, false)
+        assertEquals(listOf("Sing", "Again"), cardLines(lyrics, 6_000).lines)
+    }
 }

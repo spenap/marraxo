@@ -63,6 +63,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -215,6 +218,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
         awaitDispose { value?.close() }
     }
     val currentLyrics = remember(currentTrack?.path, lyricsDb) { currentTrack?.let { lyricsDb?.lyrics(it.path) } }
+    val favourites = remember { Favourites(context) }
     val notes by produceState<LinerNotes?>(null) {
         value = withContext(Dispatchers.IO) { LinerNotes.open(LinerNotes.file(context)) }
         awaitDispose { value?.close() }
@@ -268,7 +272,12 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                 onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
                 onArtist = { stack.add(Screen.Shelf(currentTrack.artist, { it.albumId }) { it.artist == currentTrack.artist }) },
                 onQueue = { stack.add(Screen.Queue) },
-                onLyrics = if (currentLyrics != null) ({ stack.add(Screen.Lyrics) }) else null,
+                lyrics = currentLyrics?.takeIf { it.timed.isNotEmpty() || !it.plain.isNullOrBlank() },
+                onLyrics = { stack.add(Screen.Lyrics) },
+                notes = notes,
+                onNotes = { song -> stack.add(if (song) Screen.SongNotes(currentTrack.path) else Screen.AlbumNotes(currentTrack.path)) },
+                favourite = favourites.has(currentTrack),
+                onFavourite = { favourites.toggle(currentTrack) },
                 onOptions = { songSheet = currentTrack to currentAlbum },
             ) { stack.removeAt(stack.lastIndex) }
         Screen.Queue -> QueueScreen(player) { stack.removeAt(stack.lastIndex) }
@@ -1485,75 +1494,163 @@ internal fun NowPlaying(
     onAlbum: (() -> Unit)? = null,
     onArtist: (() -> Unit)? = null,
     onQueue: (() -> Unit)? = null,
+    lyrics: Lyrics? = null,
     onLyrics: (() -> Unit)? = null,
+    notes: LinerNotes? = null,
+    onNotes: ((song: Boolean) -> Unit)? = null,
+    favourite: Boolean? = null,
+    onFavourite: () -> Unit = {},
     onOptions: (() -> Unit)? = null,
     onClose: () -> Unit,
 ) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
     val pos = rememberPosition(player, track.id)
     var outputs by remember { mutableStateOf(false) }
+    // The song's credits, or else the album's: the notes card, if there's anything to say.
+    val story = notes?.let { n ->
+        rememberNotes(n, track.path) { n.track(track.path)?.let { it to true } ?: n.album(track.path)?.let { TrackNotes(track.title, it, emptyList()) to false } }
+    }?.takeIf { (t, _) -> t.album.summary != null || t.sections.isNotEmpty() }
+    val hasCards = lyrics != null || story != null
+    val scroll = rememberScrollState()
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to tint, .62f to GDeep, 1f to GDeepest))) {
-        Column(
-            Modifier.fillMaxSize().systemBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconSpot(GlowIcons.Down, stringResource(R.string.close), onClick = onClose)
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    val radio = player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
-                    Text(
-                        radio ?: stringResource(R.string.playing_from_album),
-                        style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft),
-                    )
-                    Text(
-                        album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        modifier = if (onAlbum != null) Modifier.clickable(onClick = onAlbum) else Modifier,
-                    )
-                }
-                if (onOptions != null) IconSpot(GlowIcons.More, stringResource(R.string.song_options), onClick = onOptions) else Spacer(Modifier.width(44.dp))
-            }
-            AlbumArt(album.id, px = 560, corner = 10.dp, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.86f).aspectRatio(1f))
-            Column {
-                Text(track.title, style = display(26), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    track.artist, style = TextStyle(fontSize = 16.sp, color = GSoft),
-                    modifier = Modifier.padding(top = 4.dp).then(if (onArtist != null) Modifier.clickable(onClick = onArtist) else Modifier),
-                )
-                player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_REASON)?.takeIf { SHOW_RADIO_REASONS }?.let {
-                    Text(it, style = TextStyle(fontSize = 13.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
-                }
-            }
-            Column {
-                SeekBar(pos, track.durationMs) { player.seekTo(it) }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(fmt(pos), style = TextStyle(fontSize = 12.sp, color = GSoft))
-                    Text(fmt(track.durationMs), style = TextStyle(fontSize = 12.sp, color = GSoft))
-                }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconToggle(GlowIcons.Shuffle, stringResource(R.string.shuffle), on = player.shuffle) { player.toggleShuffle() }
-                IconSpot(GlowIcons.Previous, stringResource(R.string.previous), iconSize = 32.dp) { player.previous() }
-                Box(
-                    Modifier.size(66.dp).clip(CircleShape).background(Color.White).clickable { player.togglePlay() },
-                    contentAlignment = Alignment.Center,
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            // The player fills the screen; with cards below, it leaves their top edge in sight so they're found.
+            val navigation = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+            val fold = maxHeight - navigation - if (hasCards) 30.dp else 0.dp
+            Column(Modifier.fillMaxSize().verticalScroll(scroll, enabled = hasCards)) {
+                Column(
+                    Modifier.fillMaxWidth().height(fold).statusBarsPadding().padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Icon(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, stringResource(R.string.play_or_pause), tint = Color(0xFF0E2226), modifier = Modifier.size(32.dp))
-                }
-                IconSpot(GlowIcons.Next, stringResource(R.string.next), iconSize = 32.dp) { player.next() }
-                Box {
-                    IconToggle(GlowIcons.Repeat, stringResource(R.string.repeat), on = player.repeatMode != Player.REPEAT_MODE_OFF) { player.cycleRepeat() }
-                    if (player.repeatMode == 1) {
-                        Text("1", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = GHi), modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp))
+                    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+                        IconSpot(GlowIcons.Down, stringResource(R.string.close), onClick = onClose)
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                            val radio = player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
+                            Text(
+                                radio ?: stringResource(R.string.playing_from_album),
+                                style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft),
+                            )
+                            Text(
+                                album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                modifier = if (onAlbum != null) Modifier.clickable(onClick = onAlbum) else Modifier,
+                            )
+                        }
+                        if (onOptions != null) IconSpot(GlowIcons.More, stringResource(R.string.song_options), onClick = onOptions) else Spacer(Modifier.width(44.dp))
+                    }
+                    AlbumArt(album.id, px = 560, corner = 10.dp, modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(.86f).aspectRatio(1f))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(track.title, style = display(26), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                track.artist, style = TextStyle(fontSize = 16.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 4.dp).then(if (onArtist != null) Modifier.clickable(onClick = onArtist) else Modifier),
+                            )
+                            player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_REASON)?.takeIf { SHOW_RADIO_REASONS }?.let {
+                                Text(it, style = TextStyle(fontSize = 13.sp, color = GHi), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                            }
+                        }
+                        if (favourite != null) HeartToggle(favourite, onFavourite)
+                    }
+                    Column {
+                        SeekBar(pos, track.durationMs) { player.seekTo(it) }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(fmt(pos), style = TextStyle(fontSize = 12.sp, color = GSoft))
+                            Text(fmt(track.durationMs), style = TextStyle(fontSize = 12.sp, color = GSoft))
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        IconToggle(GlowIcons.Shuffle, stringResource(R.string.shuffle), on = player.shuffle) { player.toggleShuffle() }
+                        IconSpot(GlowIcons.Previous, stringResource(R.string.previous), iconSize = 32.dp) { player.previous() }
+                        Box(
+                            Modifier.size(66.dp).clip(CircleShape).background(Color.White).clickable { player.togglePlay() },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, stringResource(R.string.play_or_pause), tint = Color(0xFF0E2226), modifier = Modifier.size(32.dp))
+                        }
+                        IconSpot(GlowIcons.Next, stringResource(R.string.next), iconSize = 32.dp) { player.next() }
+                        Box {
+                            IconToggle(GlowIcons.Repeat, stringResource(R.string.repeat), on = player.repeatMode != Player.REPEAT_MODE_OFF) { player.cycleRepeat() }
+                            if (player.repeatMode == 1) {
+                                Text("1", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = GHi), modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp))
+                            }
+                        }
+                    }
+                    // Where it plays, and what comes next: one row under one rule.
+                    Column {
+                        Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.weight(1f)) { OutputRow(player.output) { outputs = true } }
+                            if (onQueue != null) IconSpot(GlowIcons.Queue, stringResource(R.string.up_next), onClick = onQueue)
+                        }
                     }
                 }
-            }
-            Row(verticalAlignment = Alignment.Bottom) {
-                Box(Modifier.weight(1f)) { OutputRow(player.output) { outputs = true } }
-                if (onLyrics != null) IconSpot(GlowIcons.Lyrics, stringResource(R.string.lyrics), onClick = onLyrics)
-                if (onQueue != null) IconSpot(GlowIcons.Queue, stringResource(R.string.up_next), onClick = onQueue)
+                if (hasCards) Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp).navigationBarsPadding(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    lyrics?.let { LyricsCard(it, pos, tint, onLyrics) }
+                    story?.let { (t, song) -> NotesCard(t, onNotes?.let { open -> { open(song) } }) }
+                }
             }
         }
+        // Scrolled to the cards: the bar above them in the gradient's top colour, not over the words.
+        if (scroll.value > 0) Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
         if (outputs) OutputSheet(player) { outputs = false }
+    }
+}
+
+/** The heart beside the title: a favourite song. */
+@Composable
+private fun HeartToggle(on: Boolean, onToggle: () -> Unit) {
+    Box(
+        Modifier.size(44.dp).clip(CircleShape).toggleable(value = on, role = Role.Checkbox) { onToggle() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(if (on) GlowIcons.HeartFilled else GlowIcons.Heart, stringResource(R.string.favourite), tint = if (on) GHi else Color.White, modifier = Modifier.size(26.dp))
+    }
+}
+
+/** Now Playing's lyrics card: the line being sung, in white, with its neighbours. */
+@Composable
+private fun LyricsCard(lyrics: Lyrics, positionMs: Long, tint: Color, onOpen: (() -> Unit)?) {
+    val card = cardLines(lyrics, positionMs)
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(tint)
+            .then(if (onOpen != null) Modifier.clickable(onClick = onOpen) else Modifier).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(stringResource(R.string.lyrics), style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White), modifier = Modifier.weight(1f))
+            Text("LRCLIB", style = TextStyle(fontSize = 11.sp, color = GSoft))
+        }
+        card.lines.forEachIndexed { i, line ->
+            Text(line, style = body.copy(fontSize = 17.sp, color = if (i == card.current) Color.White else GSoft), maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        if (onOpen != null) OutlinedPill(stringResource(R.string.show_lyrics), onClick = onOpen)
+    }
+}
+
+/** Now Playing's liner notes card: the album's story and the song's first credits. */
+@Composable
+private fun NotesCard(notes: TrackNotes, onOpen: (() -> Unit)?) {
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = .07f))
+            .then(if (onOpen != null) Modifier.clickable(onClick = onOpen) else Modifier).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(stringResource(R.string.liner_notes), style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.White), modifier = Modifier.weight(1f))
+            Text(listOfNotNull(notes.album.title, notes.album.year.takeIf { it > 0 }?.toString()).joinToString(" · "),
+                style = TextStyle(fontSize = 11.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        notes.album.summary?.let { Text(it, style = body.copy(lineHeight = 21.sp), maxLines = 4, overflow = TextOverflow.Ellipsis) }
+        notes.sections.flatMap { (_, people) -> people }.take(3).forEach { p ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(p.name, style = TextStyle(fontSize = 14.sp, color = Color.White), maxLines = 1)
+                Text(p.roles, style = TextStyle(fontSize = 14.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        if (onOpen != null) OutlinedPill(stringResource(R.string.show_notes), onClick = onOpen)
     }
 }
 
@@ -1566,25 +1663,25 @@ private fun outputIcon(output: Renderer?) = when {
 
 @Composable
 private fun OutputRow(output: Renderer?, onClick: () -> Unit) {
-    // "Playing on %s", with the output's name in bold wherever the language puts it.
+    // "Playing on %s", with the output's name in bold wherever the language puts it. The whole row is the
+    // button: no "Change" beside the icons, but TalkBack still says it.
     val (before, after) = stringResource(R.string.playing_on).split("%s", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
     val name = output?.name ?: stringResource(R.string.this_phone)
-    Column(Modifier.clickable(onClick = onClick)) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(GFaint))
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(outputIcon(output), null, tint = GHi, modifier = Modifier.size(18.dp))
-            Text(
-                buildAnnotatedString {
-                    append(before)
-                    withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.SemiBold)) { append(name) }
-                    append(after)
-                },
-                style = TextStyle(fontSize = 13.sp, color = GSoft),
-                modifier = Modifier.padding(start = 8.dp).weight(1f),
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
-            Text(stringResource(R.string.change), style = TextStyle(fontSize = 12.sp, color = GSoft))
-        }
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(onClickLabel = stringResource(R.string.change), onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(outputIcon(output), null, tint = GHi, modifier = Modifier.size(18.dp))
+        Text(
+            buildAnnotatedString {
+                append(before)
+                withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.SemiBold)) { append(name) }
+                append(after)
+            },
+            style = TextStyle(fontSize = 13.sp, color = GSoft),
+            modifier = Modifier.padding(start = 8.dp),
+            maxLines = 1, overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

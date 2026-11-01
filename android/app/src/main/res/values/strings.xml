@@ -129,6 +129,9 @@
     <!-- Now Playing, during a radio: "Radio from In the Air Tonight" (the song it started from) -->
     <string name="radio_from">Radio from %s</string>
     <string name="various_artists">Various Artists</string>
+    <string name="show_lyrics">Show lyrics</string>
+    <string name="show_notes">Show notes</string>
+    <string name="favourite">Favourite</string>
     <!-- Why the radio picked this song: a musician, producer or studio on this album and the one before -->
     <string name="radio_shares">%s on both</string>
     <string name="radio_artist">More %s</string>

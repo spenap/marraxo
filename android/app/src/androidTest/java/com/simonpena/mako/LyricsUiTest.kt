@@ -3,6 +3,9 @@ package com.simonpena.mako
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -74,21 +77,31 @@ class LyricsUiTest {
     // loaded isn't seekable, so Media3 ignores the seek: checked by hand on a real song.
     @Test fun timedLyricsShowWithTheirSource() {
         nowPlaying("In the Air Tonight", 100)
-        compose.onNodeWithContentDescription("Lyrics").performClick()
-        waitFor("I can feel it coming")
+        compose.onNodeWithText("I can feel it coming").assertExists() // the card below the controls
+        compose.onNodeWithText("Show lyrics").performScrollTo().performClick()
+        waitFor("Lyrics from LRCLIB")
         compose.onNodeWithText("Coming in the air tonight").assertExists()
         compose.onNodeWithText("Lyrics from LRCLIB").assertExists()
     }
 
     @Test fun wordsWithoutTimesStillShow() {
         nowPlaying("This Must Be Love", 101)
-        compose.onNodeWithContentDescription("Lyrics").performClick()
-        waitFor("Words without times")
+        compose.onNodeWithText("Show lyrics").performScrollTo().performClick()
+        waitFor("Lyrics from LRCLIB")
+        compose.onNodeWithText("Words without times").assertExists()
     }
 
     @Test fun aSongWithoutLyricsOffersNone() {
         nowPlaying("Droned", 102)
         compose.onNodeWithContentDescription("Up next").assertExists() // Now Playing is open
-        compose.onNodeWithContentDescription("Lyrics").assertDoesNotExist()
+        compose.onNodeWithText("Show lyrics").assertDoesNotExist()
+        compose.onNodeWithText("Lyrics").assertDoesNotExist() // no card at all
+    }
+
+    @Test fun theHeartMarksTheSongAndTheOutputRowIsItsOwnButton() {
+        nowPlaying("Droned", 102)
+        compose.onNodeWithContentDescription("Favourite").assertIsOff().performClick().assertIsOn()
+        compose.onNodeWithContentDescription("Favourite").performClick().assertIsOff()
+        compose.onNodeWithText("Change").assertDoesNotExist()
     }
 }

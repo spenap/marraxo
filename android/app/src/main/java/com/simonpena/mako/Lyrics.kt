@@ -87,3 +87,22 @@ fun lineAt(lines: List<LrcLine>, positionMs: Long): Int {
     }
     return found
 }
+
+/** What a lyrics card shows: a few [lines], and which is being sung ([current], -1 for none). */
+data class CardLines(val lines: List<String>, val current: Int)
+
+/**
+ * Four lines for Now Playing's lyrics card: around the line being sung at
+ * [positionMs] (one before, two after), or the first lines of words without
+ * times. Pauses are left out: a card has no room for silence.
+ */
+fun cardLines(lyrics: Lyrics, positionMs: Long, size: Int = 4): CardLines {
+    if (lyrics.timed.isEmpty()) {
+        return CardLines(lyrics.plain.orEmpty().lines().map { it.trim() }.filter { it.isNotEmpty() }.take(size), -1)
+    }
+    val sung = lyrics.timed.filter { it.text.isNotEmpty() }
+    val now = lineAt(sung, positionMs)
+    val end = minOf(sung.size, maxOf(now - 1, 0) + size)
+    val start = maxOf(0, end - size)
+    return CardLines(sung.subList(start, end).map { it.text }, if (now < 0) -1 else now - start)
+}

@@ -30,6 +30,8 @@ object GlowIcons {
     val Queue = stroked("M4 6h16M4 12h16M4 18h9M17 15v6l4-3z", width = 1.9f)
     val Close = stroked("M6 6l12 12M18 6L6 18")
     val Check = stroked("M5 12.5l4.5 4.5L19 7", width = 2.2f)
+    val Heart = stroked("M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.4-7.5 10.4z", width = 1.8f)
+    val HeartFilled = filled("M12 20.5s-7.5-4.6-7.5-10.4A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.4-7.5 10.4z")
 }
 
 private fun builder() = ImageVector.Builder(

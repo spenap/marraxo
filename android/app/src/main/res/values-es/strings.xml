@@ -120,6 +120,9 @@
     <string name="start_radio">Poner una radio</string>
     <string name="radio_from">Radio a partir de %s</string>
     <string name="various_artists">Varios artistas</string>
+    <string name="show_lyrics">Ver la letra</string>
+    <string name="show_notes">Ver las notas</string>
+    <string name="favourite">Favorita</string>
     <string name="radio_shares">%s en los dos</string>
     <string name="radio_artist">Más de %s</string>
     <string name="radio_wider">Más allá</string>

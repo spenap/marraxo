@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -125,5 +126,24 @@ class LinerNotesUiTest {
         compose.onNodeWithText("Play next").assertExists()
         compose.onNodeWithText("Song notes").assertDoesNotExist()
         compose.onNodeWithText("Liner notes").assertDoesNotExist()
+    }
+
+    @Test fun nowPlayingShowsTheAlbumsStoryBelowAndOpensTheNotes() {
+        main { player.play(library[0].tracks, 0) }
+        compose.waitUntil(5_000) { player.currentTrackId == 100L }
+        compose.onNodeWithText("In the Air Tonight").performClick() // the mini player
+        compose.onNodeWithText("Face Value is the debut solo album by Phil Collins.").assertExists()
+        compose.onNodeWithText("Show notes").performScrollTo().performClick()
+        compose.onNodeWithText("Hugh Padgham").assertExists()
+        main { player.play(emptyList(), 0) }
+    }
+
+    @Test fun nowPlayingHasNoNotesCardWithoutNotes() {
+        main { player.play(library[2].tracks, 0) }
+        compose.waitUntil(5_000) { player.currentTrackId == 300L }
+        compose.onNodeWithText("Unknown Song").performClick()
+        compose.onNodeWithContentDescription("Up next").assertExists()
+        compose.onNodeWithText("Show notes").assertDoesNotExist()
+        main { player.play(emptyList(), 0) }
     }
 }
