@@ -10,7 +10,7 @@ that most deserve a second look are marked **(review)**.
 |---|---|---|
 | Tags in the files (`USLT` in MP3, `©lyr` in M4A, `LYRICS` in FLAC/Ogg) | Whatever the ripper or tagger wrote | **Barely anything here.** Of the 5,248 songs in Music-clean, 5,201 have an empty lyrics tag (beets wrote empty frames), 20 have under 80 characters, 27 have more; some of those are junk ("MP3 MIX by JENSENBRAZIL … blogspot.com"). Not worth a fallback in v1. |
 | **LRCLIB** (lrclib.net) | Free, open database: plain and **line-timed (LRC)** lyrics, some word-timed; no key; asks clients to identify themselves and stay ~90 requests/min; matches a song by title, artist, album and **duration within ±2 s** | **Chosen.** Fetched once on the laptop, like the liner notes. |
-| LRCLIB database dump | The whole database, SQLite, gzipped: **49 GB** (30 Oct 2026) | Not downloaded: too big to take on someone's connection unasked. Would remove the dependence on the API being up (see Outage). **(review)** |
+| LRCLIB database dump | The whole database, SQLite, gzipped: **49 GB** (30 Oct 2026), 268.6 GB unpacked | **Used since 1 Nov**, after the API's outages: streamed, never unpacked, into a local extract of your artists' tracks (see "From the dump"). |
 | Musixmatch API | The largest catalogue, with timed lyrics | Licensed and paid; the free plan returns ~30% of each song's lyrics. Not for a personal offline player. |
 | Genius API | Annotations, metadata | Its API leaves the lyrics out on purpose; scraping its pages reportedly breaks its terms. No. |
 | NetEase, QQ Music and similar | Large timed catalogues | Unofficial APIs; no. |
@@ -126,13 +126,44 @@ timing of a backend timeout. The outage rule stopped the run after 10 songs
 (2 found). `lyrics.db` now has 141 songs and is on the three devices; 5,714
 cleared songs are still to fetch.
 
+### From the dump (1 Nov, evening)
+
+The API stayed half-down, so lyrics now come from LRCLIB's dump
+(`lrclib-db-dump-20261030T182259Z.sqlite3.gz`, 49.3 GB).
+
+- **Streamed, not unpacked.** `lrclib_dump.py` reads the SQLite pages as
+  they come out of gzip: pass 1 keeps only the b-trees' interior pages
+  (67,491 of 65.6 million), then a pass reads the `tracks` rows and the
+  lyrics rows they point to. Lyrics that continue on earlier pages come
+  from the last 8 GB kept in memory, or from one more pass. Five passes,
+  15 min 42 s, 13.3 GB of memory at most; ISA-L (`isal`) decompresses at
+  ~1 GB/s, three times gzip.
+- **Saved by artist:** every track by any of the collection's 664
+  artists, songs you don't own too, so new albums by them need no new
+  extraction: `out/lrclib-mine.sqlite3`, 2.75 million tracks, 8.9 GB.
+  LRCLIB keeps one track per album, compilation and length, so a big
+  artist has tens of thousands (Queen: 96,630); duets bring in the
+  other artist's whole catalogue. Matching splits credits on `&`, `/`,
+  "feat." and so on, so "AC/DC" also matches artists credited just "AC"
+  or "DC": ~8,400 tracks, 0.3%, left in as not worth a special rule.
+- **Lookup** (`lyrics_fetch.py --dump`), as the API answers: the same
+  album within 2 s first, then any version within 2 s, timed lyrics first.
+  The cleared albums (5,585 songs not yet cached) took 3.7 s: **4,095
+  found (73%)**.
+- `lyrics.db` now has **4,331 songs**: 3,230+ timed, ~614 plain only,
+  ~477 instrumental; 13.7 MB, on the Nexus 4, Pixel 5 and tablet.
+- A new album by a known artist: rerun the lookup and build (seconds).
+  A new artist: rerun the extraction (`lrclib_dump.py DUMP.gz`, ~16 min).
+- Not yet done: re-checking against the dump the 96 songs the API
+  called missing (cached, so not asked again).
+
 ## Next
 
 - Word-by-word highlighting where LRCLIB has word timings.
 - A per-song "lyrics early/late" nudge, remembered.
 - Search lyrics ("the song that says…") from the database, offline.
 - Lyrics from the song sheet for any song, not only the one playing.
-- The LRCLIB dump, if outages or misses make it worth 49 GB. **(review)**
+- Keep or delete the 49 GB dump (needed only to add new artists).
 
 Sources: [LRCLIB API docs](https://lrclib.net/docs.md),
 [LRCLIB llms.txt](https://lrclib.net/llms.txt) (dumps), lyriq 1.6.0

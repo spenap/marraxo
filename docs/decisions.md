@@ -15,6 +15,16 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-01 · Lyrics from LRCLIB's dump, streamed, saved by artist
+Updates: 2026-11-01 "Lyrics from LRCLIB, fetched on the laptop", whose
+"the dump is held back" no longer holds.
+Why: the API was down or half-down all day (502, then 503 on any real
+lookup). The dump is 49 GB gzipped and 269 GB unpacked, so it's read as
+a stream and never unpacked; only your artists' tracks are kept (8.9 GB
+locally, git-ignored). Lookups follow the API's rules and take seconds,
+offline. The API remains the fallback for songs the dump lacks.
+Detail: `lyrics.md` ("From the dump"), `tools/lyrics/lrclib_dump.py`.
+
 ## 2026-11-01 · The clean copy is now the collection, at ~/Music
 Why: the cleanup is finished, so the copy beets wrote (`Music-clean`)
 became `~/Music`; the untouched original became
