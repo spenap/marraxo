@@ -2,14 +2,16 @@
 
 [beets](https://beets.io) matches albums against MusicBrainz (plus AcoustID
 fingerprints), normalises tags, fetches and embeds artwork, and renames.
-It **copies** into `~/Music-clean`; the source collection is
-never modified.
+It **copies** into the collection, `~/Music`; the folder
+being imported (e.g. `~/Music-incoming/<album>`) is never modified. (The
+collection was built this way from the original `~/Music`, now
+`~/Music-todelete` until it is wiped.)
 
 ```sh
 tools/.venv/bin/pip install -r tools/beets/requirements.txt
 tools/.venv/bin/pip uninstall -y audioread   # see below
 sudo apt install libchromaprint-tools        # fpcalc
-tools/beets/beet import -q ~/Music   # automatic pass
+tools/beets/beet import -q ~/Music-incoming   # automatic pass
 tools/beets/beet import /path/to/album              # interactive review
 ```
 

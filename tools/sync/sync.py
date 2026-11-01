@@ -29,7 +29,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LIBRARY = HERE.parent / "beets" / "out" / "library.db"
-COLLECTION = Path("~/Music-clean")
+COLLECTION = Path("~/Music")
 PHONE_MUSIC = "/sdcard/Music"
 MANIFEST = f"{PHONE_MUSIC}/.mako-sync"
 HISTORY = "/data/data/com.simonpena.mako/databases/history.db"

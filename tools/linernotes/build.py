@@ -24,7 +24,7 @@ import fetch  # noqa: E402
 
 SCHEMA = 1
 HERE = Path(__file__).resolve().parent
-COLLECTION = "~/Music-clean/"
+COLLECTION = "~/Music/"
 
 TABLES = """
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);

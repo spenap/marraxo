@@ -9,7 +9,7 @@ reported instead of overwritten.
 Without --apply, only shows what would change. With it, first writes every
 song's path, old and new genre to genre-changes-<time>.tsv beside the
 library (out/), then sets
-the genre in beets and writes the tags to the files in Music-clean.
+the genre in beets and writes the tags to the files in the collection.
 
 Usage: tools/.venv/bin/python tools/beets/genres.py [--apply]
 """

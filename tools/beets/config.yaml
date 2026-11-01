@@ -5,7 +5,7 @@
 # Safety: beets COPIES into `directory`; the source collection is never
 # modified. Tags are written to the copies only.
 
-directory: ~/Music-clean
+directory: ~/Music
 per_disc_numbering: yes # disc 2 starts again at track 1
 # ID3v2.3, not beets' default v2.4: Android's media scanner reads the year
 # only from v2.3's TYER and shows no year for v2.4 files (checked on the

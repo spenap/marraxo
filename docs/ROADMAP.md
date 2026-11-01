@@ -332,8 +332,10 @@ reviewed interactively.
   `~/Music-extras` (byte-identical copies), converted, on the drop list,
   or junk (`out/reconcile-*.tsv`). Spoken word went to `~/Audiobooks`,
   videos, booklets, lyrics and scans to `~/Music-extras`.
-- [ ] Wipe `~/Music` and rename Music-clean to Music (paths in the beets
-  config and `library.db`, `sync.py`, `build.py`), on the user's word.
+- [x] Music-clean renamed to `~/Music` (2026-11-01); the original is
+  `~/Music-todelete`. Paths updated in the beets config and `library.db`
+  (backup `out/library.db.pre-rename-20261101`), `sync.py`, `build.py`.
+- [ ] Wipe `~/Music-todelete`, on the user's word.
 - [x] Musepack (2026-11-01): No. 2 Patrick Street, the only `.mpc` album,
   converted from the originals to AAC 256 kbps `.m4a` and re-imported
   (manifest `out/format-changes-*.tsv`). This also restored track 4,
