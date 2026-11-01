@@ -43,12 +43,16 @@ Anything else is converted in the copy, with a change manifest. Prompted by
 a Musepack album that Android can't play.
 Detail: `upnp-renderers.md`, ROADMAP.md (C2).
 
-## 2026-10-31 · Development aids are shown in debug builds only
-Why: the radio's reasons and the liner notes' "also in your library"
-hints helped tuning but misled when listening ("a professional app
-wouldn't do that"). Release builds show names as links instead; the log
-keeps the reasons. Amarok didn't show its reasons either.
-Detail: `radio.md` (Decisions 3); commits 93f7349 and the design audit.
+## 2026-10-31 · Debug and decision helpers stay out of regular builds
+Why: anything that shows how the app decided, rather than the music,
+helps while developing and misleads while listening. So does anything
+shown to help decide something. Show it only in debug builds
+(`BuildConfig.DEBUG`), or drop it. Applied so far:
+- the radio's reasons: debug builds only, and the log keeps them (Amarok
+  didn't show its reasons either);
+- the liner notes' highlighted "also in your library" hint: removed;
+  names in your library are links instead.
+Detail: `radio.md` (Decisions 3); commit 93f7349 and the design audit.
 
 ## 2026-10-31 · Test plays stay in play history
 Why: history isn't a radio bias yet, so they don't matter. Revisit when
