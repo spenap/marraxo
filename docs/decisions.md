@@ -15,6 +15,16 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-01 · The clean copy is now the collection, at ~/Music
+Why: the cleanup is finished, so the copy beets wrote (`Music-clean`)
+became `~/Music`; the untouched original became
+`~/Music-todelete`, which no tool reads. Paths inside the collection
+(album folders, liner notes and lyrics keys) didn't change; the
+tools' collection setting did.
+Updates: 2026-10-30 "Cleanup with beets, into a copy". From here on, "the
+original collection" that is never modified without a backup and a
+change manifest is `~/Music`.
+
 ## 2026-11-01 · One radio; the modes become hidden, weighted feeds
 Supersedes: 2026-10-31 "Radios in named modes".
 Why: after using it, three or four radio types in the song sheet were too
