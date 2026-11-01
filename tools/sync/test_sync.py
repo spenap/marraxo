@@ -175,3 +175,12 @@ def test_making_room_for_new_albums_keeps_the_margin():
     removed = sum(a.bytes for a in on_phone if a.path not in paths)
     assert "New/Trance" in paths
     assert free - new.bytes + removed >= margin
+
+
+def test_lyrics_go_to_the_apps_own_folder_like_the_notes(tmp_path, monkeypatch):
+    db = tmp_path / "lyrics.db"
+    db.write_bytes(b"lyrics")
+    phone = FakePhone()
+    monkeypatch.setattr(sync, "adb", phone)
+    assert sync.sync_file("serial", db, sync.PHONE_LYRICS) is True
+    assert phone.pushed == ["/sdcard/Android/data/com.simonpena.mako/files/lyrics.db"]

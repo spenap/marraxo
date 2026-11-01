@@ -37,6 +37,8 @@ NOTES = HERE.parent / "linernotes" / "out" / "linernotes.db"
 # Mako's external files folder: the app reads it without a permission, and
 # adb can write it on Android 8 to 17 (checked on the Nexus 4 and the Pixel 5).
 PHONE_NOTES = "/sdcard/Android/data/com.simonpena.mako/files/linernotes.db"
+LYRICS = HERE.parent / "lyrics" / "out" / "lyrics.db"
+PHONE_LYRICS = "/sdcard/Android/data/com.simonpena.mako/files/lyrics.db"
 AUDIO = (".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".mpc")
 GB = 1024 ** 3
 
@@ -146,17 +148,21 @@ def write_manifest(serial, paths):
     os.unlink(f.name)
 
 
-def sync_notes(serial, local=NOTES):
-    """Copies the liner notes to the phone unless it already has this version. True if copied."""
+def sync_file(serial, local, on_phone_path):
+    """Copies a file built on the laptop (liner notes, lyrics) to the phone unless it already has this version. True if copied."""
     if not Path(local).exists():
         return False
     md5 = hashlib.md5(Path(local).read_bytes()).hexdigest()
-    on_phone = adb(serial, "shell", f"md5sum {quote(PHONE_NOTES)} 2>/dev/null", check=False).split()
+    on_phone = adb(serial, "shell", f"md5sum {quote(on_phone_path)} 2>/dev/null", check=False).split()
     if on_phone and on_phone[0] == md5:
         return False
-    adb(serial, "shell", f"mkdir -p {quote(os.path.dirname(PHONE_NOTES))}")
-    adb(serial, "push", str(local), PHONE_NOTES)
+    adb(serial, "shell", f"mkdir -p {quote(os.path.dirname(on_phone_path))}")
+    adb(serial, "push", str(local), on_phone_path)
     return True
+
+
+def sync_notes(serial, local=NOTES):
+    return sync_file(serial, local, PHONE_NOTES)
 
 
 def index_music(serial):
@@ -246,6 +252,8 @@ def main():
         print(f"  {n}/{len(todo.copy)} {x}", flush=True)
     if sync_notes(a.serial):
         print("Liner notes copied.")
+    if sync_file(a.serial, LYRICS, PHONE_LYRICS):
+        print("Lyrics copied.")
     if (todo.copy or todo.remove) and index_music(a.serial):
         print("Indexed by Android.")
     print("Done. In Mako: ⋮ → Rescan library.")
