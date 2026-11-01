@@ -100,7 +100,23 @@ the Samsung TV). If it did:
 
 ## Results
 
-See the end of the overnight run, below.
+The overnight run (1 Nov) mostly met an outage. LRCLIB's API answered 502
+to everything from 01:20 to about 03:20, then failed intermittently. Try 11
+began at 06:24 and had covered only 200 songs by 08:55, slowed by retries,
+when it was stopped.
+
+- Covered: 235 of 5,248 songs (alphabetically, artists A to Am).
+- Found: 139 (59%). Of those, 112 have timed lyrics, 9 plain lyrics only,
+  and 18 are marked instrumental. Not found: 96, mostly folk and
+  instrumental records.
+- Built `lyrics.db` from those and copied only that file to the Nexus 4,
+  Pixel 5 and tablet. Good albums to try: ABBA (33 timed), Amy
+  Winehouse, Arctic Monkeys, AC/DC, Amaral.
+- Not yet checked on a real song: tapping a line to seek, and whether
+  lines land on time over Sonos.
+
+To fetch the rest, run `fetch-until-done.sh` again when the API is
+healthy. The cache keeps what was already answered.
 
 ## Next
 
