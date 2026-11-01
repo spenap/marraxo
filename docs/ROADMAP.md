@@ -479,6 +479,11 @@ Parked:
   flashes a second (WCAG 2.3.1, photosensitive epilepsy), off by default,
   a toggle in ⋮; phone playback only (Sonos and the TV play with their
   own delay, so it would flash off the beat); mind LED heat and battery.
+  Measured on the Nexus 4 (2026-11-01, 400 switches): on takes 520-580 ms,
+  off 90-100 ms, and the call blocks until done, so at best 1.6 flashes a
+  second, unevenly: below the safety limit and too slow for a beat. Likely
+  its legacy camera stack powering the camera up for each "on". Not
+  measured on the Pixel 5 or S25, where it's expected to be much faster.
   Need: D0's tempo data, and wanting it for a dark room.
 - Genre families from data instead of shared words. MusicBrainz has
   "subgenre of" links (britpop → alternative rock, not pop), shown on
