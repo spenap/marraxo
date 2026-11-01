@@ -8,7 +8,8 @@ Tables (schema SCHEMA; the app refuses versions it doesn't know):
 
 Songs are keyed by their path inside the Music folder, as the phones see
 it ("Phil Collins/Face Value/01 In the Air Tonight.mp3"). Only songs with
-lyrics (or known to be instrumental) are stored.
+words are stored: an instrumental has nothing to open. Words that aren't
+lyrics (lyrics_check.py) and rejected paths are left out.
 
 Usage: lyrics_build.py [OUT]   (default out/lyrics.db)
 """
@@ -18,13 +19,14 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # lyrics_fetch.py, also under python -I
+import lyrics_check  # noqa: E402
 import lyrics_fetch  # noqa: E402
 
 SCHEMA = 1
 HERE = Path(__file__).resolve().parent
 
 
-def build(out, cache):
+def build(out, cache, rejected=frozenset()):
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():
@@ -40,7 +42,7 @@ def build(out, cache):
         if a.get("status") != "found":
             continue
         synced, plain = a.get("syncedLyrics") or None, a.get("plainLyrics") or None
-        if not (synced or plain or a.get("instrumental")):
+        if not (synced or plain) or a["path"] in rejected or lyrics_check.check(a):
             continue
         db.execute("INSERT INTO lyrics VALUES (?, ?, ?, ?, ?)", (a["path"], synced, plain, int(bool(a.get("instrumental"))), a.get("id")))
         n += 1
@@ -53,7 +55,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("out", nargs="?", type=Path, default=HERE / "out" / "lyrics.db")
     out = p.parse_args().out
-    n = build(out, lyrics_fetch.Cache(lyrics_fetch.CACHE))
+    n = build(out, lyrics_fetch.Cache(lyrics_fetch.CACHE), lyrics_check.read_rejects())
     print(f"{n} songs with lyrics → {out}")
 
 

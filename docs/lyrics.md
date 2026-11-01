@@ -165,6 +165,24 @@ The API stayed half-down, so lyrics now come from LRCLIB's dump
 - Not yet done: re-checking against the dump the 96 songs the API
   called missing (cached, so not asked again).
 
+### Words that aren't lyrics (1 Nov, night)
+
+LRCLIB takes anyone's submissions, and some entries for songs here weren't
+lyrics: a note saying "Instrumental", a Russian paragraph on a Dutch trance
+track (Gouryella), "Artist: … Album: … Title: …" on eight Putumayo and
+Windham Hill tracks, Russian fan text on the Star Wars main title, a remark
+that a Gaelic song can't be translated. `lyrics_check.py` flags these by
+rule (13 songs, every hit read and confirmed). Real lyrics of *another*
+song, pasted under this one, can't be told by rule: Brainbug's "Nightmare"
+had Victims Family's "Supermarket Nightmare", Push's "Universal Nation"
+Alphaville's "Universal Daddy". Those go in `out/lyrics-rejects.txt`.
+A rule that flagged Title Case text was dropped: it hit real lyrics typed
+That Way (Michael Jackson) and repeated hooks ("Digital Punk").
+
+`lyrics_build.py` leaves out both, and instrumental songs too: with no
+words, a Lyrics button would only open "instrumental". `lyrics.db`: 3,878
+songs (483 instrumental and 15 non-lyrics left out).
+
 ## Next
 
 - Word-by-word highlighting where LRCLIB has word timings.

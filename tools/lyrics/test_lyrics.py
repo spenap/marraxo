@@ -91,7 +91,7 @@ def test_the_database_has_what_was_found_and_nothing_else(tmp_path):
     assert db.execute("SELECT value FROM meta WHERE key = 'schema'").fetchone() == ("1",)
     rows = dict((r[0], r[1:]) for r in db.execute("SELECT path, synced, plain, instrumental FROM lyrics"))
     assert rows[FACE["path"]] == (SYNCED, "Well, if you told me", 0)
-    assert rows["Altan/Local Ground/03 Reel.mp3"] == (None, None, 1)
+    assert "Altan/Local Ground/03 Reel.mp3" not in rows  # instrumental: no words, so nothing to open
     assert "Someone/Else/01 Gone.mp3" not in rows
 
 
@@ -163,3 +163,39 @@ def test_songs_remembered_as_missing_can_be_asked_again(tmp_path):
     fetch.fetch_all(None, cache, [FACE, other], ask=local, recheck_missing=True)
     assert asked == [FACE["path"]]  # what was found stays as it was
     assert cache.get(FACE["path"])["id"] == 7
+
+
+def test_words_that_are_not_lyrics_are_caught():
+    import lyrics_check as check
+    # Seen in LRCLIB for songs in the collection.
+    assert check.suspect("The Fairy Queen", "Clannad", "Clannad\nMagical Ring\nFairy Queen, The\nInstrumental") == "says instrumental"
+    assert check.suspect("Gouryella", "Gouryella", "Я люблю слушать современный Rock'n'Roll. Он снова в моде") == "another alphabet"
+    assert check.suspect("Mambo #5", "Fruko y sus Tesos", "Artist: Fruko y sus Tesos\nAlbum: Rumba, Mambo, Cha-Cha-Chá\nTitle: Mambo #5") == "song details"
+    assert check.suspect("Cape Breton Song", "Capercaillie", "Cape Breton Song' cannot be translated as the words have mutated") == "a note about the song"
+
+
+def test_real_lyrics_pass_the_check():
+    import lyrics_check as check
+    for title, artist, text in [
+        ("Moon River", "Louis Armstrong", "Moon river, wider than a mile\nI'm crossin' you in style some day"),
+        ("Ar Bhruach na Laoi", "Liam O'Flynn", "Nach brónach a bhí mise nuair a d'fhága mé an baile\nAgus dúirt mé slán"),
+        ("Gollum's Song", "Howard Shore", "Ú i vethed nâ i onnad\nSi boe ú-dhanna"),
+        ("Kernkraft 400", "Zombie Nation", "Zombie (Zombie, Zombie)\nZombie (Zombie, Zombie)"),
+        ("ROCK AND ROLL", "Someone", "WE ARE THE CHAMPIONS\nOF THE WORLD AND ALL"),
+        ("Мурка", "Someone", "Здравствуй, моя Мурка"),
+        ("The Girl Is Mine", "Michael Jackson", "Every Night She Walks Right In My Dreams\nSince I Met Her From The Start"),
+        ("Punk", "Ferry Corsten", "Digital Punk\nDigital Punk\nDigital Punk\nDigital Punk"),
+    ]:
+        assert check.suspect(title, artist, text) is None, title
+
+
+def test_suspect_and_rejected_lyrics_stay_off_the_phone(tmp_path):
+    cache = fetch.Cache(tmp_path / "cache")
+    cache.put("Gouryella/Gouryella/01 Gouryella.mp3", {"status": "found", **record(id=4, trackName="Gouryella", artistName="Gouryella", syncedLyrics=None,
+                                                                                    plainLyrics="Я люблю слушать современный Rock'n'Roll")})
+    cache.put("Odd/One/01 Wrong.mp3", {"status": "found", **record(id=5)})
+    cache.put(FACE["path"], {"status": "found", **record()})
+    out = tmp_path / "lyrics.db"
+    build.build(out, cache, rejected={"Odd/One/01 Wrong.mp3"})
+    paths = [r[0] for r in sqlite3.connect(out).execute("SELECT path FROM lyrics")]
+    assert paths == [FACE["path"]]
