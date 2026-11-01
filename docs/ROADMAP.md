@@ -519,6 +519,20 @@ Parked:
   to go back and swipe down to close Now Playing, once the navigation
   bar is hidden (A6). Evidence to look for: how often people reveal the
   bar just to press Back (Track U).
+- Inlay and booklet art (2026-11-01): show the back cover, inlays and
+  booklet pages, e.g. by panning across the art on Now Playing. The
+  original collection has them for some albums (155 images that aren't
+  the front cover, plus scans and two PDF booklets), kept in
+  `~/Music-extras/` by `Artist/Album/`. Need: a way to tell front from
+  back that doesn't trust file names, and wanting it.
+- Music videos (2026-11-01). The collection has 7 (Michael Jackson's
+  *Thriller* and *Bad*, Brandi Carlile's *The Story*), all H.264
+  Baseline at 320×240, kept in `~/Music-extras/`. The Nexus 4 decodes
+  H.264, MPEG-4 and H.263 in hardware up to 1920×1088, and VP8, VP9 and
+  HEVC only in software (`/vendor/etc/media_codecs.xml`), so the target
+  would be H.264 up to 720p. Media3 already plays video; the work is a
+  video screen. Only the TV could show it over UPnP. Need: more videos
+  than these 7.
 
 Not doing (and why):
 - Audiobooks, or splitting the app into reusable modules for them:
