@@ -88,7 +88,10 @@ fun <T> firstArt(vararg sources: () -> T?): T? = sources.firstNotNullOfOrNull { 
 /**
  * An album's cover: Android's thumbnail, or else the picture embedded in
  * its first track. Android's can be missing or stale (on the Nexus 4, The
- * Blue Idol's album art entry pointed to a deleted file).
+ * Blue Idol's album art entry pointed to a deleted file). Before Android
+ * 10 the media provider only writes a missing thumbnail for an app that
+ * may write storage, which Mako may not, and never redoes one when a
+ * track's cover changes.
  */
 private fun coverBitmap(context: Context, albumId: Long, px: Int): Bitmap? = firstArt(
     {

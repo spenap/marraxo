@@ -95,6 +95,12 @@ Done in a separate repository.
       thumbnail cache was rebuilt): tiles 3.3–10.7% over five runs
       (median 8.3%), 5.6–6.9% (median 5.7%) with covers under a held
       finger.
+- [ ] Covers changed in the collection stay stale on the Nexus 4 after
+      a sync: Android 8.1 keeps its old album thumbnails
+      (`albumthumbs`, the `album_art` table). Fixed by hand on
+      2026-11-02 (cleared both, then `content read` each
+      `audio/albumart/<id>` from adb, which may write the thumbnail);
+      `sync.py` should do the same for the albums it refreshes.
 - [ ] As the home screen, Now Playing's "Playing on … Change" row sits
       where the hidden navigation bar was, and the accessibility tree
       reports it at [0,0][0,0] (not visible): it can be tapped, but
