@@ -539,6 +539,11 @@ New ideas wait here until there is evidence (Track U) or a clear need;
 then they move into a track with a "done when".
 
 Parked:
+- A name of its own (2026-11-02): "Mako" is the Nexus 4's codename
+  (LG, 2012). Favourite: Makofi, Swahili for clapping or applause; it
+  keeps "mako", reads as Mako-fi (as in hi-fi), and a clap could be the
+  icon. Also Quenlla, Galician for shark (likely taken many times). Check
+  existing apps and trademarks before choosing.
 - Hero covers (2026-11-02): the cover edge to edge at the top, as Google
   Play Music, Rdio and early Spotify did, on Now Playing, the album
   screen and an artist screen (an artist's hero is a collage of their own
