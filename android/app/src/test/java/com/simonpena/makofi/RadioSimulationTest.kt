@@ -1,7 +1,5 @@
 package com.simonpena.makofi
 
-import android.net.Uri
-import org.json.JSONObject
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -22,26 +20,7 @@ class RadioSimulationTest {
     private val inventory = File(tools, "inventory/out-clean/inventory.jsonl")
     private val notesFile = File(tools, "linernotes/out/linernotes.db")
 
-    private fun collection(): List<Album> {
-        // Files without tags (Musepack, which Android doesn't play) never reach the phone's library.
-        val tracks = inventory.readLines().map(::JSONObject).filter { it.optString("kind") == "audio" && it.has("tags") }
-        val folders = tracks.groupBy { it.getString("path").substringBeforeLast('/') }
-        return folders.entries.mapIndexed { a, (_, files) ->
-            val tags = files.first().getJSONObject("tags")
-            val albumId = a + 1L
-            Album(
-                id = albumId,
-                title = tags.optString("album"),
-                artist = tags.optString("albumartist").ifEmpty { tags.optString("artist") },
-                year = tags.optString("date").take(4).toIntOrNull() ?: 0,
-                tracks = files.mapIndexed { i, f ->
-                    val t = f.getJSONObject("tags")
-                    Track(albumId * 1000 + i, t.optString("title"), t.optString("artist"), t.optString("album"), albumId, 0, i, Uri.EMPTY, f.getString("path"))
-                },
-                genre = tags.optString("genre"),
-            )
-        }
-    }
+    private fun collection(): List<Album> = RealCollection.load(inventory)
 
     @Test fun `radios on the real collection stay close, spread artists and are quick`() {
         assumeTrue("needs the desktop inventory", inventory.exists())

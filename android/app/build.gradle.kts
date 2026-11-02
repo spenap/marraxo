@@ -63,6 +63,11 @@ android {
     testOptions {
         // Robolectric runs Android classes (Uri, Bundle, SQLite) on the JVM.
         unitTests.isIncludeAndroidResources = true
+        // scripts/station.sh: the simulator's options, and its printout.
+        unitTests.all { test ->
+            project.properties.filterKeys { it.startsWith("station.") }.forEach { (k, v) -> test.systemProperty(k, v.toString()) }
+            if (project.hasProperty("station.artist")) test.testLogging.showStandardStreams = true
+        }
     }
     buildFeatures {
         compose = true
@@ -94,3 +99,4 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     debugImplementation(libs.compose.ui.test.manifest)
 }
+

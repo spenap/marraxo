@@ -1,7 +1,19 @@
 # Radios and smart playlists: research
 
+## Station simulator
+
+    android/scripts/station.sh --artist "The Strokes" --title "You Only Live Once" \
+        [--weights Radio] [--compare Era] [--picks 20] [--seed 1]
+
+Runs `Radio.kt` on the local collection and prints each pick's score by
+reason, then per station: picks linked only by genre and era, albums,
+artists, most songs from one album, times widened, and the score against
+picks judged by ear in `radio-reference.tsv`. Weights: a preset (`Radio`,
+`Similar`, `Era`, `People`, `Anything`) or `genre=…,decade=…,people=…,artist=…,band=…`.
+
 Status: researched and decided, 2026-10-31. Builds on `discovery.md` (Radio) and
-`cards.md` (cards are rules). Nothing implemented yet.
+`cards.md` (cards are rules). The radio engine and station simulator are
+implemented; smart playlists are not.
 
 ## What other players do
 

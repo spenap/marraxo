@@ -150,10 +150,12 @@ Done in a separate repository.
       everything, and the album gap is only 3. Fix: credits weighed by role,
       the album's own genre before its family, album first then song,
       weight decaying per song already played from an album or artist.
-- [ ] Station simulator: the real `Radio.kt` from the command line on the
+      The simulator adds one: compilations carry their release year, so
+      `Era` matches a 2003 Beach Boys best-of to a 2005 Strokes song.
+- [x] Station simulator (2026-11-02, `scripts/station.sh`): the real `Radio.kt` from the command line on the
       local collection. Seed, weights, picks and random seed in; each pick's
-      score by reason, and per station coherence (picks with only genre
-      and era), variety (albums, most songs from one album) and widening
+      score by reason, and per station the picks linked only by genre
+      and era, variety (albums, most songs from one album) and widening
       out. Compares weight sets on the same seeds. Picks marked good or
       weak by ear become a reference set that scores any weights, and a
       regression test.
