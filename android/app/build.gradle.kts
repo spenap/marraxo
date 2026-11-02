@@ -11,18 +11,18 @@ plugins {
 fun git(vararg args: String) = providers.exec { commandLine("git", *args) }.standardOutput.asText.get().trim()
 
 android {
-    namespace = "com.simonpena.mako"
+    namespace = "com.simonpena.makofi"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.simonpena.mako"
+        applicationId = "com.simonpena.makofi"
         minSdk = 27 // Nexus 4 on LineageOS 15.1 (Android 8.1)
         targetSdk = 35
         versionCode = git("rev-list", "--count", "HEAD").toInt()
         versionName = git("describe", "--tags", "--always", "--dirty")
         // The commit's date, not the build time, so rebuilding gives the same APK.
-        testInstrumentationRunner = "com.simonpena.mako.AwakeRunner"
-        manifestPlaceholders["appLabel"] = "Mako"
+        testInstrumentationRunner = "com.simonpena.makofi.AwakeRunner"
+        manifestPlaceholders["appLabel"] = "Makofi"
         buildConfigField("String", "COMMIT_DATE", "\"${git("log", "-1", "--format=%cs")}\"")
     }
 
@@ -32,7 +32,7 @@ android {
             // and then uninstall it, which must never wipe the real app's
             // play history, queue or hidden list.
             applicationIdSuffix = ".debug"
-            manifestPlaceholders["appLabel"] = "Mako debug"
+            manifestPlaceholders["appLabel"] = "Makofi debug"
         }
         release {
             isMinifyEnabled = true

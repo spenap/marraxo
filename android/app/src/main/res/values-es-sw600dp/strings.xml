@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="welcome_title">Tu música, en esta tableta.</string>
-    <string name="welcome_body">Mako reproduce la música guardada en esta tableta. Sin cuentas y sin Internet. También puede reproducirla en altavoces y televisores de tu wifi.</string>
+    <string name="welcome_body">Makofi reproduce la música guardada en esta tableta. Sin cuentas y sin Internet. También puede reproducirla en altavoces y televisores de tu wifi.</string>
     <string name="empty_body">Copia música en la carpeta Music de esta tableta, por transferencia de archivos USB o desde un ordenador:</string>
     <string name="hidden_some">Ocultos en la biblioteca. Los archivos siguen en la tableta.</string>
     <string name="about_summary">Un reproductor de música sin conexión. Reproduce la carpeta Music en esta tableta o en altavoces y televisores de la misma wifi.</string>

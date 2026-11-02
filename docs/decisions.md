@@ -15,6 +15,20 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-02 · The app is Makofi, `com.simonpena.makofi`
+Why: "Mako" is the Nexus 4's codename (LG, 2012), so it named the device
+more than the player. Makofi is Swahili for applause, keeps "mako" for
+where the project was born, and reads as Mako-fi (as in hi-fi); a clap
+can be its icon. Quenlla (Galician for shark) was the alternative. The
+application id changed too, while only our three phones had the app:
+play history, favourites and the queue started over (a copy of each
+phone's history was kept on the laptop). Later the id can't change
+without losing them. Notes and commits before this date say "Mako".
+Phone files the old name created stay as they are: `Music/.mako-sync`
+(sync's list) and the Nexus 4's `/data/local/tmp/mako-appliance.prev`.
+Repository: github.com/spenap/makofi.
+Detail: ROADMAP.md ("Ideas and not doing" held the shortlist).
+
 ## 2026-11-01 · Now Playing: lyrics and notes scroll below, the heart stays by the title
 Why: buttons for lyrics and notes competed for room with the cover (the
 Nexus 4 has little) and with a favourites heart. Of six layouts mocked,

@@ -4,7 +4,7 @@
     <!-- First run -->
     <string name="building_library">Preparando a túa biblioteca…</string>
     <string name="welcome_title">A túa música, neste teléfono.</string>
-    <string name="welcome_body">Mako reproduce a música gardada neste teléfono. Sen contas e sen Internet. Tamén pode reproducila en altofalantes e televisores da túa wifi.</string>
+    <string name="welcome_body">Makofi reproduce a música gardada neste teléfono. Sen contas e sen Internet. Tamén pode reproducila en altofalantes e televisores da túa wifi.</string>
     <string name="welcome_find">Buscar a miña música</string>
     <string name="empty_title">Non se atopou música</string>
     <string name="empty_body">Copia música no cartafol Music deste teléfono, por transferencia de ficheiros USB ou desde un ordenador:</string>
@@ -94,7 +94,7 @@
         <item quantity="one">%d biblioteca de código aberto</item>
         <item quantity="other">%d bibliotecas de código aberto</item>
     </plurals>
-    <string name="licences_intro">Mako baséase en %1$s: %2$s. Toca unha para ler a súa licenza.</string>
+    <string name="licences_intro">Makofi baséase en %1$s: %2$s. Toca unha para ler a súa licenza.</string>
     <string name="licences_count">%1$d coa %2$s</string>
 
     <!-- Now Playing -->

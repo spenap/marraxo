@@ -96,7 +96,7 @@ def test_liner_notes_go_to_the_apps_own_folder_when_they_changed(tmp_path, monke
     monkeypatch.setattr(sync, "adb", phone)
     assert sync.sync_notes("serial", db) is True
     assert phone.pushed == [sync.PHONE_NOTES]
-    assert sync.PHONE_NOTES == "/sdcard/Android/data/com.simonpena.mako/files/linernotes.db"  # readable without a permission
+    assert sync.PHONE_NOTES == "/sdcard/Android/data/com.simonpena.makofi/files/linernotes.db"  # readable without a permission
 
 
 def test_unchanged_liner_notes_are_not_copied_again(tmp_path, monkeypatch):
@@ -116,15 +116,15 @@ def test_no_liner_notes_built_is_not_an_error(tmp_path, monkeypatch):
 
 
 def test_android_10_and_later_is_asked_to_index_the_copied_music(monkeypatch):
-    # adb push doesn't index; since Android 11 Mako can't see unindexed files to index them.
+    # adb push doesn't index; since Android 11 Makofi can't see unindexed files to index them.
     phone = FakePhone(sdk=35)
     monkeypatch.setattr(sync, "adb", phone)
     assert sync.index_music("serial") is True
     assert "content call --uri content://media --method scan_volume --arg external_primary" in phone.commands
 
 
-def test_older_android_is_left_to_makos_rescan(monkeypatch):
-    phone = FakePhone(sdk=27)  # the Nexus 4: Mako's rescan finds the files there
+def test_older_android_is_left_to_makofis_rescan(monkeypatch):
+    phone = FakePhone(sdk=27)  # the Nexus 4: Makofi's rescan finds the files there
     monkeypatch.setattr(sync, "adb", phone)
     assert sync.index_music("serial") is False
     assert not any("scan_volume" in c for c in phone.commands)
@@ -183,7 +183,7 @@ def test_lyrics_go_to_the_apps_own_folder_like_the_notes(tmp_path, monkeypatch):
     phone = FakePhone()
     monkeypatch.setattr(sync, "adb", phone)
     assert sync.sync_file("serial", db, sync.PHONE_LYRICS) is True
-    assert phone.pushed == ["/sdcard/Android/data/com.simonpena.mako/files/lyrics.db"]
+    assert phone.pushed == ["/sdcard/Android/data/com.simonpena.makofi/files/lyrics.db"]
 
 
 def test_an_album_changed_since_it_was_copied_is_refreshed_file_by_file():

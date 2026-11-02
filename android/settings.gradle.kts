@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Mako"
+rootProject.name = "Makofi"
 include(":app")

@@ -5,7 +5,7 @@
     <!-- First run -->
     <string name="building_library">Building your library…</string>
     <string name="welcome_title">Your music, on this phone.</string>
-    <string name="welcome_body">Mako plays the music stored on this phone. No account and no Internet. It can also play to speakers and TVs on your Wi-Fi.</string>
+    <string name="welcome_body">Makofi plays the music stored on this phone. No account and no Internet. It can also play to speakers and TVs on your Wi-Fi.</string>
     <string name="welcome_find">Find my music</string>
     <string name="empty_title">No music found</string>
     <string name="empty_body">Copy music into the Music folder on this phone, over USB file transfer or from a computer:</string>
@@ -99,8 +99,8 @@
         <item quantity="one">%d open-source library</item>
         <item quantity="other">%d open-source libraries</item>
     </plurals>
-    <!-- Mako is built on 40 open-source libraries: 35 under the Apache License 2.0, 5 under the MIT License. -->
-    <string name="licences_intro">Mako is built on %1$s: %2$s. Tap one to read its licence.</string>
+    <!-- Makofi is built on 40 open-source libraries: 35 under the Apache License 2.0, 5 under the MIT License. -->
+    <string name="licences_intro">Makofi is built on %1$s: %2$s. Tap one to read its licence.</string>
     <string name="licences_count">%1$d under the %2$s</string>
 
     <!-- Now Playing -->

@@ -2,7 +2,7 @@
 <!-- On screens at least 600 dp wide (tablets), "phone" reads "tablet". -->
 <resources>
     <string name="welcome_title">Your music, on this tablet.</string>
-    <string name="welcome_body">Mako plays the music stored on this tablet. No account and no Internet. It can also play to speakers and TVs on your Wi-Fi.</string>
+    <string name="welcome_body">Makofi plays the music stored on this tablet. No account and no Internet. It can also play to speakers and TVs on your Wi-Fi.</string>
     <string name="empty_body">Copy music into the Music folder on this tablet, over USB file transfer or from a computer:</string>
     <string name="hidden_some">Hidden from the library. The files stay on the tablet.</string>
     <string name="about_summary">An offline music player. Plays from the Music folder, on this tablet or on speakers and TVs on the same Wi-Fi.</string>

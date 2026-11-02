@@ -11,4 +11,4 @@ a() { if [ -n "$S" ]; then adb -s "$S" "$@"; else adb "$@"; fi </dev/null; }
 a install -r app/build/outputs/apk/release/app-release.apk
 # "speed", not "speed-profile": right after an install there is no usage
 # profile yet, so speed-profile compiles nothing and scrolling janks.
-a shell cmd package compile -m speed -f com.simonpena.mako
+a shell cmd package compile -m speed -f com.simonpena.makofi

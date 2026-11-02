@@ -21,7 +21,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="${appLabel}"
         android:localeConfig="@xml/locales_config"
-        android:theme="@style/Theme.Mako"
+        android:theme="@style/Theme.Makofi"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -41,12 +41,12 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:showWhenLocked="true"
-            android:taskAffinity="com.simonpena.mako.lock" />
+            android:taskAffinity="com.simonpena.makofi.lock" />
 
-        <!-- Mako as the home screen: off unless enabled on the device
+        <!-- Makofi as the home screen: off unless enabled on the device
              (android/scripts/appliance.sh), so it never replaces a launcher. -->
         <activity-alias
-            android:name="com.simonpena.mako.Home"
+            android:name="com.simonpena.makofi.Home"
             android:enabled="false"
             android:exported="true"
             android:targetActivity=".MainActivity">
