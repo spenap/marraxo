@@ -539,6 +539,8 @@ New ideas wait here until there is evidence (Track U) or a clear need;
 then they move into a track with a "done when".
 
 Parked:
+- A FAQ, if the project goes public (2026-11-02): e.g. how a collection
+  gets its liner notes and lyrics.
 - Hero covers (2026-11-02): the cover edge to edge at the top, as Google
   Play Music, Rdio and early Spotify did, on Now Playing, the album
   screen and an artist screen (an artist's hero is a collage of their own
