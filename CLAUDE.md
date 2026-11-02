@@ -45,6 +45,9 @@ current Android.
   analytics, or Google Play Services. Internet is fine for desktop tooling
   and builds. Usage measured on the phone and read on the laptop (like play
   history) is fine; nothing is ever sent elsewhere.
+- Write docs, comments and commit messages concisely: state what holds,
+  not the reasoning that got there or every case it excludes. Fewer
+  words leave less to go stale or wrong.
 - New ideas go to ROADMAP.md, "Ideas and not doing", until there is
   evidence or a clear need.
 - Smallest maintainable stack; no premature abstraction.
