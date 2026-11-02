@@ -1,10 +1,11 @@
-# Builds the APK and runs the unit tests (roadmap Track T, T1–T2) on every
-# push. Device-only checks (UI tests, the scroll benchmark, the real
-# speakers and TV) are not here; they run by hand.
+# Unit tests, the APK, and the UI tests on an emulator, for every pull
+# request and every push to main. The scroll benchmark and the speakers
+# and TV run by hand.
 name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -58,6 +59,11 @@ jobs:
       run:
         working-directory: android
     steps:
+      # The emulator needs 7.2 GB free. First, as setup-java installs into
+      # the tool cache this clears.
+      - name: Free disk space
+        working-directory: /
+        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" && df -h /
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -76,6 +82,7 @@ jobs:
           api-level: 27
           arch: x86
           target: default
+          profile: Nexus 4 # the default screen is 320 dp wide: grids fall to one column
           working-directory: android
           script: ./gradlew connectedDebugAndroidTest
       - uses: actions/upload-artifact@v4
