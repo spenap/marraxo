@@ -140,6 +140,17 @@ Done in a separate repository.
       restart (today the queue does, the radio doesn't); "not heard
       lately" once history is real listening; a listener's verdict from
       the beta.
+- [ ] Radio picks poorly (beta, 2026-11-02): from "You Only Live Once"
+      (The Strokes) came The Smashing Pumpkins and La Fuga, weak matches,
+      then The Jeevas; later songs felt like they came from the same
+      albums as the first matches. Guess: a shared credit (a person or
+      studio) outweighs genre and era, and nothing spreads picks across
+      albums. Replay this seed in the simulation (`radio.md`) and read
+      the debug reasons.
+- [ ] Liner notes: what the Now Playing card previews is sometimes not
+      on the screen it opens (beta, 2026-11-02). Guess: the card and the
+      screen read different levels (song vs album) or different fields.
+      Find a song where it happens and compare the two queries.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
@@ -432,6 +443,13 @@ desktop and shipped as `discovery.db`.
 - [ ] App: a lyrics view in Now Playing, the current line highlighted and
       scrolling with the music, on the phone and on speakers. Hidden for
       instrumentals.
+
+- [ ] Some lyrics are out of sync (beta, 2026-11-02); no way yet to
+      tell which. Idea: in debug builds, a pill on the lyrics card to
+      mark "out of sync", saved on the phone like play history and read
+      on the laptop, with LRCLIB's duration against the track's. Guess:
+      timings from another version of the song (a radio edit, a live
+      take) whose length is close enough to match.
 
 ### C6. Recognise a song from your library (Shazam-style, offline)
 - [ ] Desktop prototype: index the library with landmark fingerprints
