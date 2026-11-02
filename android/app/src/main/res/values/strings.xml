@@ -18,6 +18,7 @@
     <string name="back">Back</string>
     <string name="clear">Clear</string>
     <string name="menu_rescan">Rescan library</string>
+    <string name="menu_import">Import lyrics and notes</string>
     <string name="menu_hidden">Hidden</string>
     <string name="menu_about">About</string>
     <string name="menu_show_lists">Show as lists</string>
@@ -181,4 +182,14 @@
     <string name="lyrics_instrumental">Instrumental</string>
     <!-- Credit under the lyrics: where they come from -->
     <string name="lyrics_source">Lyrics from LRCLIB</string>
+    <plurals name="import_lyrics">
+        <item quantity="one">Lyrics: %1$d song</item>
+        <item quantity="other">Lyrics: %1$d songs</item>
+    </plurals>
+    <plurals name="import_notes">
+        <item quantity="one">Liner notes: %1$d album</item>
+        <item quantity="other">Liner notes: %1$d albums</item>
+    </plurals>
+    <string name="import_not_data">A file wasn\'t lyrics or liner notes</string>
+    <string name="import_other_version">A file is for another version of Makofi</string>
 </resources>

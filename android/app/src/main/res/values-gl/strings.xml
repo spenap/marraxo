@@ -17,6 +17,7 @@
     <string name="back">Atrás</string>
     <string name="clear">Borrar</string>
     <string name="menu_rescan">Actualizar a biblioteca</string>
+    <string name="menu_import">Importar letras e notas</string>
     <string name="menu_hidden">Agochados</string>
     <string name="menu_about">Acerca de</string>
     <string name="menu_show_lists">Ver como listas</string>
@@ -160,4 +161,14 @@
     <string name="lyrics">Letra</string>
     <string name="lyrics_instrumental">Instrumental</string>
     <string name="lyrics_source">Letra de LRCLIB</string>
+    <plurals name="import_lyrics">
+        <item quantity="one">Letras: %1$d canción</item>
+        <item quantity="other">Letras: %1$d cancións</item>
+    </plurals>
+    <plurals name="import_notes">
+        <item quantity="one">Notas do disco: %1$d álbum</item>
+        <item quantity="other">Notas do disco: %1$d álbums</item>
+    </plurals>
+    <string name="import_not_data">Un ficheiro non era nin letras nin notas do disco</string>
+    <string name="import_other_version">Un ficheiro é doutra versión de Makofi</string>
 </resources>

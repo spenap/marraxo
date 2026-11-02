@@ -55,6 +55,12 @@ class HomeUiTest {
         compose.onNodeWithText("Other apps").assertExists()
     }
 
+    @Test fun theMenuOffersToImportLyricsAndNotes() {
+        show(isHome = false)
+        compose.onNodeWithContentDescription("More").performClick()
+        compose.onNodeWithText("Import lyrics and notes").assertExists()
+    }
+
     @Test fun pressingHomeReturnsToTheLibrary() {
         show(isHome = true)
         compose.onNodeWithText("The Blue Idol").performClick()

@@ -2,6 +2,8 @@
 
 package com.simonpena.makofi
 
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.produceState
@@ -214,13 +216,30 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     // "Same people" needs the liner notes on the phone.
     var songSheet by remember { mutableStateOf<Pair<Track, Album>?>(null) }
     var albumSheet by remember { mutableStateOf<Album?>(null) }
-    val lyricsDb by produceState<LyricsDb?>(null) {
+    // ⋮ → Import lyrics and notes: files picked by the user replace the ones in use (DataImport).
+    var dataVersion by remember { mutableIntStateOf(0) }
+    var imported by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val pickData = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        scope.launch {
+            val results = withContext(Dispatchers.IO) {
+                uris.map { uri ->
+                    runCatching { context.contentResolver.openInputStream(uri)?.let { DataImport.install(it, context.getExternalFilesDir(null)!!) } }.getOrNull()
+                        ?: DataImport.Rejected(DataImport.Why.NOT_DATA)
+                }
+            }
+            imported = importSummary(context.resources, results)
+            dataVersion++
+        }
+    }
+    val lyricsDb by produceState<LyricsDb?>(null, dataVersion) {
         value = withContext(Dispatchers.IO) { LyricsDb.open(LyricsDb.file(context)) }
         awaitDispose { value?.close() }
     }
     val currentLyrics = remember(currentTrack?.path, lyricsDb) { currentTrack?.let { lyricsDb?.lyrics(it.path) } }
     val favourites = remember { Favourites(context) }
-    val notes by produceState<LinerNotes?>(null) {
+    val notes by produceState<LinerNotes?>(null, dataVersion) {
         value = withContext(Dispatchers.IO) { LinerNotes.open(LinerNotes.file(context)) }
         awaitDispose { value?.close() }
     }
@@ -229,8 +248,8 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
-            visible, libraryState, look, hasMini = currentTrack != null, status = status,
-            onRescan = onRescan, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
+            visible, libraryState, look, hasMini = currentTrack != null, status = imported ?: status,
+            onRescan = onRescan, onImport = { pickData.launch(arrayOf("*/*")) }, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
             onSearch = { stack.add(Screen.Search) }, onAlbumOptions = { albumSheet = it }, home = home,
             onShelf = { title, spreadBy, matches -> stack.add(Screen.Shelf(title, spreadBy, matches)) },
         ) { stack.add(Screen.AlbumDetail(it)) }
@@ -464,6 +483,7 @@ private fun LibraryScreen(
     hasMini: Boolean,
     status: String?,
     onRescan: () -> Unit,
+    onImport: () -> Unit,
     onAbout: () -> Unit,
     onHidden: () -> Unit,
     onSearch: () -> Unit,
@@ -482,6 +502,7 @@ private fun LibraryScreen(
                 IconSpot(GlowIcons.More, stringResource(R.string.more)) { menu = true }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = GSheet) {
                     DropdownMenuItem(text = { Text(stringResource(R.string.menu_rescan), style = body) }, onClick = { menu = false; onRescan() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.menu_import), style = body) }, onClick = { menu = false; onImport() })
                     DropdownMenuItem(text = { Text(stringResource(R.string.menu_hidden), style = body) }, onClick = { menu = false; onHidden() })
                     DropdownMenuItem(
                         text = { Text(stringResource(if (look.tiles) R.string.menu_show_lists else R.string.menu_show_tiles), style = body) },
