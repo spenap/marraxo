@@ -12,7 +12,7 @@ and record decisions in `decisions.md`.
 ### A0. ROM chosen and flashed
 Done in a separate repository.
 - [x] Done when `RESULT.md` exists and its API level and known issues are
-      copied into `CLAUDE.md`. (LineageOS 15.1, API 27.)
+      copied into `AGENTS.md`. (LineageOS 15.1, API 27.)
 
 ### A1. Android feasibility spike
 - [ ] Gradle project in `android/` with dependency versions pinned
@@ -507,7 +507,7 @@ others run on demand.
 - [x] **T5. Performance gate**: `scroll-bench.sh` fails above 5% janky
       frames (`MAX_JANKY`) or under 100 frames drawn. Real phone only.
       `TAB=Artists|Genres|Years` flings another tab. Part of the
-      no-regressions checklist in CLAUDE.md (2026-10-31).
+      no-regressions checklist in AGENTS.md (2026-10-31).
 - [x] **T6. Hardware smoke tests**: `tools/upnp/probe.py` checks each step
       and ends with PASS/FAIL, against the real speakers and TV, run by
       hand. Passed 2026-10-30 on Estudio and on the TV (with `--next`).

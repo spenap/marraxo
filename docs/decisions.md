@@ -141,7 +141,7 @@ Why: WebKit's rule. Before every commit: unit tests; UI tests on the Nexus
 against the version before (measured too, never assumed); real hardware for
 speaker and TV playback. A failure that predates a change is logged with
 its numbers, never a reason to let a new one in.
-Detail: CLAUDE.md (Principles).
+Detail: AGENTS.md (Principles).
 
 ## 2026-10-31 · English, Spanish and Galician, following the phone
 Why: no in-app picker. The Nexus 4 can switch its system language, Galician
@@ -157,7 +157,7 @@ Detail: ROADMAP.md (C2).
 ## 2026-10-30 · New features are test-driven
 Why: write the failing test first, at the cheapest level that catches the
 behaviour; a device check confirms but doesn't replace a test.
-Detail: CLAUDE.md (Principles), ROADMAP.md (Track T).
+Detail: AGENTS.md (Principles), ROADMAP.md (Track T).
 
 ## 2026-10-30 · Usage is measured on the phone; ideas wait for evidence
 Why: a usage log read on the laptop answers what to polish and what to
@@ -253,7 +253,7 @@ Why: a dedicated music device. No Internet, cloud services, accounts,
 remote analytics or Google Play Services (the Nexus 4 has no Google apps).
 Desktop tools and builds may go online; nothing measured on the phone is
 sent elsewhere.
-Detail: CLAUDE.md (Principles).
+Detail: AGENTS.md (Principles).
 
 ## 2026-10-29 · No audiobooks, no reusable modules for them
 Why: out of scope; one app module.
