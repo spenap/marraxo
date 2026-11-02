@@ -46,6 +46,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -604,6 +605,12 @@ private class CoverEntry(
 @Composable
 private fun Covers(entries: List<CoverEntry>, tiles: Boolean, list: LazyListState, grid: LazyGridState, bottom: Dp, end: Dp = 0.dp) {
     if (tiles) {
+        val dragged by grid.interactionSource.collectIsDraggedAsState()
+        var heldMs by remember { mutableLongStateOf(0L) }
+        LaunchedEffect(dragged) {
+            heldMs = 0
+            if (dragged) { delay(HOLD_MS); heldMs = HOLD_MS }
+        }
         LazyVerticalGrid(
             columns = GridCells.Adaptive(GRID_MIN),
             state = grid,
@@ -612,7 +619,7 @@ private fun Covers(entries: List<CoverEntry>, tiles: Boolean, list: LazyListStat
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.navigationBarsPadding().testTag("tiles"),
         ) {
-            items(entries, key = { it.key }) { CoverTile(it.title, it.detail, it.candidates, it.accent, { grid.isScrollInProgress }, it.onClick) }
+            items(entries, key = { it.key }) { CoverTile(it.title, it.detail, it.candidates, it.accent, { coversMayLoad(grid.isScrollInProgress, heldMs) }, it.onClick) }
         }
     } else {
         LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.navigationBarsPadding().padding(end = end).testTag("rows")) {
@@ -634,12 +641,12 @@ private val GRID_MIN = 150.dp
  * Tries [candidates] in order and shows the first with artwork.
  */
 @Composable
-private fun CoverTile(title: String, detail: String, candidates: List<Album>, accent: Boolean, scrolling: () -> Boolean, onClick: () -> Unit) {
+private fun CoverTile(title: String, detail: String, candidates: List<Album>, accent: Boolean, mayLoad: () -> Boolean, onClick: () -> Unit) {
     val context = LocalContext.current
     val initial = remember(candidates) { coverToShow(candidates, ::knownWithoutArt)?.let { cachedArt(it.id, TILE_COVER_PX, tint = true) } }
     // On a new visit the state keeps the last cover until this one is found, so set it either way.
     val art by produceState(initial, candidates) {
-        if (initial == null) snapshotFlow(scrolling).first { !it } // not mid-fling: decoding then made Artists stutter
+        if (initial == null) snapshotFlow(mayLoad).first { it }
         value = initial ?: candidates.take(8).firstNotNullOfOrNull { loadArt(context, it.id, TILE_COVER_PX, tint = true) }
     }
     val tint = art?.tint ?: candidates.firstOrNull()?.let { placeholderTint(it.id) } ?: GSheet

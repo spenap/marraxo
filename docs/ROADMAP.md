@@ -84,12 +84,17 @@ Done in a separate repository.
       decide: Genres and Artists as tiles (the default) or as lists.
       Albums is already a cover grid; Years stays a list, its scrubber
       reads down a timeline (decade tiles if the beta wants tiles there).
-      Tiles draw no shadows and load covers only once a fling stops: with
-      shadows and loading mid-fling, Artists was 69–81% janky.
+      Tiles draw no shadows and load covers only once a fling stops, or
+      under a finger held 200 ms (2026-11-02; before, covers waited for
+      the finger to lift): with shadows and loading mid-fling, Artists
+      was 69–81% janky.
 - [ ] Artists stutters a little in both looks: 5.4–6.2% janky as tiles,
       6.0–6.5% as a list (scroll-bench, `TAB=Artists`, cold), over the 5%
       limit. Never benchmarked before; find out what the album grid
-      (4.1%) does differently.
+      (4.1%) does differently. Noisy on 2026-11-02 (after the Nexus 4's
+      thumbnail cache was rebuilt): tiles 3.3–10.7% over five runs
+      (median 8.3%), 5.6–6.9% (median 5.7%) with covers under a held
+      finger.
 - [ ] As the home screen, Now Playing's "Playing on … Change" row sits
       where the hidden navigation bar was, and the accessibility tree
       reports it at [0,0][0,0] (not visible): it can be tapped, but

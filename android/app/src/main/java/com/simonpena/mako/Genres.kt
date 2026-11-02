@@ -99,3 +99,14 @@ fun coverCandidates(albums: List<Album>, visit: Int, name: String): List<Album> 
  */
 fun coverToShow(candidates: List<Album>, hasNoArt: (albumId: Long) -> Boolean): Album? =
     candidates.firstOrNull { !hasNoArt(it.id) }
+
+/** How long a finger holds a tile grid before covers load under it: longer than a swipe that flings. */
+const val HOLD_MS = 200L
+
+/**
+ * Whether a tile not yet in memory may decode its cover. Not mid-fling or
+ * mid-swipe: on the Nexus 4 decoding then made Artists stutter. But under a
+ * finger held [HOLD_MS] it may: covers otherwise appeared only once the
+ * finger lifted.
+ */
+fun coversMayLoad(scrolling: Boolean, heldMs: Long) = !scrolling || heldMs >= HOLD_MS

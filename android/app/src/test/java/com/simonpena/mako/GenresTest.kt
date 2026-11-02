@@ -118,4 +118,11 @@ class GenresTest {
         assertEquals(b, coverToShow(listOf(a, b, c)) { it == a.id }) // a has no artwork
         assertEquals(null, coverToShow(listOf(a, b, c)) { true })
     }
+
+    @Test fun `tile covers load at rest and under a finger that stays, not mid-swipe or mid-fling`() {
+        assertTrue(coversMayLoad(scrolling = false, heldMs = 0))
+        assertTrue(coversMayLoad(scrolling = true, heldMs = HOLD_MS)) // a slow drag: the finger waits on the screen
+        assertFalse(coversMayLoad(scrolling = true, heldMs = 120)) // a quick swipe, about to fling
+        assertFalse(coversMayLoad(scrolling = true, heldMs = 0)) // flinging: decoding made Artists stutter
+    }
 }
