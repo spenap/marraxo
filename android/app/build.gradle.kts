@@ -26,6 +26,19 @@ android {
         buildConfigField("String", "COMMIT_DATE", "\"${git("log", "-1", "--format=%cs")}\"")
     }
 
+    // Tagged releases only (scripts/release.sh): signed with the release key
+    // when MAKOFI_KEYSTORE is set. Otherwise release builds use the debug key,
+    // as the dev phones expect.
+    val keystore = System.getenv("MAKOFI_KEYSTORE")?.let(::file)
+    signingConfigs {
+        if (keystore != null) create("release") {
+            storeFile = keystore
+            storePassword = System.getenv("MAKOFI_KEYSTORE_PASSWORD")
+            keyAlias = "makofi"
+            keyPassword = System.getenv("MAKOFI_KEYSTORE_PASSWORD")
+        }
+    }
+
     buildTypes {
         debug {
             // A separate app next to the real one: instrumented tests install
@@ -37,8 +50,7 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Sideloaded to our own phones only, so the debug key is enough for now.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (keystore != null) "release" else "debug")
         }
     }
     compileOptions {

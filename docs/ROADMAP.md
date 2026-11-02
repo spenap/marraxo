@@ -263,8 +263,9 @@ values, so the phone can be put back as it was.
 ### A7. Releases for the S25
 Dev phones keep the debug key and `install.sh`; the S25 gets tagged
 releases only.
-- [ ] One release key, kept off the repo with a backup; `release.sh` tags
-      a green `main`, builds, signs and publishes a GitHub Release.
+- [x] One release key, kept off the repo with a backup; `release.sh` tags
+      a green `main`, builds, signs and publishes a GitHub Release
+      (2026-11-02).
 - [ ] The S25 installs and updates through Obtainium (read-only token).
 - [ ] Import lyrics and liner notes in the app (file picker): the S25
       takes them over USB with the music, as it can't use adb.
