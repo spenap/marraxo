@@ -83,8 +83,9 @@ current Android.
 ## Working on this repo
 For any agent (Claude Code, Codex…) and any person.
 - One branch and pull request per change. Merge only when CI's `android`,
-  `tools` and `ui` jobs pass; nothing enforces it, so check. Push and
-  merge when the user asks.
+  `tools` and `ui` jobs pass, or CI didn't run because only Markdown or
+  `docs/` changed; nothing enforces it, so check. Push and merge when the
+  user asks.
 - Commits: atomic, Conventional Commits, ending with a `Co-Authored-By:`
   line that names the agent and model.
 - Many tests failing the same way means the environment, not the code:

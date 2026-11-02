@@ -1,12 +1,14 @@
 # Unit tests, the APK, and the UI tests on an emulator, for every pull
-# request and every push to main. The scroll benchmark and the speakers
-# and TV run by hand.
+# request and every push to main, unless only Markdown or docs/ changed.
+# The scroll benchmark and the speakers and TV run by hand.
 name: CI
 
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**']
 
 jobs:
   android:
