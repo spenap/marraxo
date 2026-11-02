@@ -42,6 +42,12 @@ class RadioTest {
         assertTrue(picks.map { it.reason }.toString(), picks.all { it.reason == Reason.Genre("Rock") })
     }
 
+    @Test fun `pick exposes its score by reason`() {
+        val pick = Radio(library, RadioWeights.Similar, seed, random = Random(2)).next(listOf(seed))!!
+        assertTrue(pick.scores.isNotEmpty() && pick.scores.values.all { it > 0 })
+        assertEquals(pick.reason, pick.scores.maxBy { it.value }.key)
+    }
+
     @Test fun `no song twice, no artist again within 5 songs, no album within 3`() {
         val played = mutableListOf(seed)
         val radio = Radio(library, RadioWeights.Similar, seed, random = Random(3))

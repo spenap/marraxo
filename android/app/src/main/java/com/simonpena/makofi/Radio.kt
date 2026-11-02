@@ -40,7 +40,7 @@ sealed interface Reason {
     data object Wider : Reason
 }
 
-data class Pick(val track: Track, val reason: Reason)
+data class Pick(val track: Track, val reason: Reason, val scores: Map<Reason, Double> = emptyMap())
 
 /** A [Reason] as Now Playing shows it: "Hugh Padgham on both", "1980s". */
 fun reasonText(res: Resources, reason: Reason): String = when (reason) {
@@ -95,7 +95,7 @@ class Radio(
         var r = random.nextDouble() * weights.sum()
         val i = weights.indexOfFirst { w -> (r - w).also { r = it } < 0 }.takeIf { it >= 0 } ?: band.lastIndex
         val (track, f) = band[i]
-        return Pick(track, f.reason)
+        return Pick(track, f.reason, f.byReason.toMap())
     }
 
     private class Features(val byReason: Map<Reason, Double>, val fromSeed: Double) {
