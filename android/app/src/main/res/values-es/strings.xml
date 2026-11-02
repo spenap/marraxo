@@ -88,6 +88,8 @@
     <string name="about_version">Versión</string>
     <string name="about_device">Dispositivo</string>
     <string name="about_summary">Un reproductor de música sin conexión. Reproduce la carpeta Music en este teléfono o en altavoces y televisores de la misma wifi.</string>
+    <string name="about_licence">Licencia</string>
+    <string name="about_data">Notas del disco de MusicBrainz y Wikipedia (CC BY-SA), portadas del Cover Art Archive, letras de LRCLIB. No se distribuyen con Makofi.</string>
     <string name="licences_link">Licencias de código abierto</string>
     <string name="licences">Licencias</string>
     <plurals name="libraries">

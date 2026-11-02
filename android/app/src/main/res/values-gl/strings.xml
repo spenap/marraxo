@@ -88,6 +88,8 @@
     <string name="about_version">Versión</string>
     <string name="about_device">Dispositivo</string>
     <string name="about_summary">Un reprodutor de música sen conexión. Reproduce o cartafol Music neste teléfono ou en altofalantes e televisores da mesma wifi.</string>
+    <string name="about_licence">Licenza</string>
+    <string name="about_data">Notas do disco de MusicBrainz e Wikipedia (CC BY-SA), portadas do Cover Art Archive, letras de LRCLIB. Non se distribúen con Makofi.</string>
     <string name="licences_link">Licenzas de código aberto</string>
     <string name="licences">Licenzas</string>
     <plurals name="libraries">

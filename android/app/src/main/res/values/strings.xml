@@ -93,6 +93,8 @@
     <string name="about_version">Version</string>
     <string name="about_device">Device</string>
     <string name="about_summary">An offline music player. Plays from the Music folder, on this phone or on speakers and TVs on the same Wi-Fi.</string>
+    <string name="about_licence">Licence</string>
+    <string name="about_data">Liner notes from MusicBrainz and Wikipedia (CC BY-SA), covers from the Cover Art Archive, lyrics from LRCLIB. Not distributed with Makofi.</string>
     <string name="licences_link">Open-source licences</string>
     <string name="licences">Licences</string>
     <plurals name="libraries">

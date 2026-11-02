@@ -42,6 +42,14 @@ class AboutUiTest {
 
     @After fun tearDown() = InstrumentationRegistry.getInstrumentation().runOnMainSync { player.release() }
 
+    @Test fun aboutNamesItsLicenceAndWhereItsDataComesFrom() {
+        compose.onNodeWithText("MIT", substring = true).assertExists()
+        compose.onNodeWithText("github.com/spenap/makofi", substring = true).assertExists()
+        // Wikipedia's summaries are CC BY-SA: shipping them means crediting them.
+        compose.onNodeWithText("Wikipedia", substring = true).assertExists()
+        compose.onNodeWithText("MusicBrainz", substring = true).assertExists()
+    }
+
     @Test fun aboutLeadsToTheLicences() {
         compose.onNodeWithText("Open-source licences").performClick()
         compose.onNodeWithText("Licences").assertExists()

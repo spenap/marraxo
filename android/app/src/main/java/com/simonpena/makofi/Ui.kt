@@ -1413,6 +1413,11 @@ private fun AboutScreen(library: List<Album>, onLicences: () -> Unit, onBack: ()
                 stringResource(R.string.about_summary),
                 style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
             )
+            AboutLine(stringResource(R.string.about_licence), "MIT · github.com/spenap/makofi")
+            Text(
+                stringResource(R.string.about_data),
+                style = TextStyle(fontSize = 13.sp, color = GSoft, lineHeight = 19.sp),
+            )
             Text(
                 stringResource(R.string.licences_link),
                 style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = GHi),
