@@ -151,6 +151,10 @@ Done in a separate repository.
       on the screen it opens (beta, 2026-11-02). Guess: the card and the
       screen read different levels (song vs album) or different fields.
       Find a song where it happens and compare the two queries.
+- [ ] Album screen: the liner notes as cards below the track list,
+      reached by scrolling on, as in Now Playing (beta, 2026-11-02).
+      One way to show "more about this" in every view, instead of a
+      button on some screens and cards on others.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
