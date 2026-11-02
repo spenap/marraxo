@@ -15,6 +15,11 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-02 · AGENTS.md holds the project's instructions
+Why: so any agent (Claude Code, Codex…) reads the same rules; CLAUDE.md
+imports it. Working rules kept in one agent's private notes moved there.
+Detail: AGENTS.md.
+
 ## 2026-11-02 · MIT licence; data credited, not distributed
 Why: the user's choice. Compatible with every library (35 Apache-2.0,
 5 MIT), whose notices ship in the app (About → Open-source licences).

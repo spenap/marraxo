@@ -17,7 +17,7 @@ import kotlin.concurrent.thread
 /**
  * A small HTTP server for renderers on the LAN. Only published tracks and
  * covers are reachable, each under a random token; paths are never exposed
- * (CLAUDE.md). Supports HEAD, byte ranges and the DLNA headers the TV needs.
+ * (AGENTS.md). Supports HEAD, byte ranges and the DLNA headers the TV needs.
  *
  * Sonos downloads a whole track in a few seconds; the TV fires dozens of
  * short range requests and then streams at playback speed. A thread per
