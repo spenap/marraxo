@@ -250,6 +250,15 @@ values, so the phone can be put back as it was.
       (2026-10-31). Every previous value is saved; --undo was checked to
       restore all of them exactly.
 
+### A7. Releases for the S25
+Dev phones keep the debug key and `install.sh`; the S25 gets tagged
+releases only.
+- [ ] One release key, kept off the repo with a backup; `release.sh` tags
+      a green `main`, builds, signs and publishes a GitHub Release.
+- [ ] The S25 installs and updates through Obtainium (read-only token).
+- [ ] Import lyrics and liner notes in the app (file picker): the S25
+      takes them over USB with the music, as it can't use adb.
+
 ## Track B: Sonos and TV (no phone needed for B0)
 
 ### B0. Renderer feasibility from the laptop
@@ -539,6 +548,11 @@ New ideas wait here until there is evidence (Track U) or a clear need;
 then they move into a track with a "done when".
 
 Parked:
+- Data from the laptop over home Wi-Fi (2026-11-02): the app pulls new
+  lyrics and liner notes from the laptop, no cable.
+- Scrobbling to a self-hosted server (2026-11-02): Koito or Maloja
+  (ListenBrainz API), plays queued and sent on home Wi-Fi. Libre.fm
+  reopened in 2026. Changes "nothing is ever sent elsewhere".
 - A FAQ, if the project goes public (2026-11-02): e.g. how a collection
   gets its liner notes and lyrics.
 - Hero covers (2026-11-02): the cover edge to edge at the top, as Google
