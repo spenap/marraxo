@@ -2,6 +2,7 @@ package com.simonpena.makofi
 
 import android.content.Context
 import android.content.res.Configuration
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import android.net.Uri
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalConfiguration
@@ -44,7 +45,10 @@ class LanguageUiTest {
         main { player = PlayerHolder(context) }
         val galician = Configuration(context.resources.configuration).apply { setLocale(Locale("gl")) }
         compose.setContent {
+            // The file picker finds its Activity through LocalContext, which this test replaces.
+            val registry = LocalActivityResultRegistryOwner.current
             CompositionLocalProvider(
+                LocalActivityResultRegistryOwner provides registry!!,
                 LocalContext provides context.createConfigurationContext(galician),
                 LocalConfiguration provides galician,
             ) {
