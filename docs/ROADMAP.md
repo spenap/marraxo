@@ -142,11 +142,21 @@ Done in a separate repository.
       the beta.
 - [ ] Radio picks poorly (beta, 2026-11-02): from "You Only Live Once"
       (The Strokes) came The Smashing Pumpkins and La Fuga, weak matches,
-      then The Jeevas; later songs felt like they came from the same
-      albums as the first matches. Guess: a shared credit (a person or
-      studio) outweighs genre and era, and nothing spreads picks across
-      albums. Replay this seed in the simulation (`radio.md`) and read
-      the debug reasons.
+      then songs from the same few albums. Causes (Claude and Codex, read
+      separately): genre family and ±1 decade let most rock through; every
+      credit counts alike (the Pumpkins share only Howie Weinberg, mastering
+      on one album, engineering on the other); album odds grow with album
+      length; songs from an album already played match the last song on
+      everything, and the album gap is only 3. Fix: credits weighed by role,
+      the album's own genre before its family, album first then song,
+      weight decaying per song already played from an album or artist.
+- [ ] Station simulator: the real `Radio.kt` from the command line on the
+      local collection. Seed, weights, picks and random seed in; each pick's
+      score by reason, and per station coherence (picks with only genre
+      and era), variety (albums, most songs from one album) and widening
+      out. Compares weight sets on the same seeds. Picks marked good or
+      weak by ear become a reference set that scores any weights, and a
+      regression test.
 - [ ] Liner notes: what the Now Playing card previews is sometimes not
       on the screen it opens (beta, 2026-11-02). Guess: the card and the
       screen read different levels (song vs album) or different fields.
