@@ -94,6 +94,11 @@ For any agent (Claude Code, Codex…) and any person.
   and run the full suite only to confirm.
 - Gate on `scroll-bench.sh`'s exit status, not its text. A run varies by
   about 2 points: repeat, and compare with the previous version's runs.
+- Fail fast. Before an expensive run (device tests, benchmarks, a CI
+  round trip), check its assumptions in seconds: the right build is
+  installed, the device is awake and unlocked, each command succeeded,
+  the first log line appears. Reproduce CI failures locally rather than
+  iterating through pushes. Give every wait a timeout.
 - Run long jobs (syncs, fetches, imports) in the background and stay
   reachable.
 - The phones and speakers are shared: one agent at a time, nothing plays
