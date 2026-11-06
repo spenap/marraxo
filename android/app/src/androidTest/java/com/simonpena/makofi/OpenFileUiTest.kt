@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.media3.common.Player
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -48,11 +49,19 @@ class OpenFileUiTest {
     @Test fun anOpenedFileShowsOnlyNowPlayingAndClosesInOneStep() {
         var closed = false
         compose.setContent { OpenedFileScreen(player, file.mediaId) { closed = true } }
+        main { player.play(library[0].tracks, 0) }
+        compose.waitUntil(5_000) { player.currentTrackId == 100L }
+        main { player.cycleRepeat() } // repeat on, left from the previous queue
+        compose.waitUntil(5_000) { player.repeatMode != Player.REPEAT_MODE_OFF }
         main { player.open(file) }
         waitFor("PLAYING A FILE")
         compose.onNodeWithText("Voice note").assertExists()
         compose.onNodeWithContentDescription("Favourite").assertDoesNotExist()
         compose.onNodeWithContentDescription("Song options").assertDoesNotExist()
+        // One song: play or pause it, nothing to shuffle, skip or repeat.
+        compose.onNodeWithContentDescription("Play or pause").assertExists()
+        for (control in listOf("Shuffle", "Previous", "Next", "Repeat")) compose.onNodeWithContentDescription(control).assertDoesNotExist()
+        compose.waitUntil(5_000) { player.repeatMode == Player.REPEAT_MODE_OFF } // or it would loop with no way out
         compose.onNodeWithContentDescription("Close").performClick()
         compose.waitUntil(5_000) { closed }
     }
