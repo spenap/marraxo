@@ -52,7 +52,8 @@ Done in a separate repository.
       Recording since 2026-10-30 (`PlayHistory.kt`, `history.db`). Known
       gap: a track in progress is lost if the process is killed (an
       install, a crash) rather than stopped.
-- [ ] A basic but polished Now Playing screen.
+- [x] A basic but polished Now Playing screen: see A3, "Now Playing
+      scrolls" (2026-11-02), and the file-only controls (2026-11-06).
 - [ ] "Open with" for audio files from other apps (`OpenFile.kt`): the file
       replaces the queue, isn't added to the library, and plays with the
       usual controls and outputs. Done when checked by hand on both phones
@@ -357,9 +358,9 @@ Android can't decode). 476 cover images next to the tracks, plus leftovers
 (`.DS_Store`, `.ini`, `.html`). Known messy cases: one band under two
 folder names (`R.E.M_`, `rem`), an album folder called "Álbum
 desconocido", `Compilations` and `Varios Artistas`.
-- [ ] Python tool in `tools/` scans the collection without writing to it.
-- [ ] Done when an HTML report shows stats, missing/contradictory tags,
-      artwork coverage and duplicates.
+- [x] Python tool in `tools/` scans the collection without writing to it.
+- [x] Done when an HTML report shows stats, missing/contradictory tags,
+      artwork coverage and duplicates (`tools/inventory/`).
 
 ### C1. Identification, normalisation, artwork (Phases 2–4)
 Done with beets (`tools/beets/`), copying into
@@ -418,8 +419,9 @@ reviewed interactively.
 - [x] Rerun the inventory on `Music-clean` and compare: of the imported
   albums, 1 lacks artwork (was 144 of 472 overall); no tracks lack year or
   track number; no artist spelling variants.
-- [ ] MusicBrainz/AcoustID matching with confidence scores and a review
-      queue.
+- [x] MusicBrainz/AcoustID matching with confidence scores and a review
+      queue: beets (`musicbrainz`, `chroma`) in two passes, then the
+      interactive review (2026-11-01).
 
 ### C3. Liner notes (offline "X-ray")
 Learn more about a track, album or artist, offline, from data fetched on
@@ -462,6 +464,12 @@ the desktop.
       (The Town House, 8 of your albums), from real rows.
 - [ ] Stories in the app's language: fetch Galician first when the phone
       is in Galician (today: Spanish, else English).
+- [ ] Some lyrics are out of sync (beta, 2026-11-02); no way yet to
+      tell which. Idea: in debug builds, a pill on the lyrics card to
+      mark "out of sync", saved on the phone like play history and read
+      on the laptop, with LRCLIB's duration against the track's. Guess:
+      timings from another version of the song (a radio edit, a live
+      take) whose length is close enough to match.
 
 ### C4. Discovery (see `discovery.md`)
 Offline similarity by sound, people, era, mood and topic, computed on the
@@ -471,21 +479,6 @@ desktop and shipped as `discovery.db`.
 - [ ] D1: CLAP and Wikipedia text embeddings; named clusters.
 - [ ] D2: package `discovery.db`; app "Sounds like", Moods, Map (A5).
 - [ ] D3: radio sequencing; play-history signals.
-
-### C5. Lyrics
-- [ ] Fetch synced lyrics (LRC) from LRCLIB once per track on the desktop
-      (open, no key; full dumps available), cached like the liner notes;
-      ship them in `linernotes.db`. Never committed (copyright).
-- [ ] App: a lyrics view in Now Playing, the current line highlighted and
-      scrolling with the music, on the phone and on speakers. Hidden for
-      instrumentals.
-
-- [ ] Some lyrics are out of sync (beta, 2026-11-02); no way yet to
-      tell which. Idea: in debug builds, a pill on the lyrics card to
-      mark "out of sync", saved on the phone like play history and read
-      on the laptop, with LRCLIB's duration against the track's. Guess:
-      timings from another version of the song (a radio edit, a live
-      take) whose length is close enough to match.
 
 ### C6. Recognise a song from your library (Shazam-style, offline)
 - [ ] Desktop prototype: index the library with landmark fingerprints
@@ -504,7 +497,9 @@ desktop and shipped as `discovery.db`.
   stick to the 2003 method, not later refinements.
 
 ### C2. Safe writing (Phase 5)
-- [ ] Backup, change manifest, reversible writes, validation.
+- [x] Backup, change manifest, reversible writes, validation: how every
+      change to the collection is made (AGENTS.md), with manifests in
+      `tools/beets/out/`.
 
 ## Track T: Tests and CI
 Every check done by hand on a device should end up as a test at the
@@ -517,10 +512,9 @@ others run on demand.
       Sonos (downloads the whole file) or the TV (needs DLNA headers,
       streams with ranges). Tests hand-over, next, track end, pause and
       "taken over by another controller" through `RendererPlayer`.
-- [ ] **T3. CI**: a hosted pipeline that runs T1–T2 and builds the release
-      APK (`./gradlew testDebugUnitTest assembleRelease`). Written for
-      GitHub Actions (`.github/workflows/ci.yml`); not run yet, as the repo
-      has no remote. Also runs pytest for `tools/`.
+- [x] **T3. CI**: GitHub Actions (`.github/workflows/ci.yml`) on every
+      pull request: `android` (T1–T2 and the release APK), `tools`
+      (pytest) and `ui` (T4 on an Android 8.1 emulator).
 - [x] **T4. UI tests** (Compose; `./gradlew connectedDebugAndroidTest` on
       the Nexus 4, or an API 27 emulator in CI): tabs and filters, hide and
       show, search plays a result. The debug build is a separate app
@@ -642,7 +636,8 @@ Parked:
 
 Not doing (and why):
 - Audiobooks, or splitting the app into reusable modules for them:
-  out of scope (decided 2026-10-29).
+  out of scope (decided 2026-10-29). A chapter now and then plays
+  through "Open with" (2026-11-06).
 - Cloud sync, streaming services, accounts, Google Play Services: the
   app is offline by design.
 - Remote analytics or remote feature flags: same reason; usage stays on
