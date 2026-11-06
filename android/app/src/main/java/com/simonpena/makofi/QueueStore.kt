@@ -79,7 +79,9 @@ class QueueStore(context: Context) : Player.Listener {
         player?.removeListener(this)
     }
 
+    /** Null for a file opened from another app: only library tracks are kept. */
     private fun toJson(item: MediaItem): JSONObject? {
+        if (item.mediaId.toLongOrNull() == null) return null
         val uri = item.localConfiguration?.uri ?: item.requestMetadata.mediaUri ?: return null
         val m = item.mediaMetadata
         return JSONObject()

@@ -53,6 +53,15 @@ Done in a separate repository.
       gap: a track in progress is lost if the process is killed (an
       install, a crash) rather than stopped.
 - [ ] A basic but polished Now Playing screen.
+- [ ] "Open with" for audio files from other apps (`OpenFile.kt`): the file
+      replaces the queue, isn't added to the library, and plays with the
+      usual controls and outputs. Done when checked by hand on both phones
+      and a speaker. Pixel 5 (2026-11-06): a library track, an indexed
+      file in Download and an unindexed one from Files all play, seek
+      after the Files screen closes, and show their cover when MediaStore
+      has one. Now Playing shows in 76 ms plus reading the file (~2 s for
+      6.5 MB unindexed); one Back returns to Files. Estudio played and
+      seeked an unindexed one. Still to check: the S25.
 
 ### A3. Library and visual design (brief Milestone 2)
 - [ ] Album/artist browsing, cached artwork, search, queue, favourites.

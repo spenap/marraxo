@@ -21,6 +21,19 @@ or recovered from commits and topic docs.
 Why: the tests check behaviour, which doesn't depend on the phone; CI
 still runs them on a Nexus 4 emulator. Detail: AGENTS.md.
 
+## 2026-11-06 · Files opened from other apps replace the queue
+Opening an audio file with Makofi plays it in place of the queue,
+without adding it to the library. `MainActivity`, started by the VIEW
+intent, shows only Now Playing (no library to load) and one Back returns
+to the app that opened it. A file MediaStore knows
+(matched by name and size) plays as that MediaStore track, so the
+library, history and saved queue know it. Any other file is copied to
+the cache (only the latest is kept), recorded by its tags, and not saved
+in the queue: the sender's grant ends when the screen it opened closes
+(seen on the Pixel 5).
+Why: one Now Playing, notification and output picker for every song.
+Detail: `OpenFile.kt`.
+
 ## 2026-11-02 · AGENTS.md holds the project's instructions
 Why: so any agent (Claude Code, Codex…) reads the same rules; CLAUDE.md
 imports it. Working rules kept in one agent's private notes moved there.

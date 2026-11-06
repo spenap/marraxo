@@ -1,5 +1,6 @@
 package com.simonpena.makofi
 
+import android.net.Uri
 import androidx.media3.common.Player
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
@@ -59,5 +60,19 @@ class QueueStoreTest {
         QueueStore(context).restore(player)
         idle()
         assertEquals(0, player.mediaItemCount)
+    }
+
+    @Test fun `a file opened from another app isn't kept`() {
+        val file = openedItem(Uri.parse("content://com.example.files/song.mp3"), Tags("Song", "", "", 60_000))
+        val before = FakePlayer()
+        before.setMediaItems(listOf(file), 0, 1_000)
+        idle()
+        QueueStore(context).run { follow(before); save() }
+
+        val after = FakePlayer()
+        QueueStore(context).restore(after)
+        idle()
+
+        assertEquals(0, after.mediaItemCount)
     }
 }
