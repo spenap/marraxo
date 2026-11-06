@@ -93,9 +93,14 @@ class PlayerHolder(context: Context) {
         }
     }
 
-    /** Plays a file opened from another app ([openedItem]): the queue becomes that file. Waits for the service if needed. */
+    /**
+     * Plays a file opened from another app ([openedItem]): the queue becomes
+     * that file, not repeated (its screen has no repeat control). Waits for
+     * the service if needed.
+     */
     fun open(item: MediaItem) {
         val start: MediaController.() -> Unit = {
+            repeatMode = Player.REPEAT_MODE_OFF
             setMediaItems(listOf(item), 0, 0L)
             prepare()
             play()

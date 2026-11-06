@@ -1600,17 +1600,20 @@ internal fun NowPlaying(
                             Text(fmt(track.durationMs), style = TextStyle(fontSize = 12.sp, color = GSoft))
                         }
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        IconToggle(GlowIcons.Shuffle, stringResource(R.string.shuffle), on = player.shuffle) { player.toggleShuffle() }
-                        IconSpot(GlowIcons.Previous, stringResource(R.string.previous), iconSize = 32.dp) { player.previous() }
+                    // A file alone: nothing to shuffle, skip or repeat, so play and pause only.
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (fromFile) Arrangement.Center else Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        if (!fromFile) {
+                            IconToggle(GlowIcons.Shuffle, stringResource(R.string.shuffle), on = player.shuffle) { player.toggleShuffle() }
+                            IconSpot(GlowIcons.Previous, stringResource(R.string.previous), iconSize = 32.dp) { player.previous() }
+                        }
                         Box(
                             Modifier.size(66.dp).clip(CircleShape).background(Color.White).clickable { player.togglePlay() },
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(if (player.isPlaying) GlowIcons.Pause else GlowIcons.Play, stringResource(R.string.play_or_pause), tint = Color(0xFF0E2226), modifier = Modifier.size(32.dp))
                         }
-                        IconSpot(GlowIcons.Next, stringResource(R.string.next), iconSize = 32.dp) { player.next() }
-                        Box {
+                        if (!fromFile) IconSpot(GlowIcons.Next, stringResource(R.string.next), iconSize = 32.dp) { player.next() }
+                        if (!fromFile) Box {
                             IconToggle(GlowIcons.Repeat, stringResource(R.string.repeat), on = player.repeatMode != Player.REPEAT_MODE_OFF) { player.cycleRepeat() }
                             if (player.repeatMode == 1) {
                                 Text("1", style = TextStyle(fontSize = 9.sp, fontWeight = FontWeight.Bold, color = GHi), modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 4.dp))
