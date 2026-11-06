@@ -1,5 +1,6 @@
 package com.simonpena.makofi
 
+import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -85,5 +86,21 @@ class PlayRecorderTest {
         assertEquals("phone", rows[0].output)
         assertEquals(3_000, rows[0].listenedMs)
         assertEquals(Row("O... Saya", 215_876, 10_000, "stopped", "Estudio"), rows[1])
+    }
+
+    @Test fun `a file opened from another app is recorded by its tags, without a MediaStore id`() {
+        val file = openedItem(Uri.parse("content://com.example.files/Voice%20note.mp3"), Tags("Voice note", "", "", 60_000))
+        player.setMediaItems(listOf(file, saya.toMediaItem()))
+        player.prepare()
+        player.play()
+        idle(5_000)
+        player.seekToNextMediaItem()
+        idle(1_000)
+        recorder.close()
+        assertEquals(Row("Voice note", 60_000, 5_000, "skipped", "phone"), rows(2)[0])
+        val ids = history.readableDatabase.rawQuery("SELECT media_id FROM plays ORDER BY id", null).use { c ->
+            buildList { while (c.moveToNext()) add(c.getString(0)) }
+        }
+        assertEquals(listOf(null, "11"), ids)
     }
 }

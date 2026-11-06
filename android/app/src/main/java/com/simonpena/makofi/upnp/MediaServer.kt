@@ -2,6 +2,7 @@ package com.simonpena.makofi.upnp
 
 import android.content.Context
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import java.io.BufferedOutputStream
 import java.io.FileInputStream
 import java.io.InputStream
@@ -50,7 +51,9 @@ class MediaServer(context: Context) {
 
     /** Publishes a track; returns its path, e.g. "/t/3f9a….mp3". */
     fun publishTrack(key: String, uri: Uri): Pair<String, String> {
-        val mime = resolver.getType(uri) ?: "audio/mpeg"
+        val mime = resolver.getType(uri)
+            ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))
+            ?: "audio/mpeg"
         val ext = when (mime) {
             "audio/mpeg" -> ".mp3"
             "audio/mp4", "audio/x-m4a", "audio/aac" -> ".m4a"

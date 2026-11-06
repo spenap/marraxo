@@ -208,6 +208,10 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val albumOfTrack = remember(library) { library.flatMap { a -> a.tracks.map { it.id to a } }.toMap() }
     val currentAlbum = player.currentTrackId?.let { albumOfTrack[it] }
     val currentTrack = currentAlbum?.tracks?.firstOrNull { it.id == player.currentTrackId }
+    // Playing something outside the library (a file opened from another app): shown from its tags.
+    val outside = if (currentTrack == null) player.currentItem?.toTrack() else null
+    val outsideAlbum = remember(outside) { outside?.let { Album(it.albumId, it.album, it.artist, 0, listOf(it)) } }
+    val hasMini = currentTrack != null || outside != null
     // What the library shows; the player above still finds hidden tracks it is playing.
     val visible = remember(library, hidden.albums, hidden.tracks) { hidden.filter(library) }
     val libraryState = remember { LibraryState() }
@@ -248,7 +252,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
 
     when (val screen = stack.last()) {
         Screen.Library -> LibraryScreen(
-            visible, libraryState, look, hasMini = currentTrack != null, status = imported ?: status,
+            visible, libraryState, look, hasMini = hasMini, status = imported ?: status,
             onRescan = onRescan, onImport = { pickData.launch(arrayOf("*/*")) }, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
             onSearch = { stack.add(Screen.Search) }, onAlbumOptions = { albumSheet = it }, home = home,
             onShelf = { title, spreadBy, matches -> stack.add(Screen.Shelf(title, spreadBy, matches)) },
@@ -262,7 +266,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
                     PillButton(stringResource(R.string.play)) { player.play(tracks, 0) }
                     ShuffleButton { player.play(spreadShuffle(tracks, key = screen.spreadBy), 0) }
                 }
-                AlbumGrid(albums, screen.grid, if (currentTrack != null) 96.dp else 24.dp, { albumSheet = it }) { stack.add(Screen.AlbumDetail(it)) }
+                AlbumGrid(albums, screen.grid, if (hasMini) 96.dp else 24.dp, { albumSheet = it }) { stack.add(Screen.AlbumDetail(it)) }
             }
         }
         Screen.Search -> SearchScreen(
@@ -276,7 +280,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
         is Screen.AlbumDetail -> {
             val album = visible.firstOrNull { it.id == screen.albumId }
             if (album == null) stack.removeAt(stack.lastIndex) else AlbumScreen(
-                album, currentTrack, hasMini = currentTrack != null,
+                album, currentTrack, hasMini = hasMini,
                 onBack = { stack.removeAt(stack.lastIndex) },
                 onPlay = { player.play(album.tracks, it) },
                 onOptions = { songSheet = it to album },
@@ -286,7 +290,10 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             )
         }
         Screen.NowPlaying ->
-            if (currentAlbum == null || currentTrack == null) stack.removeAt(stack.lastIndex)
+            if (outsideAlbum != null && outside != null) NowPlaying(outsideAlbum, outside, player, fromFile = true, onQueue = { stack.add(Screen.Queue) }) {
+                stack.removeAt(stack.lastIndex)
+            }
+            else if (currentAlbum == null || currentTrack == null) stack.removeAt(stack.lastIndex)
             else NowPlaying(
                 currentAlbum, currentTrack, player,
                 onAlbum = { stack.add(Screen.AlbumDetail(currentAlbum.id)) },
@@ -316,9 +323,10 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             }
         }
     }
-    if (stack.last() !in setOf(Screen.NowPlaying, Screen.Queue, Screen.Lyrics) && currentAlbum != null && currentTrack != null) {
+    val mini = if (currentAlbum != null && currentTrack != null) currentAlbum to currentTrack else outsideAlbum?.let { a -> outside?.let { a to it } }
+    if (stack.last() !in setOf(Screen.NowPlaying, Screen.Queue, Screen.Lyrics) && mini != null) {
         Box(Modifier.fillMaxSize()) {
-            MiniPlayer(currentAlbum, currentTrack, player, Modifier.align(Alignment.BottomCenter)) {
+            MiniPlayer(mini.first, mini.second, player, Modifier.align(Alignment.BottomCenter)) {
                 stack.add(Screen.NowPlaying)
             }
         }
@@ -328,7 +336,7 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             delay(UNDO_MS)
             if (undo === u) undo = null
         }
-        UndoBar(stringResource(u.message), bottom = if (currentTrack != null) 96.dp else 24.dp) {
+        UndoBar(stringResource(u.message), bottom = if (hasMini) 96.dp else 24.dp) {
             u.undo()
             undo = null
         }
@@ -1534,6 +1542,7 @@ internal fun NowPlaying(
     favourite: Boolean? = null,
     onFavourite: () -> Unit = {},
     onOptions: (() -> Unit)? = null,
+    fromFile: Boolean = false,
     onClose: () -> Unit,
 ) {
     val tint = rememberArt(album.id, 560)?.tint ?: placeholderTint(album.id)
@@ -1560,10 +1569,10 @@ internal fun NowPlaying(
                         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             val radio = player.currentItem?.mediaMetadata?.extras?.getString(EXTRA_RADIO)
                             Text(
-                                radio ?: stringResource(R.string.playing_from_album),
+                                radio ?: stringResource(if (fromFile) R.string.playing_file else R.string.playing_from_album),
                                 style = TextStyle(fontSize = 11.sp, letterSpacing = .7.sp, color = GSoft),
                             )
-                            Text(
+                            if (album.title.isNotEmpty()) Text(
                                 album.title, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White), maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 modifier = if (onAlbum != null) Modifier.clickable(onClick = onAlbum) else Modifier,
                             )
@@ -1629,6 +1638,20 @@ internal fun NowPlaying(
         // Scrolled to the cards: the bar above them in the gradient's top colour, not over the words.
         if (scroll.value > 0) Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
         if (outputs) OutputSheet(player) { outputs = false }
+    }
+}
+
+/**
+ * A file opened from another app: Now Playing alone, without the library;
+ * closing it ends the screen. Shows nothing until the player has [mediaId]
+ * (null: whatever it plays), not the song it was playing before.
+ */
+@Composable
+fun OpenedFileScreen(player: PlayerHolder, mediaId: String?, onClose: () -> Unit) {
+    val track = player.currentItem?.takeIf { mediaId == null || it.mediaId == mediaId }?.toTrack()
+    val album = remember(track) { track?.let { Album(it.albumId, it.album, it.artist, 0, listOf(it)) } }
+    Box(Modifier.fillMaxSize().background(GBg)) {
+        if (track != null && album != null) NowPlaying(album, track, player, fromFile = true, onClose = onClose)
     }
 }
 

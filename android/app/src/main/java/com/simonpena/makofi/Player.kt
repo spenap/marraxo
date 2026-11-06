@@ -20,6 +20,7 @@ import androidx.media3.session.SessionToken
 /** The UI's handle on [PlaybackService], exposing player state as Compose state. */
 class PlayerHolder(context: Context) {
     private var controller: MediaController? = null
+    private val pending = mutableListOf<MediaController.() -> Unit>()
 
     var isPlaying by mutableStateOf(false)
         private set
@@ -57,6 +58,8 @@ class PlayerHolder(context: Context) {
             controller = c
             sync(c)
             syncOutput(c.sessionExtras)
+            pending.forEach { c.it() }
+            pending.clear()
         }, ContextCompat.getMainExecutor(context))
     }
 
@@ -88,6 +91,17 @@ class PlayerHolder(context: Context) {
             prepare()
             play()
         }
+    }
+
+    /** Plays a file opened from another app ([openedItem]): the queue becomes that file. Waits for the service if needed. */
+    fun open(item: MediaItem) {
+        val start: MediaController.() -> Unit = {
+            setMediaItems(listOf(item), 0, 0L)
+            prepare()
+            play()
+        }
+        val c = controller
+        if (c != null) c.start() else pending.add(start)
     }
 
     /** Plays [seed] now and a radio from it after: the queue becomes the radio. */

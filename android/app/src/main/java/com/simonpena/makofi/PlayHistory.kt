@@ -102,7 +102,7 @@ class PlayRecorder(private val history: PlayHistory, private var player: Player)
             val meta = heard.mediaMetadata
             val row = ContentValues().apply {
                 put("started_at", startedAt)
-                put("media_id", heard.mediaId)
+                put("media_id", heard.mediaId.takeIf { it.toLongOrNull() != null }) // null for a file opened from another app
                 put("title", meta.title?.toString())
                 put("artist", meta.artist?.toString())
                 put("album", meta.albumTitle?.toString())

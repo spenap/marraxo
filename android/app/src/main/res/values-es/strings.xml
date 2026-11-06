@@ -102,6 +102,7 @@
 
     <!-- Now Playing -->
     <string name="playing_from_album">REPRODUCIENDO DEL ÁLBUM</string>
+    <string name="playing_file">REPRODUCIENDO UN ARCHIVO</string>
     <string name="close">Cerrar</string>
     <string name="shuffle">Aleatorio</string>
     <string name="previous">Anterior</string>

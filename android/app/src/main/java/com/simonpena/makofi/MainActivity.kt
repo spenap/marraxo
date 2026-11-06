@@ -31,6 +31,8 @@ class MainActivity : ComponentActivity() {
     private var status by mutableStateOf<String?>(null)
     private var isHome by mutableStateOf(false)
     private var homePresses by mutableIntStateOf(0)
+    /** The file opened from another app: "" until it's read; null after the screen is recreated. */
+    private var opened by mutableStateOf<String?>(null)
 
     /** Android 13+ splits storage access by media type and adds a notification permission. */
     private val permissions =
@@ -57,6 +59,15 @@ class MainActivity : ComponentActivity() {
             snapshotFlow { player.output }.collect {
                 volumeControlStream = if (it == null) AudioManager.STREAM_MUSIC else AudioManager.USE_DEFAULT_STREAM_TYPE
             }
+        }
+        // "Open with" from another app: Now Playing for that file alone, and Back returns to that app.
+        if (intent.action == Intent.ACTION_VIEW) {
+            if (savedInstanceState == null) {
+                opened = ""
+                open(intent)
+            }
+            setContent { OpenedFileScreen(player, opened, onClose = ::finish) }
+            return
         }
         refreshPermission()
         setContent {
@@ -86,6 +97,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasCategory(Intent.CATEGORY_HOME)) homePresses++
+        open(intent)
+    }
+
+    /** Plays the file in place of the queue; closes if it can't be read. */
+    private fun open(intent: Intent) {
+        val uri = intent.data?.takeIf { intent.action == Intent.ACTION_VIEW } ?: return
+        lifecycleScope.launch {
+            val item = readOpenedFile(this@MainActivity, uri) ?: return@launch finish()
+            opened = item.mediaId
+            player.open(item)
+        }
     }
 
     private fun refreshPermission() {
