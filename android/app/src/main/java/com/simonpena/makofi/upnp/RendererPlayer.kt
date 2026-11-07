@@ -15,6 +15,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import java.io.IOException
 import java.util.concurrent.Executors
 import kotlin.random.Random
 
@@ -71,6 +72,7 @@ class RendererPlayer(
     private var baseUrl: String? = null // only touched on the net thread
     private var joined = false // net thread: group members follow the lead room
     private var polling = false
+    private var missedPolls = 0 // in a row, with no answer at all
     private var released = false
 
     // ------------------------------------------------------------ state
@@ -305,6 +307,11 @@ class RendererPlayer(
                 val volume = runCatching { rendererVolume() }.getOrNull()
                 main.post {
                     polling = false
+                    missedPolls = if (transport == null && position == null && volume == null) missedPolls + 1 else 0
+                    if (missedPolls >= MAX_MISSED_POLLS) {
+                        unreachable(IOException("no answer to $MAX_MISSED_POLLS polls"))
+                        return@post
+                    }
                     applyRemote(transport, position, volume)
                     if (!released) {
                         main.removeCallbacks(this)
@@ -479,20 +486,24 @@ class RendererPlayer(
                 block()
             } catch (e: Exception) {
                 Log.w(TAG, "${renderer.name}: ${e.message}")
-                main.post {
-                    loading = false
-                    if (released) return@post
-                    playerError = PlaybackException(
-                        "${renderer.name} didn't respond", e, PlaybackException.ERROR_CODE_REMOTE_ERROR,
-                    )
-                    playbackState = Player.STATE_IDLE
-                    playWhenReady = false
-                    loadedUrl = null
-                    updateLocks()
-                    invalidateState()
-                }
+                main.post { unreachable(e) }
             }
         }
+    }
+
+    /** The renderer didn't answer: stop, with an error, so the service can move back to the phone. */
+    private fun unreachable(cause: Exception) {
+        loading = false
+        if (released) return
+        setPosition(currentPositionMs())
+        playerError = PlaybackException(
+            "${renderer.name} didn't respond", cause, PlaybackException.ERROR_CODE_REMOTE_ERROR,
+        )
+        playbackState = Player.STATE_IDLE
+        playWhenReady = false
+        loadedUrl = null
+        updateLocks()
+        invalidateState()
     }
 
     /** Sonos: the other rooms follow the lead room (x-rincon:<its id>). */
@@ -539,6 +550,7 @@ class RendererPlayer(
         const val END_SLACK_MS = 5000L
         const val FAST_POLL_MS = 1000L
         const val SLOW_POLL_MS = 5000L
+        const val MAX_MISSED_POLLS = 3
         const val WAKE_TIMEOUT_MS = 6 * 60 * 60 * 1000L
         val DONE: ListenableFuture<*> = Futures.immediateVoidFuture()
         val DEVICE_INFO = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE).setMinVolume(0).setMaxVolume(100).build()

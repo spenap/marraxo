@@ -373,6 +373,17 @@ class RendererPlayerTest {
         eventually("takes the speaker back") { fake.uri == ours && fake.state == "PLAYING" }
     }
 
+    @Test fun `a speaker that stops answering is an error, not silence`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "O... Saya", file("s.mp3"), 215_000)))
+        player.prepare()
+        player.play()
+        eventually("plays") { fake.state == "PLAYING" && player.isPlaying }
+        fake.close() // the phone left the Wi-Fi
+        eventually("gives up") { player.playerError != null }
+        assertTrue(!player.playWhenReady)
+    }
+
     @Test fun `the TV gets DLNA features, so it can seek`() {
         val (fake, player) = start(FakeRenderer.Kind.TV)
         player.setMediaItems(listOf(item(1, "Daily Growing", file("c.mp3"), 293_000)))
