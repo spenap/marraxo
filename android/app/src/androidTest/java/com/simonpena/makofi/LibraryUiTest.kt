@@ -1,7 +1,6 @@
 package com.simonpena.makofi
 
 import android.content.Context
-import android.net.Uri
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -38,7 +37,7 @@ class LibraryUiTest {
 
     private fun album(id: Long, title: String, artist: String, year: Int, genre: String, vararg songs: String) =
         Album(id, title, artist, year, songs.mapIndexed { i, s ->
-            Track(id * 100 + i, s, artist, title, id, 200_000, i + 1, Uri.parse("content://media/external/audio/media/${id * 100 + i}"))
+            Track(id * 100 + i, s, artist, title, id, 200_000, i + 1, silence)
         }, genre)
 
     private val library = listOf(
@@ -47,7 +46,7 @@ class LibraryUiTest {
         album(3, "A Son de Guerra", "Juan Luis Guerra", 2010, "Merengue", "Apaga y vámonos", "Bachata en Fukuoka"),
         album(4, "Demo", "An Danzza", 0, "", "Exiled Druid"),
         Album(5, "Anthems: Trance", "Various Artists", 2013, genre = "Trance", tracks = listOf("Insomnia" to "Faithless", "Sandstorm" to "Darude").mapIndexed { i, (s, a) ->
-            Track(500L + i, s, a, "Anthems: Trance", 5, 200_000, i + 1, Uri.parse("content://media/external/audio/media/${500 + i}"))
+            Track(500L + i, s, a, "Anthems: Trance", 5, 200_000, i + 1, silence)
         }),
     )
 

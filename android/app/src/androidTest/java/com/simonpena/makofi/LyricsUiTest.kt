@@ -2,7 +2,6 @@ package com.simonpena.makofi
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.net.Uri
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsOff
@@ -29,7 +28,7 @@ class LyricsUiTest {
     private lateinit var player: PlayerHolder
 
     private fun track(id: Long, title: String, path: String) =
-        Track(id, title, "Phil Collins", "Face Value", 1, 336_000, id.toInt(), Uri.parse("content://media/external/audio/media/$id"), path)
+        Track(id, title, "Phil Collins", "Face Value", 1, 336_000, id.toInt(), silence, path)
 
     private val library = listOf(
         Album(1, "Face Value", "Phil Collins", 1981, listOf(

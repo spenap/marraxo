@@ -173,4 +173,5 @@
     <string name="import_not_data">Un archivo no era ni letras ni notas del disco</string>
     <string name="import_other_version">Un archivo es de otra versión de Makofi</string>
     <string name="output_lost">No se puede conectar con %1$s. De vuelta en este teléfono.</string>
+    <string name="cant_play">No se puede reproducir %1$s</string>
 </resources>
