@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Looper
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
 import com.google.common.util.concurrent.Futures
@@ -37,13 +38,17 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     private var discontinuity: Int? = null
     private var repeat = Player.REPEAT_MODE_OFF
     private var shuffle = false
+    private var error: PlaybackException? = null
+    /** Positions in the queue whose tracks fail as they load, like a corrupt or missing file. */
+    var failing: Set<Int> = emptySet()
 
     override fun getState(): State {
         val b = State.Builder()
             .setAvailableCommands(Player.Commands.Builder().addAllCommands().build())
             .setPlaylist(items.mapIndexed { i, item -> MediaItemData.Builder("${item.mediaId}#$i").setMediaItem(item).build() })
             .setPlayWhenReady(playWhenReady, Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
-            .setPlaybackState(if (items.isNotEmpty() && prepared) Player.STATE_READY else Player.STATE_IDLE)
+            .setPlaybackState(if (items.isNotEmpty() && prepared && error == null) Player.STATE_READY else Player.STATE_IDLE)
+            .setPlayerError(error)
             .setContentPositionMs(positionMs)
             .setRepeatMode(repeat)
             .setShuffleModeEnabled(shuffle)
@@ -73,7 +78,13 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
         return done
     }
 
-    override fun handlePrepare(): ListenableFuture<*> { prepared = true; return done }
+    override fun handlePrepare(): ListenableFuture<*> { prepared = true; error = null; load(); return done }
+
+    private fun load() {
+        if (!prepared || index !in failing) return
+        error = PlaybackException("can't decode", null, PlaybackException.ERROR_CODE_DECODING_FAILED)
+        prepared = false // idle after an error, until prepared again
+    }
     override fun handleStop(): ListenableFuture<*> { prepared = false; return done }
     override fun handleRelease(): ListenableFuture<*> = done
 
@@ -85,6 +96,7 @@ class FakePlayer : SimpleBasePlayer(Looper.getMainLooper()) {
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
         index = mediaItemIndex
         this.positionMs = if (positionMs == C.TIME_UNSET) 0 else positionMs
+        load()
         return done
     }
 

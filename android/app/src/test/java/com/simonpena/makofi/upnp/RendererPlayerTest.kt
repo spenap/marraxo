@@ -2,6 +2,7 @@ package com.simonpena.makofi.upnp
 
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.test.core.app.ApplicationProvider
 import com.simonpena.makofi.idle
@@ -10,6 +11,7 @@ import com.simonpena.makofi.track
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -382,6 +384,32 @@ class RendererPlayerTest {
         fake.close() // the phone left the Wi-Fi
         eventually("gives up") { player.playerError != null }
         assertTrue(!player.playWhenReady)
+        assertEquals(PlaybackException.ERROR_CODE_REMOTE_ERROR, player.playerError?.errorCode)
+    }
+
+    @Test fun `a track the speaker refuses is that track's error, not a lost speaker`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        fake.refuseTracks = true
+        player.setMediaItems(listOf(item(1, "O... Saya", file("s.mp3"), 215_000)))
+        player.prepare()
+        player.play()
+        eventually("fails") { player.playerError != null }
+        assertNotEquals(PlaybackException.ERROR_CODE_REMOTE_ERROR, player.playerError?.errorCode)
+    }
+
+    @Test fun `a refused seek keeps playing`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "O... Saya", file("s.mp3"), 215_000)))
+        player.prepare()
+        player.play()
+        eventually("plays") { fake.state == "PLAYING" && player.isPlaying }
+        fake.refuseSeeks = true
+        idle(5_000)
+        player.seekTo(90_000)
+        eventually("Seek reaches the speaker") { "Seek" in fake.actions }
+        idle(1_000)
+        assertEquals(null, player.playerError)
+        assertTrue(player.isPlaying)
     }
 
     @Test fun `the TV gets DLNA features, so it can seek`() {

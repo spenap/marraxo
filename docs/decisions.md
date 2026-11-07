@@ -15,6 +15,12 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-07 · A track that can't play is skipped
+A track the phone or a renderer can't play (corrupt, missing, a format
+refused) is skipped with a message naming it; 3 in a row, or the end of
+the queue, stop there. Only no answer at all from a renderer counts as
+lost (the entry below); a fault is the track's. Detail: `TrackErrors`.
+
 ## 2026-11-07 · A lost speaker or TV hands back to the phone, paused
 When the phone leaves the Wi-Fi, or a renderer misses 3 polls in a row,
 playback moves back to this phone with the queue and position, paused,

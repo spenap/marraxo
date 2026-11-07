@@ -194,4 +194,5 @@
     <string name="import_not_data">A file wasn\'t lyrics or liner notes</string>
     <string name="import_other_version">A file is for another version of Makofi</string>
     <string name="output_lost">%1$s can\'t be reached. Back on this phone.</string>
+    <string name="cant_play">Can\'t play %1$s</string>
 </resources>

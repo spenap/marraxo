@@ -271,7 +271,7 @@ class RendererPlayer(
         loading = true
         val host = java.net.URL(renderer.avTransport).host
         val meta = item.mediaMetadata
-        call {
+        call(loadsTrack = true) {
             if (renderer.isGroup && !joined) joinGroup()
             val base = baseUrl ?: server.baseUrlFor(host).also { baseUrl = it }
             val (path, mime) = server.publishTrack(item.mediaId, uri)
@@ -309,7 +309,7 @@ class RendererPlayer(
                     polling = false
                     missedPolls = if (transport == null && position == null && volume == null) missedPolls + 1 else 0
                     if (missedPolls >= MAX_MISSED_POLLS) {
-                        unreachable(IOException("no answer to $MAX_MISSED_POLLS polls"))
+                        fail(Unreachable(IOException("no answer to $MAX_MISSED_POLLS polls")), PlaybackException.ERROR_CODE_REMOTE_ERROR)
                         return@post
                     }
                     applyRemote(transport, position, volume)
@@ -479,25 +479,37 @@ class RendererPlayer(
         }
     }
 
-    private fun call(block: () -> Unit) {
+    /**
+     * Net thread: runs [block]. No answer stops playback as unreachable. Any
+     * other failure stops it as the track's failure when [loadsTrack], and
+     * is only logged otherwise: the next poll shows where the renderer is.
+     */
+    private fun call(loadsTrack: Boolean = false, block: () -> Unit) {
         if (net.isShutdown) return
         net.execute {
             try {
                 block()
             } catch (e: Exception) {
                 Log.w(TAG, "${renderer.name}: ${e.message}")
-                main.post { unreachable(e) }
+                when {
+                    e is Unreachable -> main.post { fail(e, PlaybackException.ERROR_CODE_REMOTE_ERROR) }
+                    loadsTrack -> main.post { fail(e, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED) }
+                }
             }
         }
     }
 
-    /** The renderer didn't answer: stop, with an error, so the service can move back to the phone. */
-    private fun unreachable(cause: Exception) {
+    /** No answer from the renderer at all. */
+    private class Unreachable(cause: Exception) : IOException(cause.message, cause)
+
+    /** Stops with an error: [PlaybackException.ERROR_CODE_REMOTE_ERROR] when the renderer can't be reached, else the track's. */
+    private fun fail(cause: Exception, code: Int) {
         loading = false
         if (released) return
         setPosition(currentPositionMs())
         playerError = PlaybackException(
-            "${renderer.name} didn't respond", cause, PlaybackException.ERROR_CODE_REMOTE_ERROR,
+            if (code == PlaybackException.ERROR_CODE_REMOTE_ERROR) "${renderer.name} didn't respond" else "${renderer.name} can't play this",
+            cause, code,
         )
         playbackState = Player.STATE_IDLE
         playWhenReady = false
@@ -509,7 +521,7 @@ class RendererPlayer(
     /** Sonos: the other rooms follow the lead room (x-rincon:<its id>). */
     private fun joinGroup() {
         renderer.members.forEach {
-            soap(it.avTransport, AV_TRANSPORT, "SetAVTransportURI", "InstanceID" to 0,
+            reach(it.avTransport, AV_TRANSPORT, "SetAVTransportURI", "InstanceID" to 0,
                 "CurrentURI" to "x-rincon:${renderer.id}", "CurrentURIMetaData" to "")
         }
         joined = true
@@ -535,13 +547,17 @@ class RendererPlayer(
     }
 
     private fun grc(action: String, vararg args: Pair<String, Any>) =
-        soap(renderer.groupRenderingControl ?: error("no GroupRenderingControl"), GROUP_RENDERING_CONTROL, action, "InstanceID" to 0, *args)
+        reach(renderer.groupRenderingControl ?: error("no GroupRenderingControl"), GROUP_RENDERING_CONTROL, action, "InstanceID" to 0, *args)
+
+    /** [soap], with no answer as [Unreachable]; a fault (an answer) passes as it is. */
+    private fun reach(controlUrl: String, service: String, action: String, vararg args: Pair<String, Any>) =
+        try { soap(controlUrl, service, action, *args) } catch (e: IOException) { throw Unreachable(e) }
 
     private fun avt(action: String, vararg args: Pair<String, Any>) =
-        soap(renderer.avTransport, AV_TRANSPORT, action, "InstanceID" to 0, *args)
+        reach(renderer.avTransport, AV_TRANSPORT, action, "InstanceID" to 0, *args)
 
     private fun rc(action: String, vararg args: Pair<String, Any>) =
-        soap(renderer.renderingControl ?: error("no RenderingControl"), RENDERING_CONTROL, action, "InstanceID" to 0, *args)
+        reach(renderer.renderingControl ?: error("no RenderingControl"), RENDERING_CONTROL, action, "InstanceID" to 0, *args)
 
     private companion object {
         const val TAG = "RendererPlayer"

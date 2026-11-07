@@ -50,6 +50,7 @@ class PlaybackService : MediaSessionService() {
     private var recorder: PlayRecorder? = null
     private lateinit var queue: QueueStore
     private lateinit var radio: RadioQueue
+    private val trackErrors = TrackErrors { title -> say(getString(R.string.cant_play, title)) }
     private val scope = MainScope()
     private lateinit var phone: ExoPlayer
     private var server: MediaServer? = null
@@ -70,6 +71,7 @@ class PlaybackService : MediaSessionService() {
         recorder = PlayRecorder(PlayHistory(this), phone).also(phone::addListener)
         queue = QueueStore(this).also { it.restore(phone); it.follow(phone) }
         radio = RadioQueue(scope) { reasonText(resources, it) }.also { it.follow(phone) }
+        trackErrors.follow(phone)
         // Tapping the notification (or the lock-screen controls) opens the app.
         val openApp = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java),
@@ -174,6 +176,7 @@ class PlaybackService : MediaSessionService() {
         recorder?.attach(new, renderer?.name ?: "phone")
         queue.follow(new)
         radio.follow(new)
+        trackErrors.follow(new)
         handOver(old, new)
         session.player = new
         if (old is RendererPlayer) old.release()
@@ -182,7 +185,9 @@ class PlaybackService : MediaSessionService() {
 
     /** A renderer that stops answering: back to this phone, paused. */
     private fun lost(renderer: Renderer) = object : Player.Listener {
-        override fun onPlayerError(error: PlaybackException) = backToPhone("no answer: ${error.cause?.message}")
+        override fun onPlayerError(error: PlaybackException) {
+            if (error.errorCode == PlaybackException.ERROR_CODE_REMOTE_ERROR) backToPhone("no answer: ${error.cause?.message}")
+        }
     }
 
     /** Leaving the Wi-Fi leaves the speakers and the TV behind. */
@@ -194,8 +199,10 @@ class PlaybackService : MediaSessionService() {
         val renderer = (session?.player as? RendererPlayer)?.renderer ?: return
         Log.w(TAG, "${renderer.name}: $why; back to the phone")
         setOutput(null)
-        Toast.makeText(this, getString(R.string.output_lost, renderer.name), Toast.LENGTH_LONG).show()
+        say(getString(R.string.output_lost, renderer.name))
     }
+
+    private fun say(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
 

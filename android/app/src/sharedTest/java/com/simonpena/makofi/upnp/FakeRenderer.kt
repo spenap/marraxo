@@ -55,6 +55,10 @@ class FakeRenderer(private val kind: Kind, private val room: String = if (kind =
     @Volatile var playDelayMs = 0L
     /** State right after Play, if not the usual one (the TV can stay STOPPED for a moment). */
     @Volatile var stateAfterPlay: String? = null
+    /** Answers SetAVTransportURI with a fault, as for a format it can't play. */
+    @Volatile var refuseTracks = false
+    /** Answers Seek with a fault. */
+    @Volatile var refuseSeeks = false
     /** Play requests fully handled (after any [playDelayMs]). */
     @Volatile var plays = 0
     val actions: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
@@ -84,6 +88,7 @@ class FakeRenderer(private val kind: Kind, private val room: String = if (kind =
                     joinedTo = args.getValue("CurrentURI").removePrefix("x-rincon:")
                     return emptyMap()
                 }
+                if (refuseTracks) throw UpnpFault(714, "Illegal MIME-type")
                 uri = args.getValue("CurrentURI")
                 metadata = args["CurrentURIMetaData"].orEmpty()
                 positionMs = 0
@@ -99,6 +104,7 @@ class FakeRenderer(private val kind: Kind, private val room: String = if (kind =
             "Stop" -> { state = "STOPPED"; positionMs = 0 }
             "BecomeCoordinatorOfStandaloneGroup" -> joinedTo = null
             "Seek" -> {
+                if (refuseSeeks) throw UpnpFault(701, "Transition not available")
                 if (kind == Kind.TV && contentFeatures?.contains("DLNA.ORG_OP=01") != true) {
                     throw UpnpFault(701, "Transition not available")
                 }
