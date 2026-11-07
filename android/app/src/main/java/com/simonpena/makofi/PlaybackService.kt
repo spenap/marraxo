@@ -5,13 +5,20 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
+import android.os.Handler
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
+import android.widget.Toast
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
@@ -113,6 +120,9 @@ class PlaybackService : MediaSessionService() {
             })
             .build()
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
+        getSystemService(ConnectivityManager::class.java).registerNetworkCallback(
+            NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(), wifi, Handler(mainLooper),
+        )
     }
 
     private fun notSupported() = Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
@@ -159,7 +169,7 @@ class PlaybackService : MediaSessionService() {
             val server = server ?: MediaServer(this).also { server = it }
             RendererPlayer(this, renderer, server) { item ->
                 item.mediaMetadata.extras?.getLong(EXTRA_ALBUM_ID)?.let { coverJpeg(this, it) }
-            }
+            }.also { it.addListener(lost(renderer)) }
         }
         recorder?.attach(new, renderer?.name ?: "phone")
         queue.follow(new)
@@ -168,6 +178,23 @@ class PlaybackService : MediaSessionService() {
         session.player = new
         if (old is RendererPlayer) old.release()
         session.setSessionExtras(Bundle().apply { renderer?.let { putBundle(EXTRA_OUTPUT, it.toBundle()) } })
+    }
+
+    /** A renderer that stops answering: back to this phone, paused. */
+    private fun lost(renderer: Renderer) = object : Player.Listener {
+        override fun onPlayerError(error: PlaybackException) = backToPhone("no answer: ${error.cause?.message}")
+    }
+
+    /** Leaving the Wi-Fi leaves the speakers and the TV behind. */
+    private val wifi = object : ConnectivityManager.NetworkCallback() {
+        override fun onLost(network: Network) = backToPhone("Wi-Fi lost")
+    }
+
+    private fun backToPhone(why: String) {
+        val renderer = (session?.player as? RendererPlayer)?.renderer ?: return
+        Log.w(TAG, "${renderer.name}: $why; back to the phone")
+        setOutput(null)
+        Toast.makeText(this, getString(R.string.output_lost, renderer.name), Toast.LENGTH_LONG).show()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
@@ -179,6 +206,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         unregisterReceiver(screenOff)
+        getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(wifi)
         scope.cancel()
         queue.stop()
         recorder?.close()

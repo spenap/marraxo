@@ -60,6 +60,11 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    // The fake speaker and TV, for JVM and device tests alike.
+    sourceSets {
+        getByName("test").java.srcDir("src/sharedTest/java")
+        getByName("androidTest").java.srcDir("src/sharedTest/java")
+    }
     testOptions {
         // Robolectric runs Android classes (Uri, Bundle, SQLite) on the JVM.
         unitTests.isIncludeAndroidResources = true
