@@ -182,7 +182,9 @@ class PlaybackService : MediaSessionService() {
 
     /** A renderer that stops answering: back to this phone, paused. */
     private fun lost(renderer: Renderer) = object : Player.Listener {
-        override fun onPlayerError(error: PlaybackException) = backToPhone("no answer: ${error.cause?.message}")
+        override fun onPlayerError(error: PlaybackException) {
+            if (error.errorCode == PlaybackException.ERROR_CODE_REMOTE_ERROR) backToPhone("no answer: ${error.cause?.message}")
+        }
     }
 
     /** Leaving the Wi-Fi leaves the speakers and the TV behind. */
