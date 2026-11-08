@@ -80,6 +80,11 @@ android {
     }
 }
 
+aboutLibraries {
+    // No build time in the licences file, so rebuilding gives the same APK.
+    excludeFields = arrayOf("generated")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
