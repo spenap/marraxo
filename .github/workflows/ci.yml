@@ -61,11 +61,14 @@ jobs:
       run:
         working-directory: android
     steps:
-      # The emulator needs 7.2 GB free. First, as setup-java installs into
-      # the tool cache this clears.
+      # The emulator needs 7.2 GB free. The tool cache goes, except the
+      # runner's own Java 17: downloading it instead fails when Adoptium does.
       - name: Free disk space
         working-directory: /
-        run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" && df -h /
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+          sudo find "$AGENT_TOOLSDIRECTORY" -mindepth 1 -maxdepth 1 ! -name Java_Temurin-Hotspot_jdk -exec rm -rf {} +
+          df -h /
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
