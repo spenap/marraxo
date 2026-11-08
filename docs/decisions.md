@@ -15,6 +15,13 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-08 · No cloud backup of the app's data
+Android's backup would upload play history, favourites and the queue to
+the user's cloud account, against "nothing is ever sent elsewhere". Backup
+is off; on Android 12+ the cloud backup excludes everything, and a direct
+phone-to-phone transfer still moves them to a new phone. Detail:
+`res/xml/data_extraction_rules.xml`, `BackupTest`.
+
 ## 2026-11-07 · A track that can't play is skipped
 A track the phone or a renderer can't play (corrupt, missing, a format
 refused) is skipped with a message naming it; 3 in a row, or the end of
