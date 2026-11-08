@@ -2,7 +2,7 @@
 
 [beets](https://beets.io) matches albums against MusicBrainz (plus AcoustID
 fingerprints), normalises tags, fetches and embeds artwork, and renames.
-It **copies** into the collection, `~/Music`; the folder
+It **copies** into the collection (`MAKOFI_MUSIC`, see `tools/local.env.example`); the folder
 being imported (e.g. `~/Music-incoming/<album>`) is never modified. (The
 collection was built this way from the original `~/Music`, now
 `~/Music-todelete` until it is wiped.)

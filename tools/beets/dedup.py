@@ -21,6 +21,8 @@ import sys
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # settings.py, also under python -I
+import settings  # noqa: E402
 
 AUDIO = (".mp3", ".m4a", ".ogg", ".flac", ".wav", ".opus")
 
@@ -89,7 +91,7 @@ def describe(path):
 def main(args):
     if args == ["--from-triage"]:
         rows = [l for l in open("out/triage.md") if l.startswith("| · |")]
-        args = ["~/Music/" + l.split("|")[2].strip() for l in rows]
+        args = [str(settings.music() / l.split("|")[2].strip()) for l in rows]
     out = Path("out/dedup")
     lines = []
     for n, folder in enumerate(args, 1):

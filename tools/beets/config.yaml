@@ -1,11 +1,11 @@
 # beets configuration for the collection cleanup (roadmap C1–C2).
 # Run through tools/beets/beet, which sets BEETSDIR so nothing from
-# ~/.config/beets leaks in.
+# ~/.config/beets leaks in, and the collection (`directory`) from
+# MAKOFI_MUSIC (tools/local.env). Relative paths are under tools/beets/out.
 #
 # Safety: beets COPIES into `directory`; the source collection is never
 # modified. Tags are written to the copies only.
 
-directory: ~/Music
 per_disc_numbering: yes # disc 2 starts again at track 1
 # ID3v2.3, not beets' default v2.4: Android's media scanner reads the year
 # only from v2.3's TYER and shows no year for v2.4 files (checked on the
@@ -14,14 +14,14 @@ id3v23: yes
 # Year = when the music first came out (Castillo de arena: 1977), not the
 # reissue that was matched (2018). The release's own date stays in beets.
 original_date: yes
-library: tools/beets/out/library.db
+library: library.db
 
 import:
   copy: yes
   move: no
   write: yes
   resume: ask
-  log: tools/beets/out/import.log
+  log: import.log
   # Quiet mode accepts only strong matches; everything else is skipped
   # and listed in the log, to be reviewed interactively.
   quiet_fallback: skip

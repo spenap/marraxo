@@ -351,7 +351,7 @@ Needs A1 and B0.
 ## Track C: Music library tool (no phone needed)
 
 ### C0. Read-only inventory (brief §5 Phase 1)
-Collection: laptop copy at `~/Music` (originals stay on
+Collection: a laptop copy (originals stay on
 the backup drive). 37 GB, 225 artist folders, `Artist/Album/` layout,
 ~6,300 tracks: 6,206 MP3, 40 M4A, 37 OGG, 10 Musepack (`.mpc`, which
 Android can't decode). 476 cover images next to the tracks, plus leftovers
@@ -364,7 +364,7 @@ desconocido", `Compilations` and `Varios Artistas`.
 
 ### C1. Identification, normalisation, artwork (Phases 2–4)
 Done with beets (`tools/beets/`), copying into
-`~/Music-clean`. Automatic pass first; skipped albums are
+a separate clean folder. Automatic pass first; skipped albums are
 reviewed interactively.
 - [x] Genre synonyms the app can't see (2026-10-31): 25 albums (406
       songs) retagged, each approved one by one, by `tools/beets/genres.py`

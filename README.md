@@ -35,7 +35,8 @@ Decisions and why: [`docs/decisions.md`](docs/decisions.md).
   for Android 8.1 (API 27) and up.
 - `tools/`: Python tools for the computer side: tidying the collection's
   tags and covers (with [beets](https://beets.io)), fetching liner notes and
-  lyrics, and copying music and data to the phones.
+  lyrics, and copying music and data to the phones. They find the collection
+  through `MAKOFI_MUSIC` (`tools/local.env.example`).
 - `docs/`: plans, decisions, protocol notes and mockups.
 
 Install on a connected phone:

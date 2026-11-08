@@ -29,10 +29,11 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # settings.py, also under python -I
+import settings  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 LIBRARY = HERE.parent / "beets" / "out" / "library.db"
-COLLECTION = Path("~/Music")
 PHONE_MUSIC = "/sdcard/Music"
 MANIFEST = f"{PHONE_MUSIC}/.mako-sync"
 HISTORY = "/data/data/com.simonpena.makofi/databases/history.db"
@@ -230,7 +231,7 @@ def plays_by_album(serial):
 # ------------------------------------------------------------------ the collection
 
 def local_files(album):
-    return {f.name: (st.st_size, int(st.st_mtime)) for f in (COLLECTION / album).iterdir() if f.is_file() for st in [f.stat()]}
+    return {f.name: (st.st_size, int(st.st_mtime)) for f in (settings.music() / album).iterdir() if f.is_file() for st in [f.stat()]}
 
 
 def collection_albums(plays):
@@ -244,7 +245,7 @@ def collection_albums(plays):
         if not folder.is_dir():
             continue
         size = sum(f.stat().st_size for f in folder.iterdir() if f.is_file())
-        albums.append(Album(str(folder.relative_to(COLLECTION)), size, plays.get((artist, title), 0)))
+        albums.append(Album(str(folder.relative_to(settings.music())), size, plays.get((artist, title), 0)))
     return albums
 
 
@@ -259,9 +260,9 @@ def main():
     p.add_argument("--replace-unmanaged", action="store_true", help="also remove music not copied by this script")
     p.add_argument("--apply", action="store_true")
     a = p.parse_args()
-    unknown = [x for x in a.include if not (COLLECTION / x).is_dir()]
+    unknown = [x for x in a.include if not (settings.music() / x).is_dir()]
     if unknown:
-        sys.exit(f"Not in {COLLECTION}: {', '.join(unknown)}")
+        sys.exit(f"Not in {settings.music()}: {', '.join(unknown)}")
 
     on_phone, managed = phone_albums(a.serial), phone_manifest(a.serial)
     albums = collection_albums(plays_by_album(a.serial))
@@ -298,7 +299,7 @@ def main():
         for f in delete:
             adb(a.serial, "shell", f"rm {quote(f'{PHONE_MUSIC}/{x}/{f}')}")
         for f in push:
-            adb(a.serial, "push", str(COLLECTION / x / f), f"{PHONE_MUSIC}/{x}/{f}")
+            adb(a.serial, "push", str(settings.music() / x / f), f"{PHONE_MUSIC}/{x}/{f}")
         print(f"  refreshed {x}", flush=True)
     for x in todo.remove:
         adb(a.serial, "shell", f"rm -r {quote(f'{PHONE_MUSIC}/{x}')}")
@@ -307,7 +308,7 @@ def main():
     for n, x in enumerate(todo.copy, 1):
         parent = os.path.dirname(f"{PHONE_MUSIC}/{x}")
         adb(a.serial, "shell", f"mkdir -p {quote(parent)}")
-        adb(a.serial, "push", str(COLLECTION / x), parent + "/")
+        adb(a.serial, "push", str(settings.music() / x), parent + "/")
         managed.add(x)
         write_manifest(a.serial, managed)  # after each album, so an interrupted sync resumes
         print(f"  {n}/{len(todo.copy)} {x}", flush=True)
