@@ -6,3 +6,4 @@ beets/out/
 linernotes/out/
 sync/*.log
 lyrics/out/
+local.env

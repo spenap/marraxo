@@ -6,7 +6,7 @@ duplicates and problems. It never modifies the collection.
 ```sh
 python3 -m venv tools/.venv
 tools/.venv/bin/pip install -r tools/inventory/requirements.txt
-tools/.venv/bin/python -I tools/inventory/inventory.py ~/Music tools/inventory/out
+tools/.venv/bin/python -I tools/inventory/inventory.py /path/to/Music tools/inventory/out
 ```
 
 Outputs (git-ignored):

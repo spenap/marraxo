@@ -17,6 +17,8 @@ import sys
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # settings.py, also under python -I
+import settings  # noqa: E402
 
 MIN_SIMILARITY = 80.0
 MAX_LENGTH_DIFF = 5  # seconds
@@ -98,7 +100,7 @@ def main(directory="out/candidates"):
         f.write(f"# Triage of {len(decisions)} skipped albums\n\n{len(accepted)} accepted, "
                 f"{len(decisions) - len(accepted)} left for a person.\n\n| | Album folder | Why |\n|---|---|---|\n")
         for d in sorted(decisions, key=lambda d: (not d.accept, d.folder)):
-            name = d.folder.removeprefix("~/Music/")
+            name = d.folder.removeprefix(f"{settings.music()}/")
             link = f" ([release](https://musicbrainz.org/release/{d.release}))" if d.release else ""
             f.write(f"| {'✓' if d.accept else '·'} | {name} | {d.reason}{link} |\n")
     print(f"{len(accepted)} of {len(decisions)} accepted; see out/triage.md")

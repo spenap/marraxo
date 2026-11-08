@@ -2,7 +2,7 @@
 import triage
 
 CLEAR = """
-~/Music/Altan/Local Ground (9 items)
+/music/Altan/Local Ground (9 items)
 
   Match (88.4%):
   Altan - Local Ground
@@ -27,7 +27,7 @@ EXTRA = CLEAR + """Unmatched tracks (1):
 WEAK = CLEAR.replace("Match (88.4%)", "Match (72.0%)")
 
 LIST = """
-~/Music/Compilations/KROSE (45 items)
+/music/Compilations/KROSE (45 items)
 
 Finding tags for album "GTA: San Andreas - KROSE".
   Candidates:
@@ -39,7 +39,7 @@ def test_a_clear_match_with_missing_tracks_is_accepted():
     d = triage.decide(CLEAR)
     assert d.accept, d.reason
     assert d.release == "a10b8f12-b30e-4a87-8faa-b2fdd15943f6"
-    assert d.folder == "~/Music/Altan/Local Ground"
+    assert d.folder == "/music/Altan/Local Ground"
     assert "2 of 11 missing" in d.reason
 
 

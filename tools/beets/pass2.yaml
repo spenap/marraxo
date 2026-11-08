@@ -1,7 +1,7 @@
 # Second automatic pass, over the albums the first pass skipped only.
 # Layered on top of config.yaml:  BEETS_OVERLAY=pass2.yaml ./beet import ...
 import:
-  log: tools/beets/out/import-pass2.log
+  log: import-pass2.log
 
 match:
   # Accept from ~88% similarity (pass 1: 92%).

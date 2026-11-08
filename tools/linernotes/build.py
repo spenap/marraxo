@@ -21,10 +21,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # fetch.py, also under python -I
 import fetch  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # settings.py, also under python -I
+import settings  # noqa: E402
 
 SCHEMA = 1
 HERE = Path(__file__).resolve().parent
-COLLECTION = "~/Music/"
 
 TABLES = """
 CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT);
@@ -91,7 +92,7 @@ def library():
     db = sqlite3.connect(f"file:{fetch.LIBRARY}?mode=ro", uri=True)
     albums = [dict(zip(("mb_albumid", "albumartist", "album", "year"), r))
               for r in db.execute("SELECT mb_albumid, albumartist, album, year FROM albums ORDER BY albumartist, album")]
-    items = [{"mb_albumid": a, "mb_trackid": t, "title": ti, "path": os.fsdecode(p).removeprefix(COLLECTION)}
+    items = [{"mb_albumid": a, "mb_trackid": t, "title": ti, "path": os.fsdecode(p).removeprefix(f"{settings.music()}/")}
              for a, t, ti, p in db.execute("SELECT albums.mb_albumid, items.mb_trackid, items.title, items.path "
                                            "FROM items JOIN albums ON items.album_id = albums.id")]
     db.close()

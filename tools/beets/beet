@@ -1,7 +1,9 @@
 #!/bin/sh
 # Runs beets with this project's config and state (tools/beets/out).
 # BEETS_OVERLAY=<file> layers extra settings on top of config.yaml.
+# The collection comes from MAKOFI_MUSIC, or tools/local.env.
 here=$(cd "$(dirname "$0")" && pwd)
+music=$("$here/../.venv/bin/python" -I -c 'import sys; sys.path.insert(0, sys.argv[1]); import settings; print(settings.music())' "$here/..") || exit 1
 mkdir -p "$here/out"
 ln -sf ../config.yaml "$here/out/config.yaml" # base config, always loaded
-BEETSDIR="$here/out" exec "$here/../.venv/bin/beet" -c "$here/${BEETS_OVERLAY:-config.yaml}" "$@"
+BEETSDIR="$here/out" exec "$here/../.venv/bin/beet" -d "$music" -c "$here/${BEETS_OVERLAY:-config.yaml}" "$@"
