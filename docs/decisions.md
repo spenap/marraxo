@@ -7,7 +7,7 @@ keep the reasoning in full; this log is the index of what's in force.
 - Add an entry when a decision constrains later work: a rule, a choice
   between real alternatives, something ruled out. Not for every UI tweak;
   commits cover those.
-- Entries aren't rewritten. A reversal is a new entry that says what it
+- Entries aren't rewritten, except to drop what shouldn't be public. A reversal is a new entry that says what it
   supersedes and what changed our minds; the old entry only gains a
   "Superseded by" line.
 - Ideas not yet decided go to ROADMAP.md, "Ideas and not doing".
@@ -255,7 +255,7 @@ ROM's API level, targetSdk is current. The Nexus 4 is the development
 device and the performance floor. For Sonos: receive SSDP replies on an
 unconnected socket, hold a MulticastLock with the screen off, and keep a
 WifiLock and a wake lock while serving HTTP.
-Detail: `upnp-renderers.md`, the ROM notes.
+Detail: `upnp-renderers.md`.
 
 ## 2026-10-29 · Compose, provisionally
 Superseded by: 2026-10-30 "Compose stays".

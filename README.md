@@ -6,14 +6,18 @@ An offline music player for Android. It plays the music stored on the phone,
 through headphones or Bluetooth, or over the Wi-Fi to Sonos speakers and
 TVs (UPnP). No account, no Internet, no tracking.
 
+Written with AI: [Claude Code](https://claude.com/claude-code) writes the
+code, I direct it and test it on my phones. Each release can be rebuilt
+from its tag and compared (`android/scripts/repro-check.sh`).
+
 Makofi is Swahili for applause. It also keeps "mako", the codename of the
 LG Nexus 4 (2012) it was first built for, which still runs it as a dedicated
 music player.
 
 ## Status
 
-A personal project in beta on three devices: a Nexus 4 (Android 8.1, the
-performance floor), a Pixel 5 and a Samsung tablet. Not on any app store.
+A personal project in beta on a Nexus 4 (Android 8.1, the performance
+floor), a Galaxy S25, a Pixel 5 and a Samsung tablet. Not on any app store.
 
 Working today:
 

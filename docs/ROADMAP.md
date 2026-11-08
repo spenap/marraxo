@@ -10,9 +10,8 @@ and record decisions in `decisions.md`.
 ## Track A: Phone
 
 ### A0. ROM chosen and flashed
-Done in a separate repository.
-- [x] Done when `RESULT.md` exists and its API level and known issues are
-      copied into `AGENTS.md`. (LineageOS 15.1, API 27.)
+- [x] Done when the ROM's API level and known issues are in `AGENTS.md`.
+      (LineageOS 15.1, API 27.)
 
 ### A1. Android feasibility spike
 - [ ] Gradle project in `android/` with dependency versions pinned
