@@ -31,7 +31,6 @@ current Android.
 - **Nexus 4** (development device and performance floor): Snapdragon S4
   Pro, 32-bit ARMv7 (armeabi-v7a only), 2 GB RAM, 768×1280. LineageOS
   15.1, Android 8.1, **API 27**, no Google apps, ADB root available.
-  Details and network findings: the ROM notes.
 - **Samsung Galaxy S25** (main phone): arm64, current Android/One UI.
   Handle the newer platform rules: `READ_MEDIA_AUDIO` (API 33+) instead of
   `READ_EXTERNAL_STORAGE`, the notification permission (API 33+), and the

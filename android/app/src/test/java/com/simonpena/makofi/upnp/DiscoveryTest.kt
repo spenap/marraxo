@@ -10,7 +10,7 @@ import org.robolectric.RobolectricTestRunner
 /** Reading device descriptions, and offering the Sonos rooms together as a group. */
 @RunWith(RobolectricTestRunner::class) // for Bundle
 class DiscoveryTest {
-    // Trimmed from Estudio's real /xml/device_description.xml (docs/upnp-renderers.md).
+    // Trimmed from a real /xml/device_description.xml (docs/upnp-renderers.md), ids made up.
     private val sonos = """
         <root><device><friendlyName>192.168.1.129 - Sonos One SL - RINCON_000E58A1B2C301400</friendlyName>
         <modelName>Sonos One SL</modelName><roomName>Estudio</roomName><UDN>uuid:RINCON_000E58A1B2C301400</UDN>
