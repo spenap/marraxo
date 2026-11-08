@@ -20,14 +20,20 @@ ci=$(gh run list --branch main --limit 1 --json status,conclusion --jq '.[0].sta
 [ "$ci" = "completed success" ] || { echo "Latest CI run on main: $ci"; exit 1; }
 
 git tag -a "$v" -m "$v"
-trap 'git tag -d "$v" >/dev/null' EXIT # until the tag is pushed
-MAKOFI_KEYSTORE="$key/release.jks" MAKOFI_KEYSTORE_PASSWORD="$(cat "$key/release.pass")" \
-    ./gradlew assembleRelease -q --console=plain
+work=$(mktemp -d)
+trap 'git tag -d "$v" >/dev/null; rm -rf "$work"' EXIT # until the tag is pushed
+# Built from a fresh clone of the tag, as scripts/repro-check.sh rebuilds
+# it: nothing from earlier builds in this checkout can leak in.
+git clone -q "$(git rev-parse --show-toplevel)" "$work/src"
+git -C "$work/src" -c advice.detachedHead=false checkout -q "$v"
+(cd "$work/src/android" && MAKOFI_KEYSTORE="$key/release.jks" MAKOFI_KEYSTORE_PASSWORD="$(cat "$key/release.pass")" \
+    ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}" ./gradlew assembleRelease -q --no-daemon --console=plain)
 apk=app/build/outputs/apk/release/makofi-$v.apk
-cp app/build/outputs/apk/release/app-release.apk "$apk"
+mkdir -p "$(dirname "$apk")"
+cp "$work/src/android/app/build/outputs/apk/release/app-release.apk" "$apk"
 apksigner=$(ls -d "$HOME"/Android/Sdk/build-tools/*/apksigner | tail -1)
 "$apksigner" verify --print-certs "$apk" | grep -q "O=Makofi" || { echo "$apk isn't signed with the release key"; exit 1; }
 
 git push -q origin "$v"
-trap - EXIT
+trap 'rm -rf "$work"' EXIT
 gh release create "$v" "$apk" --title "$v" --generate-notes
