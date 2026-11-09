@@ -48,10 +48,16 @@
         <item quantity="one">%d canción</item>
         <item quantity="other">%d cancións</item>
     </plurals>
+    <plurals name="disc_count">
+        <item quantity="one">%d disco</item>
+        <item quantity="other">%d discos</item>
+    </plurals>
     <plurals name="hours">
         <item quantity="one">%d hora</item>
         <item quantity="other">%d horas</item>
     </plurals>
+    <!-- The row before each disc of a multi-disc album: "Disc 2" -->
+    <string name="disc">Disco %d</string>
     <string name="minutes">%d min</string>
 
     <!-- Rescan -->

@@ -43,7 +43,10 @@ class LibraryUiTest {
     private val library = listOf(
         album(1, "The Blue Idol", "Altan", 2002, "Celtic", "Daily Growing", "Uncle Rat"),
         album(2, "Local Ground", "Altan", 2005, "Celtic", "Dúlamán"),
-        album(3, "A Son de Guerra", "Juan Luis Guerra", 2010, "Merengue", "Apaga y vámonos", "Bachata en Fukuoka"),
+        // Two discs, a song each.
+        album(3, "A Son de Guerra", "Juan Luis Guerra", 2010, "Merengue", "Apaga y vámonos", "Bachata en Fukuoka").let { a ->
+            a.copy(tracks = a.tracks.mapIndexed { i, t -> t.copy(number = 1, disc = i + 1) })
+        },
         album(4, "Demo", "An Danzza", 0, "", "Exiled Druid"),
         Album(5, "Anthems: Trance", "Various Artists", 2013, genre = "Trance", tracks = listOf("Insomnia" to "Faithless", "Sandstorm" to "Darude").mapIndexed { i, (s, a) ->
             Track(500L + i, s, a, "Anthems: Trance", 5, 200_000, i + 1, silence)
@@ -135,6 +138,18 @@ class LibraryUiTest {
         compose.onNodeWithText("The Blue Idol").performClick()
         compose.onNodeWithText("Uncle Rat").assertExists()
         compose.onAllNodesWithText("Altan").assertCountEquals(1) // the header only
+    }
+
+    @Test fun aDoubleAlbumShowsWhereEachDiscStarts() {
+        compose.onNodeWithText("A Son de Guerra").performClick()
+        compose.onNodeWithContentDescription("Disc 1").assertExists()
+        compose.onNodeWithContentDescription("Disc 2").assertExists()
+    }
+
+    @Test fun aSingleDiscAlbumHasNoDiscRows() {
+        compose.onNodeWithText("The Blue Idol").performClick()
+        compose.onNodeWithText("Uncle Rat").assertExists()
+        compose.onNodeWithContentDescription("Disc 1").assertDoesNotExist()
     }
 
     @Test fun aHiddenSongLeavesTheRestOfTheAlbum() {

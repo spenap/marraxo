@@ -180,9 +180,11 @@ and record decisions in `decisions.md`.
       reached by scrolling on, as in Now Playing (beta, 2026-11-02).
       One way to show "more about this" in every view, instead of a
       button on some screens and cards on others.
-- [ ] Album screen: a row before each disc on multi-disc albums ("Disc 2 ·
-      10 songs · 29 min"; 29 of 454 albums), with disc titles from the
-      liner notes when known (`mockups/discs.html`, option A).
+- [x] Album screen: a row before each disc on multi-disc albums ("Disc 2 ·
+      10 songs · 29 min"; 29 of 454 albums), and "2 discs" in the details
+      (2026-11-09, `mockups/discs.html`, option A).
+- [ ] Disc titles on the disc rows ("Rarities and B-Sides"; 7 albums):
+      Android doesn't expose them, so from the liner notes.
 - [ ] Home tab, first (`mockups/home.html`, decided 2026-11-09): Continue
       (albums, artists, radios, genres; a large card resumes the last
       album at its track), then shelves of the same genre or decade. Later,
