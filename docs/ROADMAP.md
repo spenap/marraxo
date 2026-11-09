@@ -149,6 +149,10 @@ and record decisions in `decisions.md`.
       restart (today the queue does, the radio doesn't); "not heard
       lately" once history is real listening; a listener's verdict from
       the beta.
+- [ ] `RadioSimulationTest` fails on the refreshed inventory (2026-11-09:
+      454 albums, 6,052 songs): Radio shares a genre, decade or artist on
+      18% of picks, limit 20%. Fails without the day's code changes too;
+      CI skips it (no inventory).
 - [ ] Radio picks poorly (beta, 2026-11-02): from "You Only Live Once"
       (The Strokes) came The Smashing Pumpkins and La Fuga, weak matches,
       then songs from the same few albums. Causes (Claude and Codex, read
