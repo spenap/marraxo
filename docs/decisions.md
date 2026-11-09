@@ -15,6 +15,17 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-09 · Renamed to Marraxo, `com.simonpena.marraxo`
+Supersedes "The app is Makofi" (2026-11-02). Marraxo is Galician for the
+mako shark; "mako" was already the Nexus 4's codename, where the project
+was born, so the name keeps that thread and lets a fin be the icon.
+Makofi (Swahili for applause) never grew an icon we liked. The application
+id moved to `com.simonpena.marraxo` with it: only our own phones had the
+app, so play history, favourites and the queue start over. The release
+keystore is unchanged, so its key alias stays `makofi`. The repository was
+recreated as github.com/spenap/marraxo, dropping the old pull-request
+snapshots. Detail: AGENTS.md.
+
 ## 2026-11-09 · Home: a first tab to continue and discover
 The app lands on a Home tab before Albums. Its first shelf, Continue,
 mixes albums, artists, radios and genres played lately, led by a large
@@ -80,11 +91,12 @@ Data from MusicBrainz, Wikipedia (CC BY-SA), the Cover Art Archive and
 LRCLIB is credited in the app and not distributed.
 Detail: README.md, LICENSE.
 
-## 2026-11-02 · The app is Marraxo, `com.simonpena.marraxo`
+## 2026-11-02 · The app is Makofi, `com.simonpena.makofi`
+Superseded by "Renamed to Marraxo" (2026-11-09).
 Why: "Mako" is the Nexus 4's codename (LG, 2012), so it named the device
-more than the player. Marraxo is Galician for the mako shark, so the name
-keeps "mako" for where the project was born and lets a fin be its icon.
-Quenlla (Galician for shark, more loosely) was the alternative. The
+more than the player. Makofi is Swahili for applause, keeps "mako" for
+where the project was born, and reads as Mako-fi (as in hi-fi); a clap
+can be its icon. Quenlla (Galician for shark) was the alternative. The
 application id changed too, while only our three phones had the app:
 play history, favourites and the queue started over (a copy of each
 phone's history was kept on the laptop). Later the id can't change
