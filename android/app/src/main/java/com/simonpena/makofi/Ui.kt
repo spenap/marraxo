@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
+import java.time.LocalDate
 import kotlin.random.Random
 import kotlinx.coroutines.flow.first
 import androidx.compose.foundation.Canvas
@@ -77,6 +78,7 @@ import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -189,19 +191,20 @@ fun MakoApp(
     homePresses: Int = 0,
     onAndroidSettings: () -> Unit = {},
     onOtherApps: () -> Unit = {},
+    plays: List<Play> = emptyList(),
 ) {
     Box(Modifier.fillMaxSize().background(GBg)) {
         when {
             !hasPermission -> Welcome(onGrant)
             library == null -> Message(stringResource(R.string.building_library))
             library.isEmpty() -> Empty(onRescan)
-            else -> Main(library, player, hidden, status, onRescan, HomeActions(isHome, homePresses, onAndroidSettings, onOtherApps))
+            else -> Main(library, player, hidden, status, onRescan, HomeActions(isHome, homePresses, onAndroidSettings, onOtherApps), plays)
         }
     }
 }
 
 @Composable
-private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, status: String?, onRescan: () -> Unit, home: HomeActions) {
+private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, status: String?, onRescan: () -> Unit, home: HomeActions, plays: List<Play>) {
     val stack = remember { mutableStateListOf<Screen>(Screen.Library) }
     // As the home screen there is nowhere to go back to from the library.
     BackHandler(enabled = home.isHome && stack.size == 1) {}
@@ -217,7 +220,10 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
     val hasMini = currentTrack != null || outside != null
     // What the library shows; the player above still finds hidden tracks it is playing.
     val visible = remember(library, hidden.albums, hidden.tracks) { hidden.filter(library) }
-    val libraryState = remember { LibraryState() }
+    val resumes = remember(visible, plays) { continueAlbums(plays, visible) }
+    val discover = remember(visible, resumes) { discoverShelves(resumes, visible, day = LocalDate.now().toEpochDay()) }
+    // Home when there is something to go on with; Albums on a first run.
+    val libraryState = remember { LibraryState(if (resumes.isEmpty()) Tab.Albums else Tab.Home) }
     val context = LocalContext.current
     val look = remember { Look(context) }
     // "Same people" needs the liner notes on the phone.
@@ -259,6 +265,13 @@ private fun Main(library: List<Album>, player: PlayerHolder, hidden: Hidden, sta
             onRescan = onRescan, onImport = { pickData.launch(arrayOf("*/*")) }, onAbout = { stack.add(Screen.About) }, onHidden = { stack.add(Screen.Hidden) },
             onSearch = { stack.add(Screen.Search) }, onAlbumOptions = { albumSheet = it }, home = home,
             onShelf = { title, spreadBy, matches -> stack.add(Screen.Shelf(title, spreadBy, matches)) },
+            homeTab = { bottom ->
+                HomeTab(
+                    resumes, discover, libraryState.lists.getValue(Tab.Home), bottom,
+                    onPickUp = { player.play(it.album.tracks, it.index) },
+                    onAlbumOptions = { albumSheet = it },
+                ) { stack.add(Screen.AlbumDetail(it)) }
+            },
         ) { stack.add(Screen.AlbumDetail(it)) }
         is Screen.Shelf -> {
             val albums = visible.filter(screen.matches)
@@ -472,12 +485,12 @@ private fun ShuffleButton(onClick: () -> Unit) {
 
 // ---------------------------------------------------------------- library
 
-private enum class Tab(val label: Int) { Albums(R.string.tab_albums), Artists(R.string.tab_artists), Genres(R.string.tab_genres), Years(R.string.tab_years) }
+private enum class Tab(val label: Int) { Home(R.string.tab_home), Albums(R.string.tab_albums), Artists(R.string.tab_artists), Genres(R.string.tab_genres), Years(R.string.tab_years) }
 
 /** Narrows the album grid to one artist or genre; shown as a removable chip. */
 /** Library state that outlives visits to an album: tab, genre family and scroll positions. */
-private class LibraryState {
-    var tab by mutableStateOf(Tab.Albums)
+private class LibraryState(first: Tab) {
+    var tab by mutableStateOf(first)
     var family by mutableStateOf<String?>(null) // the genre family open on the Genres tab
     var visit by mutableIntStateOf(Random.nextInt(1000)) // each arrival on a tab shows other covers on its tiles
     val genreGrid = LazyGridState()
@@ -501,6 +514,7 @@ private fun LibraryScreen(
     onAlbumOptions: (Album) -> Unit,
     home: HomeActions,
     onShelf: (title: String, spreadBy: (Track) -> Any?, matches: (Album) -> Boolean) -> Unit,
+    homeTab: @Composable (bottom: Dp) -> Unit,
     onAlbum: (Long) -> Unit,
 ) {
     var menu by remember { mutableStateOf(false) }
@@ -548,6 +562,7 @@ private fun LibraryScreen(
             }
         }
         when (state.tab) {
+            Tab.Home -> homeTab(bottom)
             Tab.Albums -> AlbumGrid(library, state.grid, bottom, onAlbumOptions, onAlbum)
             Tab.Artists -> {
                 val artists = remember(library) { library.groupBy { it.artist }.toList() } // already sorted by artist
@@ -573,6 +588,89 @@ private fun LibraryScreen(
                 GenresList(library, state, look.tiles, bottom) { label, keys -> onShelf(label, { it.artist }) { a -> genreTags(a.genre).map(::genreKey).let { if (keys.isEmpty()) it.isEmpty() else it.any(keys::contains) } } }
             }
             Tab.Years -> YearsList(library, state.lists.getValue(Tab.Years), bottom, onAlbum)
+        }
+    }
+}
+
+/**
+ * Home: the latest album left halfway, to pick up at its song; the albums
+ * played lately; then, for each of them, more of its genre and decade.
+ */
+@Composable
+private fun HomeTab(
+    resumes: List<Resume>,
+    discover: List<DiscoverShelf>,
+    list: LazyListState,
+    bottom: Dp,
+    onPickUp: (Resume) -> Unit,
+    onAlbumOptions: (Album) -> Unit,
+    onAlbum: (Long) -> Unit,
+) {
+    if (resumes.isEmpty()) return Message(stringResource(R.string.home_empty))
+    val pickUp = pickUp(resumes)
+    val others = resumes.filter { it !== pickUp }
+    LazyColumn(state = list, contentPadding = PaddingValues(bottom = bottom), modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+        if (pickUp != null) item(key = "pick-up") { PickUpCard(pickUp) { onPickUp(pickUp) } }
+        if (others.isNotEmpty()) item(key = "continue") {
+            val progress = others.filter { it.inProgress }.associate { it.album.id to it.index.toFloat() / it.album.tracks.size }
+            HomeShelf(stringResource(R.string.home_continue), null, others.map { it.album }, { progress[it.id] }, onAlbumOptions, onAlbum)
+        }
+        items(discover, key = { "more-${it.seed.id}-${it.genre}-${it.decade}" }) { shelf ->
+            val title = listOfNotNull(shelf.genre, shelf.decade?.let { stringResource(R.string.decade, it) }).joinToString(" · ")
+            HomeShelf(title, stringResource(R.string.home_like, shelf.seed.title), shelf.albums, { null }, onAlbumOptions, onAlbum)
+        }
+    }
+}
+
+@Composable
+private fun PickUpCard(resume: Resume, onPlay: () -> Unit) {
+    val album = resume.album
+    val song = album.tracks[resume.index]
+    val play = stringResource(R.string.home_play_from, album.title, song.title)
+    Row(
+        Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp))
+            .background(Color.White.copy(alpha = .07f)).clickable(onClickLabel = play, onClick = onPlay).padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AlbumArt(album.id, px = 176, corner = 6.dp, modifier = Modifier.size(88.dp))
+        Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Text(stringResource(R.string.home_pick_up).uppercase(), style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.9.sp, color = GHi))
+            Text(album.title, style = display(18), maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+            Text(
+                stringResource(R.string.home_pick_up_detail, album.artist, resume.index + 1, album.tracks.size, song.title),
+                style = TextStyle(fontSize = 12.5.sp, color = GSoft), maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        Box(
+            Modifier.padding(start = 8.dp).size(44.dp).clip(CircleShape).background(GHi).semantics { contentDescription = play },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(GlowIcons.Play, null, tint = Color(0xFF0E2226), modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+/** A titled row of album covers that scrolls sideways. [progress]: how far into an album, drawn under its cover. */
+@Composable
+private fun HomeShelf(title: String, why: String?, albums: List<Album>, progress: (Album) -> Float?, onAlbumOptions: (Album) -> Unit, onAlbum: (Long) -> Unit) {
+    Column(Modifier.padding(top = 18.dp)) {
+        Text(title, style = display(18), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 16.dp).semantics { heading() })
+        if (why != null) Text(why, style = TextStyle(fontSize = 12.5.sp, color = GSoft), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 16.dp))
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 10.dp)) {
+            items(albums, key = { it.id }) { album ->
+                Column(Modifier.width(120.dp).combinedClickable(onLongClick = { onAlbumOptions(album) }) { onAlbum(album.id) }) {
+                    Box {
+                        AlbumArt(album.id, px = 240, corner = 6.dp, modifier = Modifier.size(120.dp))
+                        progress(album)?.let { f ->
+                            Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(GFaint)) {
+                                Box(Modifier.fillMaxWidth(f).fillMaxHeight().background(GHi))
+                            }
+                        }
+                    }
+                    Text(album.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Medium, color = Color.White), modifier = Modifier.padding(top = 6.dp))
+                    Text(album.artist, maxLines = 1, overflow = TextOverflow.Ellipsis, style = TextStyle(fontSize = 12.sp, color = GSoft))
+                }
+            }
         }
     }
 }

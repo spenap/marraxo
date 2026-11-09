@@ -24,6 +24,13 @@
     <string name="menu_show_tiles">Ver como mosaicos</string>
     <string name="menu_android_settings">Axustes de Android</string>
     <string name="menu_other_apps">Outras aplicacións</string>
+    <string name="tab_home">Inicio</string>
+    <string name="home_pick_up">Segue onde o deixaches</string>
+    <string name="home_pick_up_detail">%1$s · pista %2$d de %3$d, %4$s</string>
+    <string name="home_play_from">Reproducir %1$s desde %2$s</string>
+    <string name="home_continue">Continuar</string>
+    <string name="home_like">Coma %s</string>
+    <string name="home_empty">Aquí aparecen os álbums que escoitas</string>
     <string name="tab_albums">Álbums</string>
     <string name="tab_artists">Artistas</string>
     <string name="tab_genres">Xéneros</string>

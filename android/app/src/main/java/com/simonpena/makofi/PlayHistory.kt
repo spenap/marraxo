@@ -38,6 +38,12 @@ class PlayHistory(context: Context) : SQLiteOpenHelper(context, "history.db", nu
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+
+    /** The latest [limit] plays, newest first. */
+    fun recent(limit: Int): List<Play> =
+        readableDatabase.rawQuery("SELECT title, artist, album, started_at, ended FROM plays ORDER BY started_at DESC, id DESC LIMIT $limit", null).use { c ->
+            buildList { while (c.moveToNext()) add(Play(c.getString(0).orEmpty(), c.getString(1).orEmpty(), c.getString(2).orEmpty(), c.getLong(3), c.getString(4))) }
+        }
 }
 
 /** Follows the player and writes one [PlayHistory] row per track heard. */

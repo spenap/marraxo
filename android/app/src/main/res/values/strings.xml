@@ -25,6 +25,13 @@
     <string name="menu_show_tiles">Show as tiles</string>
     <string name="menu_android_settings">Android settings</string>
     <string name="menu_other_apps">Other apps</string>
+    <string name="tab_home">Home</string>
+    <string name="home_pick_up">Pick up where you left off</string>
+    <string name="home_pick_up_detail">%1$s · track %2$d of %3$d, %4$s</string>
+    <string name="home_play_from">Play %1$s from %2$s</string>
+    <string name="home_continue">Continue</string>
+    <string name="home_like">Like %s</string>
+    <string name="home_empty">Albums you play show up here</string>
     <string name="tab_albums">Albums</string>
     <string name="tab_artists">Artists</string>
     <string name="tab_genres">Genres</string>
