@@ -56,7 +56,7 @@ Why: the tests check behaviour, which doesn't depend on the phone; CI
 still runs them on a Nexus 4 emulator. Detail: AGENTS.md.
 
 ## 2026-11-06 · Files opened from other apps replace the queue
-Opening an audio file with Makofi plays it in place of the queue,
+Opening an audio file with Marraxo plays it in place of the queue,
 without adding it to the library. `MainActivity`, started by the VIEW
 intent, shows only Now Playing (no library to load) and one Back returns
 to the app that opened it. A file MediaStore knows
@@ -80,11 +80,11 @@ Data from MusicBrainz, Wikipedia (CC BY-SA), the Cover Art Archive and
 LRCLIB is credited in the app and not distributed.
 Detail: README.md, LICENSE.
 
-## 2026-11-02 · The app is Makofi, `com.simonpena.makofi`
+## 2026-11-02 · The app is Marraxo, `com.simonpena.marraxo`
 Why: "Mako" is the Nexus 4's codename (LG, 2012), so it named the device
-more than the player. Makofi is Swahili for applause, keeps "mako" for
-where the project was born, and reads as Mako-fi (as in hi-fi); a clap
-can be its icon. Quenlla (Galician for shark) was the alternative. The
+more than the player. Marraxo is Galician for the mako shark, so the name
+keeps "mako" for where the project was born and lets a fin be its icon.
+Quenlla (Galician for shark, more loosely) was the alternative. The
 application id changed too, while only our three phones had the app:
 play history, favourites and the queue started over (a copy of each
 phone's history was kept on the laptop). Later the id can't change

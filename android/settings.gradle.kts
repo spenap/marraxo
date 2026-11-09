@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Makofi"
+rootProject.name = "Marraxo"
 include(":app")

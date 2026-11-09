@@ -24,7 +24,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="${appLabel}"
         android:localeConfig="@xml/locales_config"
-        android:theme="@style/Theme.Makofi"
+        android:theme="@style/Theme.Marraxo"
         android:usesCleartextTraffic="true">
 
         <activity
@@ -53,12 +53,12 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:showWhenLocked="true"
-            android:taskAffinity="com.simonpena.makofi.lock" />
+            android:taskAffinity="com.simonpena.marraxo.lock" />
 
-        <!-- Makofi as the home screen: off unless enabled on the device
+        <!-- Marraxo as the home screen: off unless enabled on the device
              (android/scripts/appliance.sh), so it never replaces a launcher. -->
         <activity-alias
-            android:name="com.simonpena.makofi.Home"
+            android:name="com.simonpena.marraxo.Home"
             android:enabled="false"
             android:exported="true"
             android:targetActivity=".MainActivity">

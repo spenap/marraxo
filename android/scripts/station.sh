@@ -14,5 +14,5 @@ done
 IFS='
 '
 # shellcheck disable=SC2086
-./gradlew --offline testDebugUnitTest --tests com.simonpena.makofi.StationSimulator $props 2>&1 |
+./gradlew --offline testDebugUnitTest --tests com.simonpena.marraxo.StationSimulator $props 2>&1 |
     sed -n '/STANDARD_OUT/,/^BUILD/p' | sed '1d;$d'

@@ -1,7 +1,7 @@
 # beets configuration for the collection cleanup (roadmap C1–C2).
 # Run through tools/beets/beet, which sets BEETSDIR so nothing from
 # ~/.config/beets leaks in, and the collection (`directory`) from
-# MAKOFI_MUSIC (tools/local.env). Relative paths are under tools/beets/out.
+# MARRAXO_MUSIC (tools/local.env). Relative paths are under tools/beets/out.
 #
 # Safety: beets COPIES into `directory`; the source collection is never
 # modified. Tags are written to the copies only.

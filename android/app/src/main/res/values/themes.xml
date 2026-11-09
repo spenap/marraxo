@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Makofi" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Marraxo" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/glow_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/black</item>

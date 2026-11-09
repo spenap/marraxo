@@ -22,4 +22,4 @@ def _get(name, local):
 
 def music(local=LOCAL):
     """The music collection: the folder the tools read and beets copies into."""
-    return Path(_get("MAKOFI_MUSIC", local))
+    return Path(_get("MARRAXO_MUSIC", local))

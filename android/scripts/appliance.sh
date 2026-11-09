@@ -1,6 +1,6 @@
 #!/bin/sh
 # Makes the Nexus 4 a dedicated player (roadmap A6), or puts it back.
-# Makofi becomes the home screen, the camera is turned off, and the system
+# Marraxo becomes the home screen, the camera is turned off, and the system
 # settings agreed in the settings review (2026-10-31) are applied. Every
 # previous value is saved on the phone (/data/local/tmp/mako-appliance.prev)
 # the first time it changes, and --undo restores them all.
@@ -10,10 +10,10 @@ undo=
 if [ "${1:-}" = "--undo" ]; then undo=1; shift; fi
 S=${1:-}
 a() { if [ -n "$S" ]; then adb -s "$S" "$@"; else adb "$@"; fi </dev/null; }
-# Changing Makofi's components needs root; adbd forgets it after a reboot.
+# Changing Marraxo's components needs root; adbd forgets it after a reboot.
 if [ "$(a shell id -u | tr -d '\r')" != 0 ]; then a root >/dev/null; sleep 2; a wait-for-device; fi
 
-home=com.simonpena.makofi/com.simonpena.makofi.Home
+home=com.simonpena.marraxo/com.simonpena.marraxo.Home
 saved=/data/local/tmp/mako-appliance.prev
 current_home() {
     a shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME |
@@ -52,7 +52,7 @@ put() {
         tz) a shell service call alarm 3 s16 "$3" >/dev/null ;;
     esac
 }
-# Sets a value, saving the previous one the first time only (never Makofi's own).
+# Sets a value, saving the previous one the first time only (never Marraxo's own).
 set_() {
     if ! a shell "grep -qF 'set=$1|$2|' $saved"; then
         a shell "echo 'set=$1|$2|$(get "$1" "$2")' >> $saved"
@@ -65,7 +65,7 @@ airplane() {  # tells the system the airplane setting changed (it only reads the
 
 if [ -z "$undo" ]; then
     if [ -z "$(a shell "cat $saved 2>/dev/null" | tr -d '\r')" ]; then
-        a shell "echo home=$(current_home) > $saved"   # only the first time: never save Makofi itself
+        a shell "echo home=$(current_home) > $saved"   # only the first time: never save Marraxo itself
     fi
     a shell pm enable "$home" >/dev/null
     a shell cmd package set-home-activity "$home" >/dev/null
@@ -78,11 +78,11 @@ if [ -z "$undo" ]; then
         a shell pm disable-user --user 0 "$p" >/dev/null
         a shell "grep -q '^camera=$p\$' $saved || echo camera=$p >> $saved"
     done
-    # Makofi hides the navigation bar; skip Android's one-time "Viewing full screen" notice.
+    # Marraxo hides the navigation bar; skip Android's one-time "Viewing full screen" notice.
     set_ secure immersive_mode_confirmations confirmed
 
     # Display and sound
-    set_ system accelerometer_rotation 0       # Makofi is portrait-only
+    set_ system accelerometer_rotation 0       # Marraxo is portrait-only
     set_ secure screensaver_enabled 0          # dock mode will replace the clock screen saver
     set_ system sound_effects_enabled 0        # no clicks in the headphones
     set_ system lockscreen_sounds_enabled 0
@@ -107,7 +107,7 @@ if [ -z "$undo" ]; then
     set_ global ble_scan_always_enabled 0
 
     # Lock screen, notifications, shade and status bar
-    set_ secure lock_screen_show_notifications 0   # Makofi's lock-screen player shows the music
+    set_ secure lock_screen_show_notifications 0   # Marraxo's lock-screen player shows the music
     set_ global heads_up_notifications_enabled 0
     set_ secure sysui_qs_tiles wifi,bt,volume_panel,flashlight,airplane
     set_ secure icon_blacklist mobile,airplane

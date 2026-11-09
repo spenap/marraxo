@@ -2,7 +2,7 @@
 """Put as much of the cleaned collection on a phone as fits (a first rotation).
 
 Picks albums from beets' library: albums you have played on that phone
-(Makofi's play history) first, the rest in a stable random order, until the
+(Marraxo's play history) first, the rest in a stable random order, until the
 phone's free space minus a margin is used. Then copies what is missing and
 removes what is no longer picked. An album already there that changed in
 the collection since (retagged, renamed, tracks added) is refreshed file
@@ -14,7 +14,7 @@ by hand, stays unless --replace-unmanaged is given; a hand copy identical
 to the collection's album is adopted as if sync had copied it.
 
 Also copies the liner notes (tools/linernotes/out/linernotes.db) into
-Makofi's own folder, when they changed.
+Marraxo's own folder, when they changed.
 
 Shows the plan and changes nothing unless --apply is given.
 
@@ -36,13 +36,13 @@ HERE = Path(__file__).resolve().parent
 LIBRARY = HERE.parent / "beets" / "out" / "library.db"
 PHONE_MUSIC = "/sdcard/Music"
 MANIFEST = f"{PHONE_MUSIC}/.mako-sync"
-HISTORY = "/data/data/com.simonpena.makofi/databases/history.db"
+HISTORY = "/data/data/com.simonpena.marraxo/databases/history.db"
 NOTES = HERE.parent / "linernotes" / "out" / "linernotes.db"
-# Makofi's external files folder: the app reads it without a permission, and
+# Marraxo's external files folder: the app reads it without a permission, and
 # adb can write it on Android 8 to 17 (checked on the Nexus 4 and the Pixel 5).
-PHONE_NOTES = "/sdcard/Android/data/com.simonpena.makofi/files/linernotes.db"
+PHONE_NOTES = "/sdcard/Android/data/com.simonpena.marraxo/files/linernotes.db"
 LYRICS = HERE.parent / "lyrics" / "out" / "lyrics.db"
-PHONE_LYRICS = "/sdcard/Android/data/com.simonpena.makofi/files/lyrics.db"
+PHONE_LYRICS = "/sdcard/Android/data/com.simonpena.marraxo/files/lyrics.db"
 AUDIO = (".mp3", ".m4a", ".ogg", ".opus", ".flac", ".wav", ".mpc")
 GB = 1024 ** 3
 
@@ -206,8 +206,8 @@ def sync_notes(serial, local=NOTES):
 
 def index_music(serial):
     """Asks Android 10+ to index the Music folder; adb push doesn't, and since
-    Android 11 Makofi can't see files that aren't indexed. Older Android is left
-    to Makofi's rescan, which finds them there. True if asked."""
+    Android 11 Marraxo can't see files that aren't indexed. Older Android is left
+    to Marraxo's rescan, which finds them there. True if asked."""
     sdk = adb(serial, "shell", "getprop ro.build.version.sdk", check=False).strip()
     if not sdk.isdigit() or int(sdk) < 29:
         return False
@@ -216,7 +216,7 @@ def index_music(serial):
 
 
 def plays_by_album(serial):
-    """(artist, album) → plays, from Makofi's history on the phone (needs adb root); empty if unavailable."""
+    """(artist, album) → plays, from Marraxo's history on the phone (needs adb root); empty if unavailable."""
     adb(serial, "root", check=False)
     with tempfile.TemporaryDirectory() as d:
         local = os.path.join(d, "history.db")
@@ -318,7 +318,7 @@ def main():
         print("Lyrics copied.")
     if (todo.copy or todo.remove or refreshes) and index_music(a.serial):
         print("Indexed by Android.")
-    print("Done. In Makofi: ⋮ → Rescan library.")
+    print("Done. In Marraxo: ⋮ → Rescan library.")
 
 
 if __name__ == "__main__":

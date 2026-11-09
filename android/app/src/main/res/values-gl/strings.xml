@@ -4,7 +4,7 @@
     <!-- First run -->
     <string name="building_library">Preparando a túa biblioteca…</string>
     <string name="welcome_title">A túa música, neste teléfono.</string>
-    <string name="welcome_body">Makofi reproduce a música gardada neste teléfono. Sen contas e sen Internet. Tamén pode reproducila en altofalantes e televisores da túa wifi.</string>
+    <string name="welcome_body">Marraxo reproduce a música gardada neste teléfono. Sen contas e sen Internet. Tamén pode reproducila en altofalantes e televisores da túa wifi.</string>
     <string name="welcome_find">Buscar a miña música</string>
     <string name="empty_title">Non se atopou música</string>
     <string name="empty_body">Copia música no cartafol Music deste teléfono, por transferencia de ficheiros USB ou desde un ordenador:</string>
@@ -103,14 +103,14 @@
     <string name="about_device">Dispositivo</string>
     <string name="about_summary">Un reprodutor de música sen conexión. Reproduce o cartafol Music neste teléfono ou en altofalantes e televisores da mesma wifi.</string>
     <string name="about_licence">Licenza</string>
-    <string name="about_data">Notas do disco de MusicBrainz e Wikipedia (CC BY-SA), portadas do Cover Art Archive, letras de LRCLIB. Non se distribúen con Makofi.</string>
+    <string name="about_data">Notas do disco de MusicBrainz e Wikipedia (CC BY-SA), portadas do Cover Art Archive, letras de LRCLIB. Non se distribúen con Marraxo.</string>
     <string name="licences_link">Licenzas de código aberto</string>
     <string name="licences">Licenzas</string>
     <plurals name="libraries">
         <item quantity="one">%d biblioteca de código aberto</item>
         <item quantity="other">%d bibliotecas de código aberto</item>
     </plurals>
-    <string name="licences_intro">Makofi baséase en %1$s: %2$s. Toca unha para ler a súa licenza.</string>
+    <string name="licences_intro">Marraxo baséase en %1$s: %2$s. Toca unha para ler a súa licenza.</string>
     <string name="licences_count">%1$d coa %2$s</string>
 
     <!-- Now Playing -->
@@ -186,7 +186,7 @@
         <item quantity="other">Notas do disco: %1$d álbums</item>
     </plurals>
     <string name="import_not_data">Un ficheiro non era nin letras nin notas do disco</string>
-    <string name="import_other_version">Un ficheiro é doutra versión de Makofi</string>
+    <string name="import_other_version">Un ficheiro é doutra versión de Marraxo</string>
     <string name="output_lost">Non se pode conectar con %1$s. De volta neste teléfono.</string>
     <string name="cant_play">Non se pode reproducir %1$s</string>
 </resources>

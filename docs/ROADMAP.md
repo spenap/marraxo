@@ -454,7 +454,7 @@ the desktop.
 - [x] Build `linernotes.db` (SQLite) keyed by the track's path inside
       `Music-clean`, and push it with the music (`tools/linernotes/build.py`,
       schema 1; `sync.py` copies it to Mako's own folder,
-      `Android/data/com.simonpena.makofi/files/`, when it changed: readable
+      `Android/data/com.simonpena.marraxo/files/`, when it changed: readable
       without a permission, writable by adb on Android 8 to 17). 384
       albums, 381 matched, 234 with a story, 30,162 credits.
 - [x] App: reading the notes (2026-10-31): `LinerNotes.kt` opens the
@@ -538,7 +538,7 @@ others run on demand.
 - [x] **T4. UI tests** (Compose; `./gradlew connectedDebugAndroidTest` on
       the Nexus 4, or an API 27 emulator in CI): tabs and filters, hide and
       show, search plays a result. The debug build is a separate app
-      (`com.simonpena.makofi.debug`), so test runs never touch real data.
+      (`com.simonpena.marraxo.debug`), so test runs never touch real data.
       Not covered here: queue restore (unit-tested) and rescan (needs real
       files in MediaStore).
 - [x] **T5. Performance gate**: `scroll-bench.sh` fails above 5% janky

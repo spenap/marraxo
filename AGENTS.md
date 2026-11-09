@@ -1,8 +1,8 @@
-# Makofi
+# Marraxo
 
-Makofi (Swahili for applause; also "Mako-fi", as in hi-fi) is an
-offline-first music player, first built for an LG Nexus 4 ("mako") as a
-dedicated music device, and also meant to run on a Samsung Galaxy S25. It
+Marraxo (Galician for the mako shark) is an offline-first music player,
+first built for an LG Nexus 4 ("mako") as a dedicated music device, and
+also meant to run on a Samsung Galaxy S25. It
 plays through headphones/Bluetooth, or over the LAN (UPnP) to two Sonos One
 SL speakers or a Samsung TV.
 

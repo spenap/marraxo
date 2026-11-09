@@ -4,7 +4,7 @@
     <!-- First run -->
     <string name="building_library">Preparando tu biblioteca…</string>
     <string name="welcome_title">Tu música, en este teléfono.</string>
-    <string name="welcome_body">Makofi reproduce la música guardada en este teléfono. Sin cuentas y sin Internet. También puede reproducirla en altavoces y televisores de tu wifi.</string>
+    <string name="welcome_body">Marraxo reproduce la música guardada en este teléfono. Sin cuentas y sin Internet. También puede reproducirla en altavoces y televisores de tu wifi.</string>
     <string name="welcome_find">Buscar mi música</string>
     <string name="empty_title">No se ha encontrado música</string>
     <string name="empty_body">Copia música en la carpeta Music de este teléfono, por transferencia de archivos USB o desde un ordenador:</string>
@@ -103,14 +103,14 @@
     <string name="about_device">Dispositivo</string>
     <string name="about_summary">Un reproductor de música sin conexión. Reproduce la carpeta Music en este teléfono o en altavoces y televisores de la misma wifi.</string>
     <string name="about_licence">Licencia</string>
-    <string name="about_data">Notas del disco de MusicBrainz y Wikipedia (CC BY-SA), portadas del Cover Art Archive, letras de LRCLIB. No se distribuyen con Makofi.</string>
+    <string name="about_data">Notas del disco de MusicBrainz y Wikipedia (CC BY-SA), portadas del Cover Art Archive, letras de LRCLIB. No se distribuyen con Marraxo.</string>
     <string name="licences_link">Licencias de código abierto</string>
     <string name="licences">Licencias</string>
     <plurals name="libraries">
         <item quantity="one">%d biblioteca de código abierto</item>
         <item quantity="other">%d bibliotecas de código abierto</item>
     </plurals>
-    <string name="licences_intro">Makofi se basa en %1$s: %2$s. Toca una para leer su licencia.</string>
+    <string name="licences_intro">Marraxo se basa en %1$s: %2$s. Toca una para leer su licencia.</string>
     <string name="licences_count">%1$d con la %2$s</string>
 
     <!-- Now Playing -->
@@ -186,7 +186,7 @@
         <item quantity="other">Notas del disco: %1$d álbumes</item>
     </plurals>
     <string name="import_not_data">Un archivo no era ni letras ni notas del disco</string>
-    <string name="import_other_version">Un archivo es de otra versión de Makofi</string>
+    <string name="import_other_version">Un archivo es de otra versión de Marraxo</string>
     <string name="output_lost">No se puede conectar con %1$s. De vuelta en este teléfono.</string>
     <string name="cant_play">No se puede reproducir %1$s</string>
 </resources>

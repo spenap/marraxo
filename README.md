@@ -1,6 +1,6 @@
-# Makofi
+# Marraxo
 
-[![CI](https://github.com/spenap/makofi/actions/workflows/ci.yml/badge.svg)](https://github.com/spenap/makofi/actions/workflows/ci.yml)
+[![CI](https://github.com/spenap/marraxo/actions/workflows/ci.yml/badge.svg)](https://github.com/spenap/marraxo/actions/workflows/ci.yml)
 
 An offline music player for Android. It plays the music stored on the phone,
 through headphones or Bluetooth, or over the Wi-Fi to Sonos speakers and
@@ -10,7 +10,7 @@ Written with AI: [Claude Code](https://claude.com/claude-code) writes the
 code, I direct it and test it on my phones. Each release can be rebuilt
 from its tag and compared (`android/scripts/repro-check.sh`).
 
-Makofi is Swahili for applause. It also keeps "mako", the codename of the
+Marraxo is Galician for the mako shark. It keeps "mako", the codename of the
 LG Nexus 4 (2012) it was first built for, which still runs it as a dedicated
 music player.
 
@@ -40,7 +40,7 @@ Decisions and why: [`docs/decisions.md`](docs/decisions.md).
 - `tools/`: Python tools for the computer side: tidying the collection's
   tags and covers (with [beets](https://beets.io)), fetching liner notes and
   lyrics, and copying music and data to the phones. They find the collection
-  through `MAKOFI_MUSIC` (`tools/local.env.example`).
+  through `MARRAXO_MUSIC` (`tools/local.env.example`).
 - `docs/`: plans, decisions, protocol notes and mockups.
 
 Install on a connected phone:
@@ -59,7 +59,7 @@ Tests: `./gradlew testDebugUnitTest` in `android/`, and `pytest` in
 
 ## Credits
 
-- **Libraries.** Makofi is built on 40 open-source libraries (35 under the
+- **Libraries.** Marraxo is built on 40 open-source libraries (35 under the
   Apache License 2.0, 5 under MIT). Their notices are collected at build
   time and shown in the app: ⋮ → About → Open-source licences.
 - **Data.** Liner notes from [MusicBrainz](https://musicbrainz.org) and
