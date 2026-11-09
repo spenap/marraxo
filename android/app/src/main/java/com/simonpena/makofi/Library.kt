@@ -29,6 +29,8 @@ data class Track(
     val path: String = "",
     /** The album's artist as tagged ("Various Artists" on a compilation); empty if untagged. */
     val albumArtist: String = "",
+    /** 1, 2… on a multi-disc album; 0 if untagged. */
+    val disc: Int = 0,
 )
 
 data class Album(
@@ -138,6 +140,7 @@ suspend fun loadLibrary(context: Context): List<Album> = withContext(Dispatchers
                 albumId = aId,
                 durationMs = c.getLong(duration),
                 number = c.getInt(track) % 1000, // stored as disc * 1000 + track
+                disc = c.getInt(track) / 1000,
                 uri = ContentUris.withAppendedId(m, trackId),
                 path = path(),
                 albumArtist = clean(c.getString(albumArtist), ""),
@@ -188,7 +191,7 @@ fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>, various: String = VA
         .map { groups ->
             val main = groups.maxBy { it.size }
             val id = main.first().albumId
-            val sorted = groups.flatten().sortedWith(compareBy({ it.number }, { it.title }))
+            val sorted = groups.flatten().sortedWith(compareBy({ it.disc }, { it.number }, { it.title }))
             val year = years[id] ?: groups.firstNotNullOfOrNull { years[it.first().albumId] } ?: 0
             Album(id, main.first().album, albumArtist(main), year, sorted)
         }

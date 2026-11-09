@@ -43,6 +43,15 @@ class AlbumGroupingTest {
         assertEquals(21, groupAlbums(tracks, years = emptyMap()).single().tracks.size)
     }
 
+    @Test fun `a double album plays disc 1 before disc 2`() {
+        val tracks = listOf(
+            track(1, "Burning Down", number = 1, disc = 2), track(2, "Eternity", number = 1, disc = 1),
+            track(3, "Catch My Breath", number = 2, disc = 2), track(4, "The Outside", number = 2, disc = 1),
+        )
+        val album = groupAlbums(tracks, years = emptyMap()).single()
+        assertEquals(listOf("Eternity", "The Outside", "Burning Down", "Catch My Breath"), album.tracks.map { it.title })
+    }
+
     @Test fun `albums with the same title by different artists stay apart`() {
         val albums = groupAlbums(listOf(
             track(1, "a", album = "Greatest Hits", artist = "Clannad", albumId = 1),
