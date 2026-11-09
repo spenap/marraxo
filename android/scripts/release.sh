@@ -3,21 +3,27 @@
 # GitHub Release (installed on the S25 through Obtainium).
 # Needs: a clean main equal to origin/main, CI green on it, `gh` logged in,
 # and the key in ~/.config/makofi (release.jks, release.pass).
-# Usage: scripts/release.sh v0.1.0
+# The version comes from the Conventional Commits since the last tag
+# (git-cliff, cliff.toml): a feat bumps the minor, a fix the patch.
+# Usage: scripts/release.sh
 set -eu
 cd "$(dirname "$0")/.."
-v=${1:-}
+[ $# = 0 ] || { echo "Usage: $0 (the version comes from the commits)"; exit 1; }
 key=${MAKOFI_KEY_DIR:-$HOME/.config/makofi}
-
-echo "$v" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || { echo "Usage: $0 vX.Y.Z"; exit 1; }
+cliff=$(command -v git-cliff || echo "${CARGO_HOME:-$HOME/.cargo}/bin/git-cliff")
+[ -x "$cliff" ] || { echo "No git-cliff: cargo install --locked git-cliff"; exit 1; }
 [ -r "$key/release.jks" ] && [ -r "$key/release.pass" ] || { echo "No release key in $key"; exit 1; }
 [ "$(git branch --show-current)" = main ] || { echo "Not on main"; exit 1; }
 [ -z "$(git status --porcelain)" ] || { echo "Uncommitted changes"; exit 1; }
 git fetch -q origin main
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "main differs from origin/main"; exit 1; }
-git rev-parse -q --verify "refs/tags/$v" >/dev/null && { echo "$v already exists"; exit 1; }
 ci=$(gh run list --branch main --limit 1 --json status,conclusion --jq '.[0].status + " " + .[0].conclusion')
 [ "$ci" = "completed success" ] || { echo "Latest CI run on main: $ci"; exit 1; }
+# From the top: in android/, git-cliff counts only the commits that touch it.
+v=$(cd .. && "$cliff" --config android/cliff.toml --bumped-version 2>/dev/null)
+echo "$v" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || { echo "No version from git-cliff: '$v'"; exit 1; }
+git rev-parse -q --verify "refs/tags/$v" >/dev/null && { echo "Nothing to release since $v"; exit 1; }
+echo "Releasing $v"
 
 git tag -a "$v" -m "$v"
 work=$(mktemp -d)
