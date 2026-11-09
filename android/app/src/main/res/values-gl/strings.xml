@@ -115,7 +115,9 @@
     <!-- Where to play -->
     <string name="play_on">Reproducir en</string>
     <string name="this_phone">Este teléfono</string>
-    <string name="this_phone_detail">Auriculares ou Bluetooth</string>
+    <string name="output_phone_speaker">Altofalante do teléfono</string>
+    <string name="output_headphones">Auriculares</string>
+    <string name="output_bluetooth">Bluetooth</string>
     <string name="speaker">Altofalante</string>
     <string name="tv">Televisor</string>
     <string name="outputs_looking">Buscando altofalantes e televisores…</string>

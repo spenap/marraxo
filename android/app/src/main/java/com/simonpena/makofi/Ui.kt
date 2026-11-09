@@ -1770,7 +1770,12 @@ private fun OutputSheet(player: PlayerHolder, onClose: () -> Unit) {
         ) {
             Box(Modifier.align(Alignment.CenterHorizontally).size(36.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(GFaint))
             Text(stringResource(R.string.play_on), style = display(20), modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 10.dp))
-            OutputOption(GlowIcons.Phone, stringResource(R.string.this_phone), stringResource(R.string.this_phone_detail), current == null) {
+            val phone = when (val o = rememberPhoneOutput()) {
+                PhoneOutput.Speaker -> stringResource(R.string.output_phone_speaker)
+                PhoneOutput.Headphones -> stringResource(R.string.output_headphones)
+                is PhoneOutput.Bluetooth -> o.name.ifEmpty { stringResource(R.string.output_bluetooth) }
+            }
+            OutputOption(GlowIcons.Phone, stringResource(R.string.this_phone), phone, current == null) {
                 player.playOn(null)
                 onClose()
             }

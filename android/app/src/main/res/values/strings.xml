@@ -122,7 +122,9 @@
     <!-- Where to play -->
     <string name="play_on">Play on</string>
     <string name="this_phone">This phone</string>
-    <string name="this_phone_detail">Headphones or Bluetooth</string>
+    <string name="output_phone_speaker">Phone speaker</string>
+    <string name="output_headphones">Headphones</string>
+    <string name="output_bluetooth">Bluetooth</string>
     <string name="speaker">Speaker</string>
     <string name="tv">TV</string>
     <string name="outputs_looking">Looking for speakers and TVs…</string>
