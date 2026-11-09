@@ -3,8 +3,8 @@
 Status: ideas, not started. Everything goes out under Simon's own
 accounts; nothing is submitted automatically.
 
-We no longer have the source discs, which rules out some contributions
-but not the most useful ones.
+Some contributions need the source discs and aren't possible here; the
+most useful ones don't need them.
 
 ## AcoustID fingerprints (best value, low effort)
 
@@ -29,9 +29,8 @@ match automatically.
   Discogs. New editors' edits wait for votes.
 - **Corrections:** wrong titles or years noticed during review, with an
   edit note.
-- **Not possible without the source discs:** disc IDs (need the disc's table of
-  contents) and Cover Art Archive scans (own scans only, not art
-  embedded in files without clear provenance).
+- **Not possible without the source discs:** disc IDs (need the disc's
+  table of contents) and Cover Art Archive scans (must be your own scans).
 
 ## beets
 

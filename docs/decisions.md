@@ -251,10 +251,9 @@ Why: on the Nexus 4's album grid, a release build compiled ahead of time
 97% janky, so performance is judged only on release builds installed with
 `android/scripts/install.sh`.
 
-## 2026-10-30 · Glow is our own; another player isn't a reference
+## 2026-10-30 · Glow is our own
 Why: the art-tinted look is a common pattern (Apple Music, Spotify,
-Android's media notification). another player's maintainer doesn't want
-LLM-written code, so we neither imitate nor contribute to it.
+Android's media notification), arrived at independently.
 
 ## 2026-10-30 · Cleanup with beets, into a copy
 Why: MusicBrainz and AcoustID matching, fetchart and embedart, instead of

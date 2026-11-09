@@ -662,8 +662,6 @@ Not doing (and why):
   app is offline by design.
 - Remote analytics or remote feature flags: same reason; usage stays on
   the phone (Track U).
-- Contributing to, or imitating, another player: its maintainer objects to
-  LLM-written code.
 
 ## Later (brief Milestone 5)
 - Wi-Fi library sync, error recovery, battery tuning, offline test suite.
