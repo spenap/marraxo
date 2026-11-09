@@ -55,9 +55,15 @@ on every visit.
 | Decades | Original year (138 from the 90s, 170 from the 2000s) | Now |
 | Players in your collection | Musicians on 3+ albums (Phil Cunningham on 8, Nathan East on 6) | Now (liner notes) |
 | Recorded at | Studios on 2+ albums (AIR Studios 9, Windmill Lane 5) | Now (liner notes) |
-| Not played here yet | Albums with no plays on this phone | Now |
 | Moods | Calm, energetic, melancholic… | With discovery (D2) |
 | Sounds like… | Neighbours of a recent album | With discovery (D2) |
+
+Decided for Home (2026-11-09, `mockups/home.html`): Home is the first
+tab; "Jump back in" is Continue, mixing albums, artists, radios and
+genres, led by a card that resumes the last album at its track; genre and
+decade shelves come first, then people, studios and Rediscover in
+rotation. "Not played here yet" is dropped: much of the collection is
+unplayed by choice.
 
 The players and studios shelves are something streaming apps can't do:
 they come from the credits fetched for this collection.

@@ -15,6 +15,21 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-09 · Home: a first tab to continue and discover
+The app lands on a Home tab before Albums. Its first shelf, Continue,
+mixes albums, artists, radios and genres played lately, led by a large
+card that resumes the last album at its track. Discovery starts with the
+same genre or decade; shelves of the same people and studios (liner
+notes) and Rediscover rotate in later. No shelf of albums never played: much of the collection is
+unplayed by choice. On the Nexus 4 as the home screen, Now Playing still
+comes first, with Home behind it. Detail: `cards.md`, `mockups/home.html`.
+
+## 2026-11-09 · Multi-disc albums: a row for each disc
+An album with more than one disc shows a row before each disc ("Disc 2 ·
+10 songs · 29 min", with the disc's title when known); single-disc albums
+are unchanged. Chosen over a pinned row, a disc switch and disc numbers on
+every song. Detail: `mockups/discs.html`.
+
 ## 2026-11-08 · No cloud backup of the app's data
 Android's backup would upload play history, favourites and the queue to
 the user's cloud account, against "nothing is ever sent elsewhere". Backup

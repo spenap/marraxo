@@ -180,6 +180,14 @@ and record decisions in `decisions.md`.
       reached by scrolling on, as in Now Playing (beta, 2026-11-02).
       One way to show "more about this" in every view, instead of a
       button on some screens and cards on others.
+- [ ] Album screen: a row before each disc on multi-disc albums ("Disc 2 ·
+      10 songs · 29 min"; 29 of 454 albums), with disc titles from the
+      liner notes when known (`mockups/discs.html`, option A).
+- [ ] Home tab, first (`mockups/home.html`, decided 2026-11-09): Continue
+      (albums, artists, radios, genres; a large card resumes the last
+      album at its track), then shelves of the same genre or decade. Later,
+      rotated: the same people and studios, Rediscover. Nexus 4 as the home
+      screen keeps Now Playing first. Benchmark the sideways shelves.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
