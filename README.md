@@ -47,8 +47,10 @@ Install on a connected phone:
 
     android/scripts/install.sh [device-serial]
 
-Releases: `android/scripts/release.sh vX.Y.Z` tags a green `main` and
-publishes an APK signed with the release key as a GitHub Release.
+Releases: `android/scripts/release.sh` tags a green `main` with the next
+version from its Conventional Commits (git-cliff: a feat bumps the minor,
+a fix the patch) and publishes an APK signed with the release key as a
+GitHub Release.
 
 Tests: `./gradlew testDebugUnitTest` in `android/`, and `pytest` in
 `tools/`; both run in CI on every push. UI tests
