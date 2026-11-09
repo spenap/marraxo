@@ -103,4 +103,16 @@ class PlayRecorderTest {
         }
         assertEquals(listOf(null, "11"), ids)
     }
+
+    @Test fun `the Home tab reads the plays newest first`() {
+        start(saya, riots)
+        idle(5_000)
+        player.seekToNextMediaItem()
+        idle(5_000)
+        player.pause()
+        idle()
+        recorder.close()
+        rows(2)
+        assertEquals(listOf("Riots" to "stopped", "O... Saya" to "skipped"), history.recent(10).map { it.title to it.ended })
+    }
 }
