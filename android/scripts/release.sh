@@ -38,7 +38,8 @@ apk=app/build/outputs/apk/release/marraxo-$v.apk
 mkdir -p "$(dirname "$apk")"
 cp "$work/src/android/app/build/outputs/apk/release/app-release.apk" "$apk"
 apksigner=$(ls -d "$HOME"/Android/Sdk/build-tools/*/apksigner | tail -1)
-"$apksigner" verify --print-certs "$apk" | grep -q "O=Marraxo" || { echo "$apk isn't signed with the release key"; exit 1; }
+# The release key's cert still reads O=Makofi (unchanged by the rename).
+"$apksigner" verify --print-certs "$apk" | grep -q "O=Makofi" || { echo "$apk isn't signed with the release key"; exit 1; }
 
 git push -q origin "$v"
 trap 'rm -rf "$work"' EXIT
