@@ -42,6 +42,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.media3.common.Player
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.lazy.LazyListScope
@@ -973,6 +976,7 @@ private fun AlbumScreen(
     val tint = rememberArt(album.id, 400)?.tint ?: placeholderTint(album.id)
     val fadePx = with(LocalDensity.current) { 380.dp.toPx() }
     val minutes = album.tracks.sumOf { it.durationMs } / 60000
+    val discs = remember(album.tracks) { discs(album.tracks) }
     val list = rememberLazyListState()
     val scrolled by remember { derivedStateOf { list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 0 } }
     Box(Modifier.fillMaxSize()) {
@@ -998,7 +1002,11 @@ private fun AlbumScreen(
                 Spacer(Modifier.height(4.dp))
                 Text(album.title, style = display(26), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(album.artist, style = TextStyle(fontSize = 14.sp, color = GSoft))
-                val details = listOfNotNull(album.year.takeIf { it > 0 }?.toString(), songCount(album.tracks.size), stringResource(R.string.minutes, minutes))
+                val details = listOfNotNull(
+                    album.year.takeIf { it > 0 }?.toString(),
+                    discs.size.takeIf { it > 1 }?.let { pluralStringResource(R.plurals.disc_count, it, it) },
+                    songCount(album.tracks.size), stringResource(R.string.minutes, minutes),
+                )
                 Text(details.joinToString(" · "), style = TextStyle(fontSize = 12.sp, color = GSoft))
                 Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1008,7 +1016,9 @@ private fun AlbumScreen(
                 }
             }
         }
-        itemsIndexed(album.tracks, key = { _, t -> t.id }) { i, track ->
+        val songs = { from: Int, count: Int ->
+          itemsIndexed(album.tracks.subList(from, from + count), key = { _, t -> t.id }) { j, track ->
+            val i = from + j
             val on = current?.id == track.id
             val color = if (on) GHi else Color.White
             val soft = if (on) GHi else GSoft
@@ -1028,10 +1038,38 @@ private fun AlbumScreen(
                 Text(fmt(track.durationMs), style = TextStyle(fontSize = 13.sp, color = soft))
                 IconSpot(GlowIcons.More, stringResource(R.string.song_options), tint = GSoft) { onOptions(track) }
             }
+          }
+        }
+        if (discs.isEmpty()) songs(0, album.tracks.size)
+        else discs.forEach { d ->
+            item(key = "disc-${d.number}") { DiscRow(d) }
+            songs(d.first, d.count)
         }
     }
     // The list scrolls under the status bar: once it does, cover the bar in the gradient's top colour.
     if (scrolled) Box(Modifier.fillMaxWidth().windowInsetsTopHeight(WindowInsets.statusBars).background(tint))
+    }
+}
+
+/** The row before each disc of a multi-disc album: "DISC 2 ──── 10 songs · 29 min". */
+@Composable
+private fun DiscRow(disc: Disc) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        val name = stringResource(R.string.disc, disc.number)
+        Text(
+            name.uppercase(),
+            style = TextStyle(fontSize = 12.sp, letterSpacing = 1.sp, color = GHi, fontWeight = FontWeight.SemiBold),
+            modifier = Modifier.semantics { heading(); contentDescription = name }, // read as a word, not spelled out
+        )
+        Box(Modifier.weight(1f).height(1.dp).background(GFaint))
+        Text(
+            "${songCount(disc.count)} · ${stringResource(R.string.minutes, disc.durationMs / 60000)}",
+            style = TextStyle(fontSize = 12.sp, color = GSoft),
+        )
     }
 }
 

@@ -198,6 +198,17 @@ fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>, various: String = VA
         .sortedWith(compareBy({ sortKey(it.artist) }, { it.year }, { it.title }))
 }
 
+/** A disc of a multi-disc album: its songs are [count] of the album's tracks from index [first]. */
+data class Disc(val number: Int, val first: Int, val count: Int, val durationMs: Long)
+
+/** The discs of an album's tracks (sorted by disc), or none unless every track is tagged and there are two or more. */
+fun discs(tracks: List<Track>): List<Disc> {
+    if (tracks.any { it.disc == 0 }) return emptyList()
+    var first = 0
+    val discs = tracks.groupBy { it.disc }.map { (n, list) -> Disc(n, first, list.size, list.sumOf { it.durationMs }).also { first += list.size } }
+    return if (discs.size > 1) discs else emptyList()
+}
+
 /** How MusicBrainz and beets tag a compilation's album artist. */
 const val VARIOUS_ARTISTS = "Various Artists"
 
