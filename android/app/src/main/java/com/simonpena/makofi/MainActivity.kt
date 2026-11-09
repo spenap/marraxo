@@ -20,7 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -29,6 +31,9 @@ class MainActivity : ComponentActivity() {
     private var hasPermission by mutableStateOf(false)
     private var library by mutableStateOf<List<Album>?>(null)
     private var status by mutableStateOf<String?>(null)
+    /** The latest plays, for the Home tab. */
+    private var plays by mutableStateOf(emptyList<Play>())
+    private val history by lazy { PlayHistory(this) }
     private var isHome by mutableStateOf(false)
     private var homePresses by mutableIntStateOf(0)
     /** The file opened from another app: "" until it's read; null after the screen is recreated. */
@@ -83,9 +88,19 @@ class MainActivity : ComponentActivity() {
                 onAndroidSettings = { startActivity(Intent(Settings.ACTION_SETTINGS)) },
                 onOtherApps = { openOtherLauncher(this) },
                 onRescan = ::rescan,
+                plays = plays,
             )
         }
+        // A song heard is a new row: Home's Continue follows.
+        lifecycleScope.launch {
+            snapshotFlow { player.currentTrackId }.collect {
+                delay(1000)
+                if (library != null) plays = readPlays()
+            }
+        }
     }
+
+    private suspend fun readPlays() = withContext(Dispatchers.IO) { runCatching { history.recent(500) }.getOrDefault(emptyList()) }
 
     override fun onResume() {
         super.onResume()
@@ -116,7 +131,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun loadLibraryAsync() {
-        lifecycleScope.launch { library = loadLibrary(this@MainActivity) }
+        lifecycleScope.launch {
+            plays = readPlays() // first: the library opens on Home if there are any
+            library = loadLibrary(this@MainActivity)
+        }
     }
 
     private fun rescan() {

@@ -185,11 +185,18 @@ and record decisions in `decisions.md`.
       (2026-11-09, `mockups/discs.html`, option A).
 - [ ] Disc titles on the disc rows ("Rarities and B-Sides"; 7 albums):
       Android doesn't expose them, so from the liner notes.
-- [ ] Home tab, first (`mockups/home.html`, decided 2026-11-09): Continue
-      (albums, artists, radios, genres; a large card resumes the last
-      album at its track), then shelves of the same genre or decade. Later,
-      rotated: the same people and studios, Rediscover. Nexus 4 as the home
-      screen keeps Now Playing first. Benchmark the sideways shelves.
+- [ ] Home tab, first (`mockups/home.html`, decided 2026-11-09).
+  - [x] The first tab, opening the library when there are plays (Albums
+        on a first run): a large card picks up the latest album left
+        halfway at its song; Continue, the albums played lately; for the
+        3 latest, more of their genre and decade (the genre alone below 4
+        albums), in another order each day. From `history.db`.
+  - [ ] Continue with artists, radios and genres: record what started
+        playback (play history keeps only the songs).
+  - [ ] Nexus 4 as the home screen opens on Now Playing, Home behind it.
+  - [ ] Benchmark Home's shelves flung sideways; scroll-bench flings only
+        down (`TAB=Home`: 1.6–2.4% janky on the Nexus 4; Albums 3.3–3.7%).
+  - [ ] Later, rotated: the same people and studios, Rediscover.
 - [ ] Favourites and a Home of cards (smart playlists with a readable
       rule: genres, decades, players and studios from the liner notes,
       moods later). Design: `cards.md`; mockup: `mockups/cards.html`.
