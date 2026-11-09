@@ -35,6 +35,14 @@ class AlbumGroupingTest {
         assertEquals(2005, albums.single().year)
     }
 
+    @Test fun `a split-off song with a guest rejoins its album`() {
+        // You’ll Be Alright, Kid on the S25: only "On My Mind" (Alex Warren & ROSÉ) got its own id.
+        val album = "You’ll Be Alright, Kid"
+        val tracks = (1..20).map { track(it.toLong(), "Song $it", album = album, artist = "Alex Warren", albumArtist = "Alex Warren", albumId = 7) } +
+            track(21, "On My Mind", album = album, artist = "Alex Warren & ROSÉ", albumArtist = "Alex Warren", albumId = 2)
+        assertEquals(21, groupAlbums(tracks, years = emptyMap()).single().tracks.size)
+    }
+
     @Test fun `albums with the same title by different artists stay apart`() {
         val albums = groupAlbums(listOf(
             track(1, "a", album = "Greatest Hits", artist = "Clannad", albumId = 1),

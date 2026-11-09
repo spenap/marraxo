@@ -173,7 +173,7 @@ private fun trackGenres(context: Context): Map<Long, String> {
 
 /**
  * Albums from tracks: Android's album ids first (they keep compilations
- * together), then groups with the same title and main artist merged. Android
+ * together), then groups with the same title and album artist merged. Android
  * can give one album two ids when it reads the name differently for some
  * tracks (see [repairMojibake]). The id most tracks share stays, for the cover.
  */
@@ -184,7 +184,7 @@ fun groupAlbums(tracks: List<Track>, years: Map<Long, Int>, various: String = VA
         .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
         ?.let { if (fold(it) == fold(VARIOUS_ARTISTS)) various else it } ?: mainArtist(list)
     return tracks.groupBy { it.albumId }.values
-        .groupBy { list -> fold(list.first().album) + "\u0000" + fold(mainArtist(list)) }.values
+        .groupBy { list -> fold(list.first().album) + "\u0000" + fold(albumArtist(list)) }.values
         .map { groups ->
             val main = groups.maxBy { it.size }
             val id = main.first().albumId
