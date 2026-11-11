@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" color="#9FD6CF">
+  <!-- Status bar: the fin, heavier, with one wave. -->
+  <g fill="none" stroke="currentColor" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M108 410C124 296 206 126 372 92Q390 86 386 102C344 200 318 334 352 410Z"/>
+    <path d="M223.7 346C235.4 318.2 252.6 290.4 275.5 267.6"/>
+  </g>
+</svg>

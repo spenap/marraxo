@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" color="#9FD6CF">
+  <!-- Launcher icon: the fin and three waves, concentric with its leading edge. -->
+  <g fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M108 410C124 296 206 126 372 92Q390 86 386 102C344 200 318 334 352 410Z"/>
+    <path d="M216.4 244.2A332.1 332.1 0 0 1 324 154.5"/>
+    <path d="M196.8 370A292.1 292.1 0 0 1 309.3 210.2"/>
+    <path d="M238.9 368.9A252.1 252.1 0 0 1 299.2 271"/>
+  </g>
+</svg>
