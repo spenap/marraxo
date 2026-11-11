@@ -15,6 +15,15 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-11 · Only the renderer's silence means it's lost
+Supersedes "A lost speaker or TV hands back to the phone, paused"
+(2026-11-07) in when it happens: only 3 unanswered polls in a row, not the
+phone's Wi-Fi network being lost. Android reports a roam to the same
+network (Samsung's silent roaming) as the network lost and a new one 0.5 s
+later, which dropped the S25 from the Sonos mid-song. A command with no
+answer polls soon instead of giving up. Handing back stays paused, with
+the message. Detail: `RendererPlayer.call`, `PlaybackService.backToPhone`.
+
 ## 2026-11-09 · Renamed to Marraxo, `com.simonpena.marraxo`
 Supersedes "The app is Makofi" (2026-11-02). Marraxo is Galician for the
 mako shark; "mako" was already the Nexus 4's codename, where the project
@@ -59,6 +68,7 @@ When the phone leaves the Wi-Fi, or a renderer misses 3 polls in a row,
 playback moves back to this phone with the queue and position, paused,
 and a message names the output that was lost. It doesn't resume: the
 phone's speaker shouldn't start on its own. Detail: `PlaybackService`.
+Superseded by "Only the renderer's silence means it's lost" (2026-11-11).
 
 ## 2026-11-06 · Device tests on any phone; performance on the Nexus 4
 `connectedDebugAndroidTest` may run on whichever phone is connected;
