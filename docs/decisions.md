@@ -15,6 +15,14 @@ keep the reasoning in full; this log is the index of what's in force.
 Entries before 2026-11-01 were moved here from ROADMAP.md's decision log
 or recovered from commits and topic docs.
 
+## 2026-11-11 · The icon: a fin made of sound waves
+A mako's dorsal fin, outlined, with three sound waves inside. The waves
+are arcs concentric with the circle through the fin's leading edge (base,
+middle, tip), so they share its curvature instead of being added on.
+Glow's teal on deep teal, one stroke width; a monochrome layer for themed
+icons. Replaces the record seen from above. Detail:
+`res/drawable/ic_launcher_foreground.xml`.
+
 ## 2026-11-11 · Only the renderer's silence means it's lost
 Supersedes "A lost speaker or TV hands back to the phone, paused"
 (2026-11-07) in when it happens: only 3 unanswered polls in a row, not the
