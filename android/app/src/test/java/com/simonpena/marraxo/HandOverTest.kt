@@ -2,6 +2,7 @@ package com.simonpena.marraxo
 
 import androidx.media3.common.Player
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +31,22 @@ class HandOverTest {
         assertEquals(Player.REPEAT_MODE_ALL, speaker.repeatMode)
         assertTrue(speaker.shuffleModeEnabled)
         assertEquals(Player.STATE_IDLE, phone.playbackState) // the phone stops
+    }
+
+    @Test fun `a lost speaker hands over paused`() {
+        val speaker = FakePlayer()
+        speaker.setMediaItems((1L..2L).map { track(it, "Song $it").toMediaItem() }, 1, 30_000)
+        speaker.prepare()
+        speaker.play()
+        idle()
+
+        val phone = FakePlayer()
+        handOver(speaker, phone, play = false)
+        idle()
+
+        assertEquals(1, phone.currentMediaItemIndex)
+        assertEquals(30_000, phone.currentPosition)
+        assertFalse(phone.playWhenReady)
     }
 
     @Test fun `an empty queue moves as nothing, without preparing`() {

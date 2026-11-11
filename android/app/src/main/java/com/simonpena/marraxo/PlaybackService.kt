@@ -5,12 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import android.os.Build
-import android.os.Handler
 import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
@@ -122,9 +117,6 @@ class PlaybackService : MediaSessionService() {
             })
             .build()
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF))
-        getSystemService(ConnectivityManager::class.java).registerNetworkCallback(
-            NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(), wifi, Handler(mainLooper),
-        )
     }
 
     private fun notSupported() = Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
@@ -161,7 +153,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     /** Moves the queue and position to [renderer], or back to this phone when null. */
-    private fun setOutput(renderer: Renderer?) {
+    private fun setOutput(renderer: Renderer?, play: Boolean? = null) {
         val session = session ?: return
         val old = session.player
         if (old is RendererPlayer && old.renderer == renderer) return
@@ -177,7 +169,7 @@ class PlaybackService : MediaSessionService() {
         queue.follow(new)
         radio.follow(new)
         trackErrors.follow(new)
-        handOver(old, new)
+        handOver(old, new, play ?: old.playWhenReady)
         session.player = new
         if (old is RendererPlayer) old.release()
         session.setSessionExtras(Bundle().apply { renderer?.let { putBundle(EXTRA_OUTPUT, it.toBundle()) } })
@@ -190,15 +182,10 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
-    /** Leaving the Wi-Fi leaves the speakers and the TV behind. */
-    private val wifi = object : ConnectivityManager.NetworkCallback() {
-        override fun onLost(network: Network) = backToPhone("Wi-Fi lost")
-    }
-
     private fun backToPhone(why: String) {
         val renderer = (session?.player as? RendererPlayer)?.renderer ?: return
         Log.w(TAG, "${renderer.name}: $why; back to the phone")
-        setOutput(null)
+        setOutput(null, play = false)
         say(getString(R.string.output_lost, renderer.name))
     }
 
@@ -213,7 +200,6 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         unregisterReceiver(screenOff)
-        getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(wifi)
         scope.cancel()
         queue.stop()
         recorder?.close()
@@ -239,11 +225,10 @@ class PlaybackService : MediaSessionService() {
 }
 
 /** Moves the queue, position, play state, shuffle and repeat from one player to another, and stops the first. */
-internal fun handOver(from: Player, to: Player) {
+internal fun handOver(from: Player, to: Player, play: Boolean = from.playWhenReady) {
     val items = List(from.mediaItemCount) { from.getMediaItemAt(it) }
     val index = from.currentMediaItemIndex
     val position = from.currentPosition
-    val play = from.playWhenReady
     from.stop()
     to.repeatMode = from.repeatMode
     if (items.isNotEmpty()) {
