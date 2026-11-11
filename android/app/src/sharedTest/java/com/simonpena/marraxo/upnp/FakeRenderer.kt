@@ -59,6 +59,8 @@ class FakeRenderer(private val kind: Kind, private val room: String = if (kind =
     @Volatile var refuseTracks = false
     /** Answers Seek with a fault. */
     @Volatile var refuseSeeks = false
+    /** Drops requests without answering, as during a Wi-Fi roam. */
+    @Volatile var silent = false
     /** Play requests fully handled (after any [playDelayMs]). */
     @Volatile var plays = 0
     val actions: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
@@ -157,6 +159,7 @@ class FakeRenderer(private val kind: Kind, private val room: String = if (kind =
 
     /** Just enough HTTP for SOAP: a POST with a Content-Length body. */
     private fun handle(client: Socket) {
+        if (silent) return
         val input = client.getInputStream().buffered()
         fun line() = generateSequence { input.read().takeIf { it >= 0 } }.takeWhile { it != '\n'.code }
             .map { it.toChar() }.joinToString("").trimEnd('\r')
