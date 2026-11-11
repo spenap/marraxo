@@ -16,6 +16,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
@@ -52,6 +53,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        setMediaNotificationProvider(notificationProvider(this))
         phone = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -225,6 +227,10 @@ class PlaybackService : MediaSessionService() {
 }
 
 /** Moves the queue, position, play state, shuffle and repeat from one player to another, and stops the first. */
+/** Media3's playback notification, with the app's fin in the status bar. */
+internal fun notificationProvider(context: Context) =
+    DefaultMediaNotificationProvider.Builder(context).build().apply { setSmallIcon(R.drawable.ic_notification) }
+
 internal fun handOver(from: Player, to: Player, play: Boolean = from.playWhenReady) {
     val items = List(from.mediaItemCount) { from.getMediaItemAt(it) }
     val index = from.currentMediaItemIndex
