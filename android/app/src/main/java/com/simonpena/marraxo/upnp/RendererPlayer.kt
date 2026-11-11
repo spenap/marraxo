@@ -480,9 +480,10 @@ class RendererPlayer(
     }
 
     /**
-     * Net thread: runs [block]. No answer stops playback as unreachable. Any
-     * other failure stops it as the track's failure when [loadsTrack], and
-     * is only logged otherwise: the next poll shows where the renderer is.
+     * Net thread: runs [block]. A failure stops playback when [loadsTrack]:
+     * as unreachable with no answer, else as the track's failure. Otherwise
+     * it is only logged and a poll follows soon: it shows where the renderer
+     * is, and only polls give up on it.
      */
     private fun call(loadsTrack: Boolean = false, block: () -> Unit) {
         if (net.isShutdown) return
@@ -492,8 +493,9 @@ class RendererPlayer(
             } catch (e: Exception) {
                 Log.w(TAG, "${renderer.name}: ${e.message}")
                 when {
+                    !loadsTrack -> main.post { pollSoon() }
                     e is Unreachable -> main.post { fail(e, PlaybackException.ERROR_CODE_REMOTE_ERROR) }
-                    loadsTrack -> main.post { fail(e, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED) }
+                    else -> main.post { fail(e, PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED) }
                 }
             }
         }

@@ -387,6 +387,24 @@ class RendererPlayerTest {
         assertEquals(PlaybackException.ERROR_CODE_REMOTE_ERROR, player.playerError?.errorCode)
     }
 
+    @Test fun `a command lost in a brief blip doesn't drop the speaker`() {
+        val (fake, player) = start(FakeRenderer.Kind.SONOS)
+        player.setMediaItems(listOf(item(1, "O... Saya", file("s.mp3"), 215_000)))
+        player.prepare()
+        player.play()
+        eventually("plays") { fake.state == "PLAYING" && player.isPlaying }
+        fake.silent = true // the phone roams between access points
+        player.setDeviceVolume(40, 0)
+        Thread.sleep(300)
+        idle(200)
+        fake.silent = false
+        val polls = fake.actions.count { it == "GetTransportInfo" }
+        eventually("polled again") { fake.actions.count { it == "GetTransportInfo" } > polls }
+        idle(200)
+        assertEquals(null, player.playerError)
+        assertTrue(player.isPlaying)
+    }
+
     @Test fun `a track the speaker refuses is that track's error, not a lost speaker`() {
         val (fake, player) = start(FakeRenderer.Kind.SONOS)
         fake.refuseTracks = true
