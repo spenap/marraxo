@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.simonpena.marraxo.upnp.FakeRenderer
 import com.simonpena.marraxo.upnp.Renderer
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
@@ -58,17 +59,23 @@ class OutputLostTest {
         waitFor("back on the phone", 30_000) { player.output == null }
     }
 
-    /** Only on an emulator: on a phone, Wi-Fi off could cut a wireless adb connection. */
-    @Test fun leavingTheWifiHandsBackToThePhone() {
+    /**
+     * A roam reports the Wi-Fi network lost, then a new one: the speaker
+     * still answers, so playback stays on it. Only on an emulator: on a
+     * phone, Wi-Fi off could cut a wireless adb connection.
+     */
+    @Test fun aWifiDropWhileTheSpeakerAnswersKeepsTheSpeaker() {
         assumeTrue(Build.HARDWARE == "ranchu" || Build.HARDWARE == "goldfish")
         val connectivity = context.getSystemService(ConnectivityManager::class.java)
         assumeTrue(connectivity.allNetworks.any { connectivity.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true })
-        playOn(fake.renderer) // on localhost: still answering after the Wi-Fi goes
+        playOn(fake.renderer) // on localhost: still answering while the Wi-Fi is off
         try {
             shell("svc wifi disable")
-            waitFor("back on the phone", 10_000) { player.output == null }
+            Thread.sleep(3_000)
         } finally {
             shell("svc wifi enable")
         }
+        Thread.sleep(5_000)
+        assertEquals(fake.renderer, player.output)
     }
 }
