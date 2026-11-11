@@ -1,17 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A record seen from above: Glow's teal ring around a dark centre. -->
+<!-- A mako's dorsal fin, outlined, with sound waves inside: arcs concentric with the circle of its leading edge. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#9FD6CF"
-        android:pathData="M54,32a22,22 0,1 1,0 44a22,22 0,1 1,0 -44z" />
+        android:pathData="M31.37,80C33.94,61.7 47.1,34.42 73.74,28.96Q76.63,28 75.99,30.57C69.25,46.3 65.07,67.8 70.53,80Z"
+        android:strokeColor="#9FD6CF"
+        android:strokeWidth="3.21"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#24525A"
-        android:pathData="M54,37a17,17 0,1 1,0 34a17,17 0,1 1,0 -34z" />
+        android:pathData="M48.77,53.39A53.3,53.3 0 0,1 66.04,38.99"
+        android:strokeColor="#9FD6CF"
+        android:strokeWidth="3.21"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#0C1112"
-        android:pathData="M54,47a7,7 0,1 1,0 14a7,7 0,1 1,0 -14z" />
+        android:pathData="M45.62,73.58A46.88,46.88 0 0,1 63.68,47.93"
+        android:strokeColor="#9FD6CF"
+        android:strokeWidth="3.21"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M52.38,73.4A40.46,40.46 0 0,1 62.06,57.69"
+        android:strokeColor="#9FD6CF"
+        android:strokeWidth="3.21"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 </vector>
