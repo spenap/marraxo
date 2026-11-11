@@ -653,6 +653,10 @@ Parked:
   would be H.264 up to 720p. Media3 already plays video; the work is a
   video screen. Only the TV could show it over UPnP. Need: more videos
   than these 7.
+- Animated splash icon (2026-11-11): the waves ripple out across the fin,
+  one after another, as an `AnimatedVectorDrawable` on Android 12+'s splash
+  screen. Launcher icons can't animate; the Nexus 4 (API 27) would show
+  it still.
 
 Not doing (and why):
 - Audiobooks, or splitting the app into reusable modules for them:
